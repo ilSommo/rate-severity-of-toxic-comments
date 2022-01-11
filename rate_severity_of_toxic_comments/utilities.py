@@ -12,6 +12,5 @@ def obfuscator(text):
     for word in _bad_words:
         visible = min(len(word) // 3, 3)
         censorship = word[0:visible] + ((len(word) - visible * 2) * "*") + word[-visible:]
-        print(word, censorship)
         text = text.replace(word, censorship)
     return text
