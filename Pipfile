@@ -5,6 +5,8 @@ name = "pypi"
 
 [packages]
 jupyter = "*"
+numpy = "*"
+torch = "*"
 
 [dev-packages]
 autopep8 = "*"

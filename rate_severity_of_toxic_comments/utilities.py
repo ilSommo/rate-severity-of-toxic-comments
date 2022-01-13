@@ -1,6 +1,11 @@
 __version__ = '0.1.0'
 __author__ = 'Lorenzo Menghini, Martino Pulici, Alessandro Stockman, Luca Zucchini'
 
+import numpy as np
+import torch
+
+import random
+
 _bad_words = []
 
 def obfuscator(text):
@@ -17,3 +22,17 @@ def obfuscator(text):
         censorship = word[0:visible] + ((len(word) - visible * 2) * "*") + word[-visible:]
         text = text.replace(word, censorship)
     return text
+
+
+def fix_random_seed(seed):
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.enabled = False
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        torch.use_deterministic_algorithms(True)
