@@ -7,6 +7,9 @@ name = "pypi"
 jupyter = "*"
 numpy = "*"
 torch = "*"
+pandas = "*"
+transformers = "*"
+wandb = "*"
 
 [dev-packages]
 autopep8 = "*"
