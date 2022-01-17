@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+from transformers import AutoModel
 
 OUTPUT_CLASSES = 1
 
@@ -14,7 +15,7 @@ class PretrainedModel(nn.Module):
     def forward(self, ids, mask):        
         out = self.model(input_ids=ids,attention_mask=mask,
                          output_hidden_states=False)
-        out = self.drop(out[1])
+        out = self.drop(out.last_hidden_state)
         outputs = self.fc(out)
         return outputs
 

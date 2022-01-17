@@ -17,14 +17,13 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_int
     dataset_size = 0
 
     for idx_batch, data in enumerate(dataloader):
-        more_toxic_ids = data['more_toxic_ids'].to(device, dtype = torch.long)
-        more_toxic_mask = data['more_toxic_mask'].to(device, dtype = torch.long)
-        less_toxic_ids = data['less_toxic_ids'].to(device, dtype = torch.long)
-        less_toxic_mask = data['less_toxic_mask'].to(device, dtype = torch.long)
+        more_toxic_ids = data['more_toxic_ids'].to(device, dtype=torch.long)
+        more_toxic_mask = data['more_toxic_mask'].to(device, dtype=torch.long)
+        less_toxic_ids = data['less_toxic_ids'].to(device, dtype=torch.long)
+        less_toxic_mask = data['less_toxic_mask'].to(device, dtype=torch.long)
         targets = data['target'].to(device, dtype=torch.long)
 
         batch_size = more_toxic_ids.size(0)
-
 
         more_toxic_outputs = model(more_toxic_ids, more_toxic_mask)
         less_toxic_outputs = model(less_toxic_ids, less_toxic_mask)
@@ -33,11 +32,11 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_int
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-                
+
         total_loss += (loss.item() * batch_size)
         cumul_batches += 1
         dataset_size += batch_size
-        
+
         epoch_loss = total_loss / cumul_batches
         
         if idx_batch % log_interval == 0 and idx_batch > 0: #TODO: Iterative/Cumulative logs?
@@ -46,6 +45,7 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_int
     total_metrics["train_loss"] = total_loss / dataset_size
 
     return total_metrics
+
 
 def test_loop(dataloader, model, loss_fn, device):
     """
@@ -59,18 +59,22 @@ def test_loop(dataloader, model, loss_fn, device):
 
     with torch.no_grad():
         for idx_batch, data in enumerate(dataloader):
-            more_toxic_ids = data['more_toxic_ids'].to(device, dtype = torch.long)
-            more_toxic_mask = data['more_toxic_mask'].to(device, dtype = torch.long)
-            less_toxic_ids = data['less_toxic_ids'].to(device, dtype = torch.long)
-            less_toxic_mask = data['less_toxic_mask'].to(device, dtype = torch.long)
+            more_toxic_ids = data['more_toxic_ids'].to(
+                device, dtype=torch.long)
+            more_toxic_mask = data['more_toxic_mask'].to(
+                device, dtype=torch.long)
+            less_toxic_ids = data['less_toxic_ids'].to(
+                device, dtype=torch.long)
+            less_toxic_mask = data['less_toxic_mask'].to(
+                device, dtype=torch.long)
             targets = data['target'].to(device, dtype=torch.long)
-        
+
             batch_size = more_toxic_ids.size(0)
 
             more_toxic_outputs = model(more_toxic_ids, more_toxic_mask)
             less_toxic_outputs = model(less_toxic_ids, less_toxic_mask)
             loss = loss_fn(more_toxic_outputs, less_toxic_outputs, targets)
-                    
+
             total_loss += (loss.item() * batch_size)
             cumul_batches += 1
             dataset_size += batch_size
@@ -99,14 +103,15 @@ def run_training(train_dataloader: torch.utils.data.DataLoader,
     for epoch in range(1, num_epochs + 1):
         time_start = time.time()
 
-        metrics_train = train_loop(train_dataloader, model, loss_fn, optimizer, device, epoch, log_interval=log_interval)
+        metrics_train = train_loop(
+            train_dataloader, model, loss_fn, optimizer, device, epoch, log_interval=log_interval)
         metrics_val = test_loop(val_dataloader, model, loss_fn, device)
 
         time_end = time.time()
-        
-        lr =  optimizer.param_groups[0]['lr']
 
-        if verbose:            
+        lr = optimizer.param_groups[0]['lr']
+
+        if verbose:
             print(f'Epoch: {epoch} '
                   f' Lr: {lr:.8f} '
                   f' | Time one epoch (s): {(time_end - time_start):.4f} '
@@ -121,6 +126,6 @@ def run_training(train_dataloader: torch.utils.data.DataLoader,
     loop_end = time.time()
     time_loop = loop_end - loop_start
     if verbose:
-        print(f'Time for {num_epochs} epochs (s): {(time_loop):.3f}') 
+        print(f'Time for {num_epochs} epochs (s): {(time_loop):.3f}')
 
-    #TODO: Return best model
+    # TODO: Return best model
