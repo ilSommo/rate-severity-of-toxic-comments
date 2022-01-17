@@ -17,14 +17,13 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_int
     dataset_size = 0
 
     for idx_batch, data in enumerate(dataloader):
-        more_toxic_ids = data['more_toxic_ids'].to(device, dtype = torch.long)
-        more_toxic_mask = data['more_toxic_mask'].to(device, dtype = torch.long)
-        less_toxic_ids = data['less_toxic_ids'].to(device, dtype = torch.long)
-        less_toxic_mask = data['less_toxic_mask'].to(device, dtype = torch.long)
+        more_toxic_ids = data['more_toxic_ids'].to(device, dtype=torch.long)
+        more_toxic_mask = data['more_toxic_mask'].to(device, dtype=torch.long)
+        less_toxic_ids = data['less_toxic_ids'].to(device, dtype=torch.long)
+        less_toxic_mask = data['less_toxic_mask'].to(device, dtype=torch.long)
         targets = data['target'].to(device, dtype=torch.long)
 
         batch_size = more_toxic_ids.size(0)
-
 
         more_toxic_outputs = model(more_toxic_ids, more_toxic_mask)
         less_toxic_outputs = model(less_toxic_ids, less_toxic_mask)
@@ -33,16 +32,16 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_int
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-                
+
         total_loss += (loss.item() * batch_size)
         cumul_batches += 1
         dataset_size += batch_size
-        
+
         epoch_loss = total_loss / cumul_batches
-        
-        if idx_batch % log_interval == 0 and idx_batch > 0: #TODO: Iterative/Cumulative logs?
-            #TODO: writer.add_scalar("key", val) -> wandb.log({"key": val})
-            # global_step = idx_batch + (idx_epoch * len(dataloader)) 
+
+        if idx_batch % log_interval == 0 and idx_batch > 0:  # TODO: Iterative/Cumulative logs?
+            # TODO: writer.add_scalar("key", val) -> wandb.log({"key": val})
+            # global_step = idx_batch + (idx_epoch * len(dataloader))
             # writer.add_scalar('Metrics/Accuracy_Un_Train_IT', cumul_metrics["accuracy"], global_step)
             # cumul_metrics = normalize_metrics(cumul_metrics, cumul_batches)
             # cumul_f1_score = f1_score(cumul_metrics["precision"], cumul_metrics["recall"])
@@ -60,6 +59,7 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_int
 
     return total_metrics
 
+
 def test_loop(dataloader, model, loss_fn, device):
     """
     Executes a test loop on the given paramters. Returns metrics and votes.
@@ -72,18 +72,22 @@ def test_loop(dataloader, model, loss_fn, device):
 
     with torch.no_grad():
         for idx_batch, data in enumerate(dataloader):
-            more_toxic_ids = data['more_toxic_ids'].to(device, dtype = torch.long)
-            more_toxic_mask = data['more_toxic_mask'].to(device, dtype = torch.long)
-            less_toxic_ids = data['less_toxic_ids'].to(device, dtype = torch.long)
-            less_toxic_mask = data['less_toxic_mask'].to(device, dtype = torch.long)
+            more_toxic_ids = data['more_toxic_ids'].to(
+                device, dtype=torch.long)
+            more_toxic_mask = data['more_toxic_mask'].to(
+                device, dtype=torch.long)
+            less_toxic_ids = data['less_toxic_ids'].to(
+                device, dtype=torch.long)
+            less_toxic_mask = data['less_toxic_mask'].to(
+                device, dtype=torch.long)
             targets = data['target'].to(device, dtype=torch.long)
-        
+
             batch_size = more_toxic_ids.size(0)
 
             more_toxic_outputs = model(more_toxic_ids, more_toxic_mask)
             less_toxic_outputs = model(less_toxic_ids, less_toxic_mask)
             loss = loss_fn(more_toxic_outputs, less_toxic_outputs, targets)
-                    
+
             total_loss += (loss.item() * batch_size)
             cumul_batches += 1
             dataset_size += batch_size
@@ -92,16 +96,17 @@ def test_loop(dataloader, model, loss_fn, device):
 
     return total_metrics
 
-def run_training(train_dataloader: torch.utils.data.DataLoader, 
-                  val_dataloader: torch.utils.data.DataLoader, 
-                  model: nn.Module, 
-                  loss_fn, 
-                  optimizer: torch.optim,
-                  device,
-                  num_epochs: int, 
-                  log_interval: int, 
-                  training_label=None,
-                  verbose: bool=True) -> dict:
+
+def run_training(train_dataloader: torch.utils.data.DataLoader,
+                 val_dataloader: torch.utils.data.DataLoader,
+                 model: nn.Module,
+                 loss_fn,
+                 optimizer: torch.optim,
+                 device,
+                 num_epochs: int,
+                 log_interval: int,
+                 training_label=None,
+                 verbose: bool = True) -> dict:
     """
     Executes the full train test loop with the given parameters
     """
@@ -115,14 +120,15 @@ def run_training(train_dataloader: torch.utils.data.DataLoader,
     for epoch in range(1, num_epochs + 1):
         time_start = time.time()
 
-        metrics_train = train_loop(train_dataloader, model, loss_fn, optimizer, device, epoch, log_interval=log_interval)
+        metrics_train = train_loop(
+            train_dataloader, model, loss_fn, optimizer, device, epoch, log_interval=log_interval)
         metrics_val = test_loop(val_dataloader, model, loss_fn, device)
 
         time_end = time.time()
-        
-        lr =  optimizer.param_groups[0]['lr']
 
-        if verbose:            
+        lr = optimizer.param_groups[0]['lr']
+
+        if verbose:
             print(f'Epoch: {epoch} '
                   f' Lr: {lr:.8f} '
                   f' | Time one epoch (s): {(time_end - time_start):.4f} '
@@ -130,9 +136,9 @@ def run_training(train_dataloader: torch.utils.data.DataLoader,
                   f' Loss: [{metrics_train["loss"]:.4f}] '
                   f' \n Val   - '
                   f' Loss: [{metrics_val["loss"]:.4f}] '
-            )
-        
-        # #TODO Tensorboard -> WandB        
+                  )
+
+        # #TODO Tensorboard -> WandB
         # writer.add_scalars('Metrics/Losses', {"Train": metrics_train["loss"], "Val": metrics_val["loss"]}, epoch)
         # writer.add_scalars('Metrics/Accuracy', {"Train": metrics_train["accuracy"], "Val": metrics_val["accuracy"]}, epoch)
         # writer.add_scalars('Metrics/Precision', {"Train": metrics_train["precision"], "Val": metrics_val["precision"]}, epoch)
@@ -143,10 +149,10 @@ def run_training(train_dataloader: torch.utils.data.DataLoader,
         # writer.add_scalars('Metrics/Maj Recall', {"Train": majority_metrics_train["recall"], "Val": majority_metrics_val["recall"]}, epoch)
         # writer.add_scalars('Metrics/Maj F1', {"Train": majority_metrics_train["f1_score"], "Val": majority_metrics_val["f1_score"]}, epoch)
         # writer.flush()
-    
+
     loop_end = time.time()
     time_loop = loop_end - loop_start
     if verbose:
-        print(f'Time for {num_epochs} epochs (s): {(time_loop):.3f}') 
+        print(f'Time for {num_epochs} epochs (s): {(time_loop):.3f}')
 
-    #TODO: Return best model
+    # TODO: Return best model
