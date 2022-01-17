@@ -1,10 +1,10 @@
 import time
-from typing import Counter
 import os
 
 import torch
 from torch import nn
 
+import wandb
 
 def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_interval=10):
     """
@@ -41,22 +41,9 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_int
         epoch_loss = total_loss / cumul_batches
         
         if idx_batch % log_interval == 0 and idx_batch > 0: #TODO: Iterative/Cumulative logs?
-            #TODO: writer.add_scalar("key", val) -> wandb.log({"key": val})
-            # global_step = idx_batch + (idx_epoch * len(dataloader)) 
-            # writer.add_scalar('Metrics/Accuracy_Un_Train_IT', cumul_metrics["accuracy"], global_step)
-            # cumul_metrics = normalize_metrics(cumul_metrics, cumul_batches)
-            # cumul_f1_score = f1_score(cumul_metrics["precision"], cumul_metrics["recall"])
-            # writer.add_scalar('Metrics/Loss_Train_IT', loss, global_step)
-            # writer.add_scalar('Metrics/Accuracy_Train_IT', cumul_metrics["accuracy"], global_step)
-            # writer.add_scalar('Metrics/Precision_Train_IT', cumul_metrics["precision"], global_step)
-            # writer.add_scalar('Metrics/Recall_Train_IT', cumul_metrics["recall"], global_step)
-            # writer.add_scalar('Metrics/F1_Train_IT', cumul_f1_score, global_step)
-
-            # cumul_metrics.clear()
-            # cumul_batches = 0
             pass
 
-    total_metrics["loss"] = total_loss / dataset_size
+    total_metrics["train_loss"] = total_loss / dataset_size
 
     return total_metrics
 
@@ -88,7 +75,7 @@ def test_loop(dataloader, model, loss_fn, device):
             cumul_batches += 1
             dataset_size += batch_size
 
-    total_metrics["loss"] = total_loss / dataset_size
+    total_metrics["valid_loss"] = total_loss / dataset_size
 
     return total_metrics
 
@@ -100,17 +87,14 @@ def run_training(train_dataloader: torch.utils.data.DataLoader,
                   device,
                   num_epochs: int, 
                   log_interval: int, 
-                  training_label=None,
                   verbose: bool=True) -> dict:
     """
     Executes the full train test loop with the given parameters
     """
+    wandb.watch(model, log_freq=log_interval)
     loop_start = time.time()
 
     log_dir = os.path.join("logs", "fact_checker")
-    if training_label is not None:
-        log_dir = os.path.join(log_dir, training_label)
-    # writer = tensorboard.writer.SummaryWriter(log_dir=log_dir)
 
     for epoch in range(1, num_epochs + 1):
         time_start = time.time()
@@ -127,22 +111,12 @@ def run_training(train_dataloader: torch.utils.data.DataLoader,
                   f' Lr: {lr:.8f} '
                   f' | Time one epoch (s): {(time_end - time_start):.4f} '
                   f' \n Train - '
-                  f' Loss: [{metrics_train["loss"]:.4f}] '
+                  f' Loss: [{metrics_train["train_loss"]:.4f}] '
                   f' \n Val   - '
-                  f' Loss: [{metrics_val["loss"]:.4f}] '
+                  f' Loss: [{metrics_val["valid_loss"]:.4f}] '
             )
         
-        # #TODO Tensorboard -> WandB        
-        # writer.add_scalars('Metrics/Losses', {"Train": metrics_train["loss"], "Val": metrics_val["loss"]}, epoch)
-        # writer.add_scalars('Metrics/Accuracy', {"Train": metrics_train["accuracy"], "Val": metrics_val["accuracy"]}, epoch)
-        # writer.add_scalars('Metrics/Precision', {"Train": metrics_train["precision"], "Val": metrics_val["precision"]}, epoch)
-        # writer.add_scalars('Metrics/Recall', {"Train": metrics_train["recall"], "Val": metrics_val["recall"]}, epoch)
-        # writer.add_scalars('Metrics/F1', {"Train": metrics_train["f1_score"], "Val": metrics_val["f1_score"]}, epoch)
-        # writer.add_scalars('Metrics/Maj Accuracy', {"Train": majority_metrics_train["accuracy"], "Val": majority_metrics_val["accuracy"]}, epoch)
-        # writer.add_scalars('Metrics/Maj Precision', {"Train": majority_metrics_train["precision"], "Val": majority_metrics_val["precision"]}, epoch)
-        # writer.add_scalars('Metrics/Maj Recall', {"Train": majority_metrics_train["recall"], "Val": majority_metrics_val["recall"]}, epoch)
-        # writer.add_scalars('Metrics/Maj F1', {"Train": majority_metrics_train["f1_score"], "Val": majority_metrics_val["f1_score"]}, epoch)
-        # writer.flush()
+        wandb.log(metrics_train | metrics_val)
     
     loop_end = time.time()
     time_loop = loop_end - loop_start
