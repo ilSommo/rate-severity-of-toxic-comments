@@ -135,5 +135,7 @@ dmypy.json
 .vscode/
 
 # Dataset
-
 res/data/*
+
+# Logs
+wandb/*
