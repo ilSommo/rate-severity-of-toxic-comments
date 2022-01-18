@@ -48,8 +48,8 @@ class JigsawDataset(Dataset):
         }
 
 
-def build_datasets(dfs, tokenizer, max_length):
-    return [JigsawDataset(df, tokenizer=tokenizer, max_length=max_length) for df in dfs]
+def build_datasets(dfs, config):
+    return [JigsawDataset(df, tokenizer=config["tokenizer"], max_length=config["max_length"]) for df in dfs]
 
 
 def build_dataloaders(datasets, batch_sizes):
