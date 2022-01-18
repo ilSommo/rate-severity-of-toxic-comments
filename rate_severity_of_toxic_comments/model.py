@@ -19,6 +19,21 @@ class PretrainedModel(nn.Module):
         outputs = self.fc(out)
         return outputs
 
+class RecurrentModel(nn.Module):
+    def __init__(self, vocab_size, hidden_dim):
+        super().__init__()
+        embedding_dim = 300
+        self.embedding = nn.Embedding(vocab_size, embedding_dim) #TODO: From pretrained
+        self.lstm = nn.LSTM(300, hidden_dim, batch_first=True)
+
+    def forward(self, ids, mask):
+        embedded = self.embedding(ids)
+        embedded = torch.nn.utils.rnn.pack_padded_sequence(embedded, mask, batch_first=True, enforce_sorted=False)
+        output, _ = self.lstm(embedded)
+        output, _ = nn.utils.rnn.pad_packed_sequence(output, batch_first=True)
+        x = torch.mean(output, dim=-2)
+        return self.fc(x)
+
 class DummyModel(nn.Module):
     def __init__(self):
         super().__init__()
@@ -30,5 +45,7 @@ class DummyModel(nn.Module):
 def create_model(config):
     if config["run_mode"] == "test":
         return DummyModel()
+    if config["run_mode"] == "recurrent":
+        return RecurrentModel(config["vocab_size"], config["hidden_dim"])
     elif config["run_mode"] == "pretrained":
         return PretrainedModel(config["model_name"])
