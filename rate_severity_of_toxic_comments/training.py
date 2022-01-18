@@ -121,7 +121,8 @@ def run_training(train_dataloader: torch.utils.data.DataLoader,
                   f' Loss: [{metrics_val["valid_loss"]:.4f}] '
             )
         
-        wandb.log(metrics_train.update(metrics_val))
+        metrics_train.update(metrics_val)
+        wandb.log(metrics_train)
     
     loop_end = time.time()
     time_loop = loop_end - loop_start
