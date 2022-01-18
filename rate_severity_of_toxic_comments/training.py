@@ -2,9 +2,12 @@ import time
 import os
 
 import torch
-from torch import nn
+from torch import nn, optim
 
 import wandb
+
+from rate_severity_of_toxic_comments.dataset import build_dataloaders
+from rate_severity_of_toxic_comments.model import create_model
 
 def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_interval=10, pairwise_dataset=False):
     """
@@ -102,19 +105,40 @@ def test_loop(dataloader, model, loss_fn, device, pairwise_dataset=False):
 
     return total_metrics
 
-def run_training(train_dataloader: torch.utils.data.DataLoader, 
-                  val_dataloader: torch.utils.data.DataLoader, 
-                  model: nn.Module, 
-                  loss_fn, 
-                  optimizer: torch.optim,
-                  device,
-                  num_epochs: int, 
+def run_training(training_data: torch.utils.data.Dataset, 
+                  val_data: torch.utils.data.Dataset,
                   log_interval: int, 
+                  config,
                   verbose: bool=True) -> dict:
     """
     Executes the full train test loop with the given parameters
     """
-    wandb.watch(model, log_freq=log_interval)
+    num_epochs = config["epochs"]
+
+    if config["wandb"]:
+        run = wandb.init(project="rate-comments",
+        entity="toxicity",
+        config=config,
+        job_type='Train',
+        # group="", TODO?
+        tags=[config["run_mode"]])
+
+        wandb.run.name = config["run_mode"] + "-" + wandb.run.id
+        wandb.run.save()
+
+    device = torch.device("cuda" if torch.cuda.is_available() and config["use_gpu"] else "cpu")
+    # loss_fn = nn.MarginRankingLoss(margin=CONFIG['margin'])
+    loss_fn = nn.MSELoss()
+
+    train_dataloader, val_dataloader = build_dataloaders([training_data, val_data], batch_sizes=(config["train_batch_size"], config["valid_batch_size"]))
+
+    model = create_model(config)
+    model.to(device)
+
+    optimizer = optim.Adam(model.parameters(), lr=config["learning_rate"])
+
+    if config["wandb"]:
+        wandb.watch(model, log_freq=log_interval)
     loop_start = time.time()
 
     log_dir = os.path.join("logs", "fact_checker")
@@ -139,13 +163,17 @@ def run_training(train_dataloader: torch.utils.data.DataLoader,
                   f' Loss: [{metrics_val["valid_loss"]:.4f}] '
             )
         
-        all_metrics = metrics_train
-        all_metrics.update(metrics_val)
-        wandb.log(all_metrics)
+        if config["wandb"]:
+            all_metrics = metrics_train
+            all_metrics.update(metrics_val)
+            wandb.log(all_metrics)
     
     loop_end = time.time()
     time_loop = loop_end - loop_start
     if verbose:
         print(f'Time for {num_epochs} epochs (s): {(time_loop):.3f}')
 
+    if config["wandb"]:
+        run.finish()
     # TODO: Return best model
+    
