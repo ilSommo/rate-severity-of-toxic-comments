@@ -40,7 +40,7 @@ class DummyModel(nn.Module):
         self.fc = nn.Linear(1, OUTPUT_CLASSES)
         
     def forward(self, ids, mask):
-        return self.fc(ids.type(torch.float).mean(dim=0).unsqueeze(1))
+        return self.fc(ids.to(torch.float32).mean(dim=0).unsqueeze(1))
 
 def create_model(config):
     if config["run_mode"] == "test":

@@ -6,7 +6,7 @@ from torch import nn
 
 import wandb
 
-def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_interval=10):
+def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_interval=10, pairwise_dataset=False):
     """
     Executes the training loop on the given parameters. Logs metrics on TensorBoard.
     """
@@ -17,17 +17,29 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_int
     dataset_size = 0
 
     for idx_batch, data in enumerate(dataloader):
-        more_toxic_ids = data['more_toxic_ids'].to(device, dtype=torch.long)
-        more_toxic_mask = data['more_toxic_mask'].to(device, dtype=torch.long)
-        less_toxic_ids = data['less_toxic_ids'].to(device, dtype=torch.long)
-        less_toxic_mask = data['less_toxic_mask'].to(device, dtype=torch.long)
-        targets = data['target'].to(device, dtype=torch.long)
+        if not pairwise_dataset:
+            ids = data["ids"].to(device, dtype=torch.long)
+            mask = data['mask'].to(device, dtype=torch.long)
+            targets = data['target'].to(device, dtype=torch.long)
+            batch_size = ids.size(0)
+        else:
+            more_toxic_ids = data['more_toxic_ids'].to(device, dtype=torch.long)
+            more_toxic_mask = data['more_toxic_mask'].to(device, dtype=torch.long)
+            less_toxic_ids = data['less_toxic_ids'].to(device, dtype=torch.long)
+            less_toxic_mask = data['less_toxic_mask'].to(device, dtype=torch.long)
+            targets = data['target'].to(device, dtype=torch.long)
+            batch_size = more_toxic_ids.size(0)
 
-        batch_size = more_toxic_ids.size(0)
 
-        more_toxic_outputs = model(more_toxic_ids, more_toxic_mask)
-        less_toxic_outputs = model(less_toxic_ids, less_toxic_mask)
-        loss = loss_fn(more_toxic_outputs, less_toxic_outputs, targets)
+        if not pairwise_dataset:
+            scores = model(ids, mask)
+            scores = scores.to(torch.float32)
+            targets = targets.to(torch.float32)
+            loss = loss_fn(scores, targets)
+        else:
+            more_toxic_outputs = model(more_toxic_ids, more_toxic_mask)
+            less_toxic_outputs = model(less_toxic_ids, less_toxic_mask)
+            loss = loss_fn(more_toxic_outputs, less_toxic_outputs, targets)
 
         optimizer.zero_grad()
         loss.backward()
@@ -47,7 +59,7 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_int
     return total_metrics
 
 
-def test_loop(dataloader, model, loss_fn, device):
+def test_loop(dataloader, model, loss_fn, device, pairwise_dataset=False):
     """
     Executes a test loop on the given paramters. Returns metrics and votes.
     """
@@ -59,21 +71,28 @@ def test_loop(dataloader, model, loss_fn, device):
 
     with torch.no_grad():
         for idx_batch, data in enumerate(dataloader):
-            more_toxic_ids = data['more_toxic_ids'].to(
-                device, dtype=torch.long)
-            more_toxic_mask = data['more_toxic_mask'].to(
-                device, dtype=torch.long)
-            less_toxic_ids = data['less_toxic_ids'].to(
-                device, dtype=torch.long)
-            less_toxic_mask = data['less_toxic_mask'].to(
-                device, dtype=torch.long)
-            targets = data['target'].to(device, dtype=torch.long)
+            if not pairwise_dataset:
+                ids = data["ids"].to(device, dtype=torch.long)
+                mask = data['mask'].to(device, dtype=torch.long)
+                targets = data['target'].to(device, dtype=torch.long)
+                batch_size = ids.size(0)
+            else:
+                more_toxic_ids = data['more_toxic_ids'].to(device, dtype=torch.long)
+                more_toxic_mask = data['more_toxic_mask'].to(device, dtype=torch.long)
+                less_toxic_ids = data['less_toxic_ids'].to(device, dtype=torch.long)
+                less_toxic_mask = data['less_toxic_mask'].to(device, dtype=torch.long)
+                targets = data['target'].to(device, dtype=torch.long)
+                batch_size = more_toxic_ids.size(0)
 
-            batch_size = more_toxic_ids.size(0)
-
-            more_toxic_outputs = model(more_toxic_ids, more_toxic_mask)
-            less_toxic_outputs = model(less_toxic_ids, less_toxic_mask)
-            loss = loss_fn(more_toxic_outputs, less_toxic_outputs, targets)
+            if not pairwise_dataset:
+                scores = model(ids, mask)
+                scores = scores.to(torch.float32)
+                targets = targets.to(torch.float32)
+                loss = loss_fn(scores, targets)
+            else:
+                more_toxic_outputs = model(more_toxic_ids, more_toxic_mask)
+                less_toxic_outputs = model(less_toxic_ids, less_toxic_mask)
+                loss = loss_fn(more_toxic_outputs, less_toxic_outputs, targets)
 
             total_loss += (loss.item() * batch_size)
             cumul_batches += 1
@@ -103,9 +122,8 @@ def run_training(train_dataloader: torch.utils.data.DataLoader,
     for epoch in range(1, num_epochs + 1):
         time_start = time.time()
 
-        metrics_train = train_loop(
-            train_dataloader, model, loss_fn, optimizer, device, epoch, log_interval=log_interval)
-        metrics_val = test_loop(val_dataloader, model, loss_fn, device)
+        metrics_train = train_loop(train_dataloader, model, loss_fn, optimizer, device, epoch, log_interval=log_interval, pairwise_dataset=False)
+        metrics_val = test_loop(val_dataloader, model, loss_fn, device, pairwise_dataset=False)
 
         time_end = time.time()
 
@@ -121,8 +139,9 @@ def run_training(train_dataloader: torch.utils.data.DataLoader,
                   f' Loss: [{metrics_val["valid_loss"]:.4f}] '
             )
         
-        metrics_train.update(metrics_val)
-        wandb.log(metrics_train)
+        all_metrics = metrics_train
+        all_metrics.update(metrics_val)
+        wandb.log(all_metrics)
     
     loop_end = time.time()
     time_loop = loop_end - loop_start
