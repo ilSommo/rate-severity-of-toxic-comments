@@ -134,8 +134,8 @@ dmypy.json
 # VSCode
 .vscode/
 
-# Dataset
-res/data/*
-
 # Logs
 wandb/*
+
+# User defined config
+config/local.json
