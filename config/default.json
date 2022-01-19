@@ -9,5 +9,6 @@
     "margin": 0.5,
     "use_gpu": false,
     "run_mode": "test",
-    "wandb": true
+    "wandb": true,
+    "preprocessing": []
 }
