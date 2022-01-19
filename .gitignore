@@ -139,3 +139,6 @@ wandb/*
 
 # User defined config
 config/local.json
+
+# Models
+res/data/models/*

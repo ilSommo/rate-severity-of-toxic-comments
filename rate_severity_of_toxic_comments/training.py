@@ -1,5 +1,7 @@
 import time
 import os
+import copy
+import numpy as np
 
 import torch
 from torch import nn, optim
@@ -139,9 +141,15 @@ def run_training(training_data: torch.utils.data.Dataset,
 
     if config["wandb"]:
         wandb.watch(model, log_freq=log_interval)
-    loop_start = time.time()
 
-    log_dir = os.path.join("logs", "fact_checker")
+    best_model_wts = copy.deepcopy(model.state_dict())
+    best_epoch_loss = np.inf
+    loss_history = {
+        "train": [],
+        "valid": [],
+    }
+
+    loop_start = time.time()
 
     for epoch in range(1, num_epochs + 1):
         time_start = time.time()
@@ -151,6 +159,11 @@ def run_training(training_data: torch.utils.data.Dataset,
 
         time_end = time.time()
 
+        all_metrics = metrics_train
+        all_metrics.update(metrics_val)
+
+        loss_history['train'].append(all_metrics["train_loss"])
+        loss_history['valid'].append(all_metrics["valid_loss"])
         lr = optimizer.param_groups[0]['lr']
 
         if verbose:
@@ -158,22 +171,29 @@ def run_training(training_data: torch.utils.data.Dataset,
                   f' Lr: {lr:.8f} '
                   f' | Time one epoch (s): {(time_end - time_start):.4f} '
                   f' \n Train - '
-                  f' Loss: [{metrics_train["train_loss"]:.4f}] '
+                  f' Loss: [{all_metrics["train_loss"]:.4f}] '
                   f' \n Val   - '
-                  f' Loss: [{metrics_val["valid_loss"]:.4f}] '
+                  f' Loss: [{all_metrics["valid_loss"]:.4f}] '
             )
         
         if config["wandb"]:
-            all_metrics = metrics_train
-            all_metrics.update(metrics_val)
             wandb.log(all_metrics)
+        
+        if all_metrics["valid_loss"] <= best_epoch_loss:
+            best_epoch_loss = all_metrics["valid_loss"]
+            best_model_wts = copy.deepcopy(model.state_dict())
     
     loop_end = time.time()
     time_loop = loop_end - loop_start
     if verbose:
         print(f'Time for {num_epochs} epochs (s): {(time_loop):.3f}')
 
+    model.load_state_dict(best_model_wts)
+    model_filename = config["run_mode"]+"-"+time.strftime("%Y%m%d-%H%M%S")+".pth"
+    torch.save(model.state_dict(), os.path.join("res", "models", model_filename))
+
     if config["wandb"]:
+        torch.save(model.state_dict(), os.path.join(wandb.run.dir, model_filename))
         run.finish()
-    # TODO: Return best model
+    return model, loss_history
     
