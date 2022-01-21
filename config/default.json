@@ -10,5 +10,8 @@
     "use_gpu": false,
     "run_mode": "test",
     "wandb": true,
-    "preprocessing": []
+    "preprocessing": [],
+    "vocab_file": "res/vocab/naive",
+    "embedding_dimension": 300,
+    "embedding_type": "glove"
 }
