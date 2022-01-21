@@ -17,14 +17,14 @@ class PairwiseDataset(Dataset):
     def __getitem__(self, index):
         more_toxic = self.more_toxic[index]
         less_toxic = self.less_toxic[index]
-        inputs_more_toxic = self.tokenizer.encode_plus(
+        inputs_more_toxic = self.tokenizer(
             more_toxic,
             truncation=True,
             add_special_tokens=True,
             max_length=self.max_len,
             padding='max_length'
         )
-        inputs_less_toxic = self.tokenizer.encode_plus(
+        inputs_less_toxic = self.tokenizer(
             less_toxic,
             truncation=True,
             add_special_tokens=True,
@@ -61,7 +61,7 @@ class WeightedDataset(Dataset):
 
     def __getitem__(self, index):
         text = self.text[index]
-        inputs = self.tokenizer.encode_plus(
+        inputs = self.tokenizer(
             text,
             truncation=True,
             add_special_tokens=True,
