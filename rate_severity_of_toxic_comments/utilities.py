@@ -1,10 +1,15 @@
 __version__ = '0.1.0'
 __author__ = 'Lorenzo Menghini, Martino Pulici, Alessandro Stockman, Luca Zucchini'
 
+import random
+
 import numpy as np
 import torch
+from transformers import AutoTokenizer, pipeline
 
-import random
+from rate_severity_of_toxic_comments.embedding import build_embedding_matrix, load_embedding_model
+from rate_severity_of_toxic_comments.preprocessing import AVAILABLE_PREPROCESSING_PIPELINES
+from rate_severity_of_toxic_comments.tokenizer import NaiveTokenizer
 
 _bad_words = []
 
@@ -36,3 +41,17 @@ def fix_random_seed(seed):
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
         torch.use_deterministic_algorithms(True)
+
+def process_config(config):
+    if not all([p not in AVAILABLE_PREPROCESSING_PIPELINES for p in config["preprocessing"]]):
+        raise ValueError()
+    # TODO Add validation for other values
+
+    if config["run_mode"] == "pretrained":
+        config["tokenizer"] = AutoTokenizer.from_pretrained(config['model_name'])
+    else:
+        config["tokenizer"] = NaiveTokenizer(config["vocab_file"])
+        embedding_model = load_embedding_model(config)
+        embedding_matrix = build_embedding_matrix(embedding_model, config)
+        config["embedding_matrix"] = embedding_matrix
+    return config
