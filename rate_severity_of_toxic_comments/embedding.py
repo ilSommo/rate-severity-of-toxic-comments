@@ -7,7 +7,7 @@ import gensim
 import gensim.downloader as gloader
 from torchtext.vocab import vocab, Vocab
 
-def load_embedding_model(model_type: str, embedding_dimension: int = 50) -> gensim.models.keyedvectors.KeyedVectors:
+def load_embedding_model(config) -> gensim.models.keyedvectors.KeyedVectors:
     """
     Loads a pre-trained word embedding model via gensim library.
 
@@ -17,6 +17,7 @@ def load_embedding_model(model_type: str, embedding_dimension: int = 50) -> gens
     :return
         - pre-trained word embedding model (gensim KeyedVectors object)
     """
+    model_type, embedding_dimension = config["embedding_type"], config["embedding_dimension"]
 
     download_path = ""
 
@@ -41,9 +42,7 @@ def load_embedding_model(model_type: str, embedding_dimension: int = 50) -> gens
 
     return emb_model
 
-def build_embedding_matrix(embedding_model: gensim.models.keyedvectors.KeyedVectors,
-                           embedding_dimension: int,
-                           vocab: collections.OrderedDict) -> np.ndarray:
+def build_embedding_matrix(embedding_model: gensim.models.keyedvectors.KeyedVectors, config) -> np.ndarray:
     """
     Builds the embedding matrix of a specific dataset given a pre-trained word embedding model
 
@@ -55,7 +54,7 @@ def build_embedding_matrix(embedding_model: gensim.models.keyedvectors.KeyedVect
     :return
         - embedding matrix that assigns a high dimensional vector to each word in the dataset specific vocabulary (shape |V| x d)
     """
-
+    embedding_dimension, vocab = config["embedding_dimension"], config["tokenizer"].get_vocab()
     embedding_matrix = np.zeros((len(vocab), embedding_dimension), dtype=np.float32)
 
     for idx, word in tqdm(enumerate(vocab.items())):
