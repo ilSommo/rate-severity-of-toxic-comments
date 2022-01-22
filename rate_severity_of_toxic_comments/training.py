@@ -27,6 +27,11 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_int
             mask = data['mask'].to(device, dtype=torch.long)
             targets = data['target'].to(device, dtype=torch.long)
             batch_size = ids.size(0)
+            
+            scores = model(ids, mask)
+            scores = scores.to(torch.float32)
+            targets = targets.to(torch.float32)
+            loss = loss_fn(scores, targets)
         else:
             more_toxic_ids = data['more_toxic_ids'].to(device, dtype=torch.long)
             more_toxic_mask = data['more_toxic_mask'].to(device, dtype=torch.long)
@@ -35,13 +40,6 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_int
             targets = data['target'].to(device, dtype=torch.long)
             batch_size = more_toxic_ids.size(0)
 
-
-        if not pairwise_dataset:
-            scores = model(ids, mask)
-            scores = scores.to(torch.float32)
-            targets = targets.to(torch.float32)
-            loss = loss_fn(scores, targets)
-        else:
             more_toxic_outputs = model(more_toxic_ids, more_toxic_mask)
             less_toxic_outputs = model(less_toxic_ids, less_toxic_mask)
             loss = loss_fn(more_toxic_outputs, less_toxic_outputs, targets)
@@ -81,6 +79,11 @@ def test_loop(dataloader, model, loss_fn, device, pairwise_dataset=False):
                 mask = data['mask'].to(device, dtype=torch.long)
                 targets = data['target'].to(device, dtype=torch.long)
                 batch_size = ids.size(0)
+                
+                scores = model(ids, mask)
+                scores = scores.to(torch.float32)
+                targets = targets.to(torch.float32)
+                loss = loss_fn(scores, targets)
             else:
                 more_toxic_ids = data['more_toxic_ids'].to(device, dtype=torch.long)
                 more_toxic_mask = data['more_toxic_mask'].to(device, dtype=torch.long)
@@ -89,12 +92,6 @@ def test_loop(dataloader, model, loss_fn, device, pairwise_dataset=False):
                 targets = data['target'].to(device, dtype=torch.long)
                 batch_size = more_toxic_ids.size(0)
 
-            if not pairwise_dataset:
-                scores = model(ids, mask)
-                scores = scores.to(torch.float32)
-                targets = targets.to(torch.float32)
-                loss = loss_fn(scores, targets)
-            else:
                 more_toxic_outputs = model(more_toxic_ids, more_toxic_mask)
                 less_toxic_outputs = model(less_toxic_ids, less_toxic_mask)
                 loss = loss_fn(more_toxic_outputs, less_toxic_outputs, targets)
