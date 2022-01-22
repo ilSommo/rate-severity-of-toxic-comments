@@ -25,15 +25,17 @@ class RecurrentModel(nn.Module):
         _, embedding_dim = embedding_matrix.shape
         self.embedding = nn.Embedding.from_pretrained(torch.tensor(embedding_matrix), freeze=True)
         self.lstm = nn.LSTM(embedding_dim, hidden_dim, batch_first=True)
+        self.relu = nn.ReLU()
+        self.fc = nn.Linear(hidden_dim, OUTPUT_CLASSES)
 
     def forward(self, ids, mask):
-        print(type(ids), type(mask))
-        exit()
         embedded = self.embedding(ids)
-        embedded = torch.nn.utils.rnn.pack_padded_sequence(embedded, mask, batch_first=True, enforce_sorted=False)
+        lengths = torch.count_nonzero(mask, dim=1)
+        embedded = torch.nn.utils.rnn.pack_padded_sequence(embedded, lengths, batch_first=True, enforce_sorted=False)
         output, _ = self.lstm(embedded)
         output, _ = nn.utils.rnn.pad_packed_sequence(output, batch_first=True)
         x = torch.mean(output, dim=-2)
+        x = self.relu(x)
         return self.fc(x)
 
 class DummyModel(nn.Module):
