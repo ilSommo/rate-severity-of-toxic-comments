@@ -54,4 +54,8 @@ def process_config(config):
         embedding_model = load_embedding_model(config)
         embedding_matrix = build_embedding_matrix(embedding_model, config)
         config["embedding_matrix"] = embedding_matrix
+
+
+    if config["seed"]:
+        fix_random_seed(config["seed"])
     return config

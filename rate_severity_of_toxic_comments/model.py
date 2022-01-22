@@ -36,7 +36,7 @@ class RecurrentModel(nn.Module):
         output, _ = nn.utils.rnn.pad_packed_sequence(output, batch_first=True)
         x = torch.mean(output, dim=-2)
         x = self.relu(x)
-        return self.fc(x)
+        return self.fc(x).squeeze()
 
 class DummyModel(nn.Module):
     def __init__(self):
