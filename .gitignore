@@ -142,3 +142,6 @@ config/local.json
 
 # Models
 res/models/*
+
+# Dataset
+res/data/*

@@ -5,7 +5,7 @@ from typing import Optional
 import torch
 import torchtext
 from transformers import BasicTokenizer, PreTrainedTokenizer
-from preprocessing import apply_preprocessing_pipelines
+from rate_severity_of_toxic_comments.preprocessing import apply_preprocessing_pipelines
 
 
 def load_vocab(vocab_file):

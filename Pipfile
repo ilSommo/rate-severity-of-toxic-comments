@@ -12,6 +12,9 @@ transformers = "*"
 wandb = "*"
 gensim = "*"
 torchtext = "*"
+scikit-learn = "*"
+verstack = "*"
+mlxtend = "*"
 
 [dev-packages]
 autopep8 = "*"

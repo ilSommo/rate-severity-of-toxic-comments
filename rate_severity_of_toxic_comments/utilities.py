@@ -1,12 +1,16 @@
 __version__ = '0.1.0'
 __author__ = 'Lorenzo Menghini, Martino Pulici, Alessandro Stockman, Luca Zucchini'
 
+import math
 import random
 
 import numpy as np
+from pandas import DataFrame
 import torch
 from transformers import AutoTokenizer, pipeline
 
+from verstack.stratified_continuous_split import scsplit
+from sklearn.model_selection import train_test_split
 from rate_severity_of_toxic_comments.embedding import build_embedding_matrix, load_embedding_model
 from rate_severity_of_toxic_comments.preprocessing import AVAILABLE_PREPROCESSING_PIPELINES
 from rate_severity_of_toxic_comments.tokenizer import NaiveTokenizer
@@ -48,6 +52,11 @@ def fix_random_seed(seed):
 def process_config(config):
     if not all([p not in AVAILABLE_PREPROCESSING_PIPELINES for p in config["preprocessing"]]):
         raise ValueError()
+
+    try:
+        config['output_features']
+    except:
+        raise ValueError()
     # TODO Add validation for other values
 
     """ 
@@ -59,9 +68,20 @@ def process_config(config):
     if config["run_mode"] == "pretrained":
         config["tokenizer"] = AutoTokenizer.from_pretrained(
             config['model_name'])
-    else:
+    elif config['run_mode'] == 'recurrent':
         config["tokenizer"] = NaiveTokenizer(config["vocab_file"])
         embedding_model = load_embedding_model(config)
         embedding_matrix = build_embedding_matrix(embedding_model, config)
         config["embedding_matrix"] = embedding_matrix
+    else:
+        config["tokenizer"] = NaiveTokenizer(config["vocab_file"])
     return config
+
+
+def split_dataset(dataframe: DataFrame, seed):
+
+    for _, row in dataframe.iterrows():
+        v = row['target']
+        row['label'] = math.floor(v*10)
+
+    return train_test_split(dataframe, stratify=dataframe['label'], random_state=seed)
