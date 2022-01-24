@@ -1,4 +1,3 @@
-from pandas import DataFrame
 import re
 import string
 
@@ -9,33 +8,31 @@ AVAILABLE_PREPROCESSING_PIPELINES = [
 ]
 
 
-def apply_preprocessing_pipelines(dataframe, pipelines):
+def apply_preprocessing_pipelines(text, pipelines):
     for pipeline in pipelines:
-        dataframe = apply_preprocessing_pipeline(dataframe, pipeline)
-    return dataframe
+        text = apply_preprocessing_pipeline(text, pipeline)
+    return text
 
 
-def apply_preprocessing_pipeline(dataframe, pipeline) -> DataFrame:
+def apply_preprocessing_pipeline(text, pipeline):
     if(pipeline in AVAILABLE_PREPROCESSING_PIPELINES):
         if pipeline == 'LOWER':
-            return _apply_lower_pipeline(dataframe)
+            return _apply_lower_pipeline(text)
         elif pipeline == 'PUNCTUATION':
-            return _apply_punctuation_pipeline(dataframe)
+            return _apply_punctuation_pipeline(text)
         elif pipeline == 'WHITESPACES':
-            return _apply_whitespaces_pipeline(dataframe)
+            return _apply_whitespaces_pipeline(text)
 
 
-def _apply_punctuation_pipeline(dataframe: DataFrame):
-    dataframe["comment_text"] = dataframe["comment_text"].apply(
-        lambda x: re.sub('[%s]' % re.escape(string.punctuation), '', x))
-    return dataframe
+def _apply_punctuation_pipeline(text):
+    text = re.sub('[%s]' % re.escape(string.punctuation), '', text)
+    return text
 
 
-def _apply_lower_pipeline(dataframe: DataFrame):
-    dataframe["comment_text"] = dataframe["comment_text"].apply(
-        lambda val: val.lower())
-    return dataframe
+def _apply_lower_pipeline(text):
+    text = text.lower()
+    return text
 
 
-def _apply_whitespaces_pipeline(dataframe):
-    return dataframe
+def _apply_whitespaces_pipeline(text):
+    return text

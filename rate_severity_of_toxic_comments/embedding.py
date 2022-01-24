@@ -7,6 +7,7 @@ import gensim
 import gensim.downloader as gloader
 from torchtext.vocab import vocab, Vocab
 
+
 def load_embedding_model(config) -> gensim.models.keyedvectors.KeyedVectors:
     """
     Loads a pre-trained word embedding model via gensim library.
@@ -29,7 +30,8 @@ def load_embedding_model(config) -> gensim.models.keyedvectors.KeyedVectors:
     elif model_type.strip().lower() == 'fasttext':
         download_path = "fasttext-wiki-news-subwords-300"
     else:
-        raise AttributeError("Unsupported embedding model type! Available ones: word2vec, glove, fasttext")
+        raise AttributeError(
+            "Unsupported embedding model type! Available ones: word2vec, glove, fasttext")
 
     # Check download
     try:
@@ -41,6 +43,7 @@ def load_embedding_model(config) -> gensim.models.keyedvectors.KeyedVectors:
         raise e
 
     return emb_model
+
 
 def build_embedding_matrix(embedding_model: gensim.models.keyedvectors.KeyedVectors, config) -> np.ndarray:
     """
@@ -54,8 +57,10 @@ def build_embedding_matrix(embedding_model: gensim.models.keyedvectors.KeyedVect
     :return
         - embedding matrix that assigns a high dimensional vector to each word in the dataset specific vocabulary (shape |V| x d)
     """
-    embedding_dimension, vocab = config["embedding_dimension"], config["tokenizer"].get_vocab()
-    embedding_matrix = np.zeros((len(vocab), embedding_dimension), dtype=np.float32)
+    embedding_dimension, vocab = config["embedding_dimension"], config["tokenizer"].get_vocab(
+    )
+    embedding_matrix = np.zeros(
+        (len(vocab), embedding_dimension), dtype=np.float32)
 
     for idx, word in tqdm(enumerate(vocab.items())):
         if idx == 0:
@@ -63,15 +68,17 @@ def build_embedding_matrix(embedding_model: gensim.models.keyedvectors.KeyedVect
             embedding_vector = np.zeros(embedding_dimension)
         else:
             try:
-                embedding_vector = embedding_model[word][0] #TODO: Why 2 vectors?
+                # TODO: Why 2 vectors?
+                embedding_vector = embedding_model[word][0]
             except (KeyError, TypeError):
-                embedding_vector = np.random.uniform(low=-0.05, high=0.05, size=embedding_dimension)
+                embedding_vector = np.random.uniform(
+                    low=-0.05, high=0.05, size=embedding_dimension)
 
         embedding_matrix[idx] = embedding_vector
 
     return embedding_matrix
-        
-        
+
+
 def check_OOV_terms(embedding_model: gensim.models.keyedvectors.KeyedVectors, vocab: Vocab):
     """
     Checks differences between pre-trained embedding model vocabulary

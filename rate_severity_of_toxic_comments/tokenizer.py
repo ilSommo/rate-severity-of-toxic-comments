@@ -5,6 +5,8 @@ from typing import Optional
 import torch
 import torchtext
 from transformers import BasicTokenizer, PreTrainedTokenizer
+from preprocessing import apply_preprocessing_pipelines
+
 
 def load_vocab(vocab_file):
     """Loads a vocabulary file into a dictionary."""
@@ -15,7 +17,8 @@ def load_vocab(vocab_file):
         token = token.rstrip("\n")
         vocab[token] = index
     return vocab
-        
+
+
 def build_vocab(sententeces, tokenizer: PreTrainedTokenizer, min_freq=1, save_path=None):
     """
     Returns a Vocab object containing all the tokens appearing in the `cols` columns of the dataframe `df`
@@ -31,11 +34,13 @@ def build_vocab(sententeces, tokenizer: PreTrainedTokenizer, min_freq=1, save_pa
         #     vocab[token] = index
         counter.update(tokenizer._tokenize(sentence))
 
-    v = torchtext.vocab.vocab(counter, min_freq=min_freq).get_stoi() #TODO If min_freq > 1 special token are lost
+    # TODO If min_freq > 1 special token are lost
+    v = torchtext.vocab.vocab(counter, min_freq=min_freq).get_stoi()
     if save_path:
         save_vocabulary(save_path, v)
     return v, counter
-    
+
+
 def save_vocabulary(save_path: str, vocab: collections.OrderedDict) -> tuple[str]:
     index = 0
     with open(save_path, "w", encoding="utf-8") as writer:
@@ -48,6 +53,7 @@ def save_vocabulary(save_path: str, vocab: collections.OrderedDict) -> tuple[str
                 index = token_index
             writer.write(token + "\n")
             index += 1
+
 
 class NaiveTokenizer(PreTrainedTokenizer):
     r"""
@@ -69,6 +75,7 @@ class NaiveTokenizer(PreTrainedTokenizer):
     def __init__(
         self,
         vocab_file=None,
+        preprocessing_pipelines=[],
         do_lower_case=True,
         never_split=None,
         unk_token="[UNK]",
@@ -91,8 +98,10 @@ class NaiveTokenizer(PreTrainedTokenizer):
 
         if vocab_file:
             self.vocab = load_vocab(vocab_file)
-            self.ids_to_tokens = collections.OrderedDict([(ids, tok) for tok, ids in self.vocab.items()])
-        
+            self.ids_to_tokens = collections.OrderedDict(
+                [(ids, tok) for tok, ids in self.vocab.items()])
+
+        self.preprocessing_pipelines = preprocessing_pipelines
         self.basic_tokenizer = BasicTokenizer(
             do_lower_case=do_lower_case,
             never_split=never_split,
@@ -108,13 +117,16 @@ class NaiveTokenizer(PreTrainedTokenizer):
 
     def set_vocab(self, vocab):
         self.vocab = vocab
-        self.ids_to_tokens = collections.OrderedDict([(ids, tok) for tok, ids in self.vocab.items()])
-        
+        self.ids_to_tokens = collections.OrderedDict(
+            [(ids, tok) for tok, ids in self.vocab.items()])
+
     def get_vocab(self):
         return dict(self.vocab, **self.added_tokens_encoder)
 
     def _tokenize(self, text):
-        return self.basic_tokenizer.tokenize(text, never_split=self.all_special_tokens)
+        processed_text = apply_preprocessing_pipelines(
+            text, self.preprocessing_pipelines)
+        return self.basic_tokenizer.tokenize(processed_text, never_split=self.all_special_tokens)
 
     def _convert_token_to_id(self, token):
         """Converts a token (str) in an id using the vocab."""
@@ -132,9 +144,11 @@ class NaiveTokenizer(PreTrainedTokenizer):
     def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> tuple[str]:
         if os.path.isdir(save_directory):
             vocab_file = os.path.join(
-                save_directory, (filename_prefix + "-" if filename_prefix else "") + "naive-vocab"
+                save_directory, (filename_prefix +
+                                 "-" if filename_prefix else "") + "naive-vocab"
             )
         else:
-            vocab_file = (filename_prefix + "-" if filename_prefix else "") + save_directory
+            vocab_file = (filename_prefix +
+                          "-" if filename_prefix else "") + save_directory
         save_vocabulary(vocab_file, self.vocab)
         return (vocab_file,)
