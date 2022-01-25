@@ -40,10 +40,10 @@ class PairwiseDataset(Dataset):
         less_toxic_mask = inputs_less_toxic['attention_mask']
 
         return {
-            'more_toxic_ids': more_toxic_ids.to(torch.long),
-            'more_toxic_mask': more_toxic_mask.to(torch.long),
-            'less_toxic_ids': less_toxic_ids.to(torch.long),
-            'less_toxic_mask': less_toxic_mask.to(torch.long),
+            'more_toxic_ids': torch.tensor(more_toxic_ids, dtype=torch.long),
+            'more_toxic_mask': torch.tensor(more_toxic_mask, dtype=torch.long),
+            'less_toxic_ids': torch.tensor(less_toxic_ids, dtype=torch.long),
+            'less_toxic_mask': torch.tensor(less_toxic_mask, dtype=torch.long),
             'target': torch.tensor(target, dtype=torch.long)
         }
 
@@ -73,8 +73,8 @@ class WeightedDataset(Dataset):
         ids = inputs['input_ids']
         mask = inputs['attention_mask']
         return {
-            'ids': ids.to(torch.long),
-            'mask': mask.to(torch.long),
+            'ids': torch.tensor(ids, dtype=torch.long),
+            'mask': torch.tensor(mask, dtype=torch.long),
             'target': torch.tensor(target, dtype=torch.float32),
         }
 
