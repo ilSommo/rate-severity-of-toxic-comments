@@ -15,6 +15,7 @@ torchtext = "*"
 scikit-learn = "*"
 verstack = "*"
 mlxtend = "*"
+kaggle = "*"
 
 [dev-packages]
 autopep8 = "*"
