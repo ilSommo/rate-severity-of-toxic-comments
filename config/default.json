@@ -15,5 +15,9 @@
   "embedding_dimension": 300,
   "embedding_type": "glove",
   "dropout": 0.2,
-  "output_features": 128
+  "output_features": 128,
+  "training_set": {
+      "path": "res/data/train.csv",
+      "cols": ["comment_text"]
+  }
 }

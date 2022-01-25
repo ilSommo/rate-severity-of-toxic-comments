@@ -19,17 +19,18 @@ def load_vocab(vocab_file):
     return vocab
 
 
-def build_vocab(sententeces, tokenizer: PreTrainedTokenizer, min_freq=1, save_path=None):
+def build_vocab(df, cols, tokenizer: PreTrainedTokenizer, min_freq=1, save_path=None):
     """
     Returns a Vocab object containing all the tokens appearing in the `cols` columns of the dataframe `df`
     """
     # vocab = collections.OrderedDict()
     counter = collections.Counter()
 
+    # Append to vocab special tokens expected by the tokenizer
     for token in tokenizer.special_tokens_map.values():
         counter.update([token])
 
-    for sentence in sententeces:
+    for sentence in [v for col in cols for v in df[col].values]:
         # for token in tokenizer._tokenize(sentence:
         #     vocab[token] = index
         counter.update(tokenizer._tokenize(sentence))
