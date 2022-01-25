@@ -28,14 +28,13 @@ def build_vocab(df, cols, tokenizer: PreTrainedTokenizer, min_freq=1, save_path=
 
     # Append to vocab special tokens expected by the tokenizer
     for token in tokenizer.special_tokens_map.values():
-        counter.update([token])
+        counter[token] = min_freq + 1
 
     for sentence in [v for col in cols for v in df[col].values]:
         # for token in tokenizer._tokenize(sentence:
         #     vocab[token] = index
         counter.update(tokenizer._tokenize(sentence))
 
-    # TODO If min_freq > 1 special token are lost
     v = torchtext.vocab.vocab(counter, min_freq=min_freq).get_stoi()
     if save_path:
         save_vocabulary(save_path, v)
