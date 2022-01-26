@@ -8,9 +8,8 @@ import os
 import numpy as np
 import pandas as pd
 import torch
-from transformers import AutoTokenizer, pipeline
+from transformers import AutoTokenizer
 
-from verstack.stratified_continuous_split import scsplit
 from sklearn.model_selection import train_test_split
 from rate_severity_of_toxic_comments.embedding import build_embedding_matrix, load_embedding_model
 from rate_severity_of_toxic_comments.preprocessing import AVAILABLE_PREPROCESSING_PIPELINES
@@ -78,7 +77,8 @@ def process_config(config):
         # If vocab is empty, populate it with training sets
         if len(config["tokenizer"].get_vocab()) == 0:
             df = pd.read_csv(config["training_set"]["path"])
-            vocab, _ = build_vocab(df, config["training_set"]["cols"], config["tokenizer"], save_path=config["vocab_file"])
+            vocab, _ = build_vocab(
+                df, config["training_set"]["cols"], config["tokenizer"], save_path=config["vocab_file"])
             print(type(vocab))
             config["tokenizer"].set_vocab(vocab)
         embedding_model = load_embedding_model(config)
@@ -92,12 +92,12 @@ def process_config(config):
 def split_dataset(dataframe: pd.DataFrame, seed):
 
     dataframe["label"] = dataframe["target"] * 10
-    
-    
+
     # for _, row in dataframe.iterrows():
     #     v = row['target']
     #     row['label'] = math.floor(v*10)
 
-    unique, counts = np.unique(np.floor(dataframe["label"]), return_counts=True)
+    unique, counts = np.unique(
+        np.floor(dataframe["label"]), return_counts=True)
     print(dict(zip(unique, counts)))
     return train_test_split(dataframe, stratify=np.floor(dataframe["label"]), random_state=seed)
