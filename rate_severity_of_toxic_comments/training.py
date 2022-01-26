@@ -11,13 +11,14 @@ import wandb
 from rate_severity_of_toxic_comments.dataset import build_dataloaders
 from rate_severity_of_toxic_comments.model import create_model
 
-def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_interval=10, pairwise_dataset=False):
+def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_interval=100, pairwise_dataset=False):
     """
     Executes the training loop on the given parameters. Logs metrics on TensorBoard.
     """
     model.train()
     total_metrics = {}
     total_loss = 0.0
+    running_loss = 0.0
     cumul_batches = 0
     dataset_size = 0
 
@@ -49,26 +50,28 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_int
         optimizer.step()
 
         total_loss += (loss.item() * batch_size)
+        running_loss += loss.item()
         cumul_batches += 1
         dataset_size += batch_size
 
-        epoch_loss = total_loss / cumul_batches
-        
-        if idx_batch % log_interval == 0 and idx_batch > 0: #TODO: Iterative/Cumulative logs?
-            pass
+        if idx_batch % log_interval == 0 and idx_batch > 0:
+            wandb.log({"Train Running Loss": running_loss / cumul_batches})
+            running_loss = 0
+            cumul_batches = 0
 
     total_metrics["train_loss"] = total_loss / dataset_size
 
     return total_metrics
 
 
-def test_loop(dataloader, model, loss_fn, device, pairwise_dataset=False):
+def test_loop(dataloader, model, loss_fn, device, log_interval=100, pairwise_dataset=False):
     """
     Executes a test loop on the given paramters. Returns metrics and votes.
     """
     model.eval()
     total_metrics = {}
     total_loss = 0.0
+    running_loss = 0.0
     cumul_batches = 0
     dataset_size = 0
 
@@ -97,8 +100,14 @@ def test_loop(dataloader, model, loss_fn, device, pairwise_dataset=False):
                 loss = loss_fn(more_toxic_outputs, less_toxic_outputs, targets)
 
             total_loss += (loss.item() * batch_size)
+            running_loss += loss.item()
             cumul_batches += 1
             dataset_size += batch_size
+
+            if idx_batch % log_interval == 0 and idx_batch > 0:
+                wandb.log({"Validation Running Loss": running_loss / cumul_batches})
+                running_loss = 0
+                cumul_batches = 0
 
     total_metrics["valid_loss"] = total_loss / dataset_size
 
