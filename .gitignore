@@ -140,8 +140,7 @@ wandb/*
 # User defined config
 config/local.json
 
-# Models
+# Resources
 res/models/*
-
-# Dataset
 res/data/*
+res/logs/*

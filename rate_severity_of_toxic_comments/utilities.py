@@ -4,6 +4,8 @@ __author__ = 'Lorenzo Menghini, Martino Pulici, Alessandro Stockman, Luca Zucchi
 import math
 import random
 import os
+import time
+from typing import OrderedDict
 
 import numpy as np
 import pandas as pd
@@ -17,7 +19,10 @@ from rate_severity_of_toxic_comments.preprocessing import AVAILABLE_PREPROCESSIN
 from rate_severity_of_toxic_comments.tokenizer import NaiveTokenizer, build_vocab
 
 _bad_words = []
-
+_times = OrderedDict()
+_time_deltas = OrderedDict()
+_enable_time_tracking = None
+_time_log_filename = None
 
 def obfuscator(text):
     global _bad_words
@@ -51,6 +56,8 @@ def fix_random_seed(seed):
 
 
 def process_config(config):
+    global _enable_time_tracking
+
     if not all([p not in AVAILABLE_PREPROCESSING_PIPELINES for p in config["preprocessing"]]):
         raise ValueError()
 
@@ -65,6 +72,10 @@ def process_config(config):
     CHECKS CORRCT CONFIG FILE AND ELABORATION OF DATA DEPENDING ON CONFIGURATION
     
     """
+    #TODO: Remove unused configs so that they are not uploaded to wandb
+
+    if "time_tracking" in config:
+        _enable_time_tracking = config["time_tracking"]
 
     if config["run_mode"] == "pretrained":
         config["tokenizer"] = AutoTokenizer.from_pretrained(
@@ -90,14 +101,23 @@ def process_config(config):
 
 
 def split_dataset(dataframe: pd.DataFrame, seed):
-
     dataframe["label"] = dataframe["target"] * 10
-    
-    
-    # for _, row in dataframe.iterrows():
-    #     v = row['target']
-    #     row['label'] = math.floor(v*10)
-
     unique, counts = np.unique(np.floor(dataframe["label"]), return_counts=True)
     print(dict(zip(unique, counts)))
     return train_test_split(dataframe, stratify=np.floor(dataframe["label"]), random_state=seed)
+
+
+def track_time(label, continuous_update=True):
+    global _time_log_filename, _enable_time_tracking, _times, _time_deltas
+
+    if _time_log_filename is None:
+       _time_log_filename = "times-"+time.strftime("%Y%m%d-%H%M%S")+".txt"
+    
+    if _enable_time_tracking and label not in _time_deltas:
+        if label not in _times:
+            _times[label] = time.time()
+        else:
+            _time_deltas[label] = time.time() - _times[label]
+            if continuous_update:
+                with open(os.path.join("res", "logs", _time_log_filename), "a+") as log_file:
+                    log_file.write(label + ": " + str(_time_deltas[label]) + "\n")

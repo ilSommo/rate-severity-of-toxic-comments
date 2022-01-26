@@ -10,6 +10,7 @@ import wandb
 
 from rate_severity_of_toxic_comments.dataset import build_dataloaders
 from rate_severity_of_toxic_comments.model import create_model
+from rate_severity_of_toxic_comments.utilities import track_time
 
 def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_interval=100, pairwise_dataset=False):
     """
@@ -23,16 +24,24 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_int
     dataset_size = 0
 
     for idx_batch, data in enumerate(dataloader):
+        track_time("train_batch")
+
         if not pairwise_dataset:
+            track_time("gpu_transfer")
             ids = data["ids"].to(device, dtype=torch.long)
             mask = data['mask'].to(device, dtype=torch.long)
             targets = data['target'].to(device, dtype=torch.long)
             batch_size = ids.size(0)
+            track_time("gpu_transfer")
             
+            track_time("forward_pass")
             scores = model(ids, mask)
+            track_time("forward_pass")
+            track_time("loss")
             scores = scores.to(torch.float32)
             targets = targets.to(torch.float32)
             loss = loss_fn(scores, targets)
+            track_time("loss")
         else:
             more_toxic_ids = data['more_toxic_ids'].to(device, dtype=torch.long)
             more_toxic_mask = data['more_toxic_mask'].to(device, dtype=torch.long)
@@ -45,26 +54,32 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_int
             less_toxic_outputs = model(less_toxic_ids, less_toxic_mask)
             loss = loss_fn(more_toxic_outputs, less_toxic_outputs, targets)
 
+        track_time("backward_pass")
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+        track_time("backward_pass")
 
         total_loss += (loss.item() * batch_size)
         running_loss += loss.item()
         cumul_batches += 1
         dataset_size += batch_size
 
+        track_time("train_batch")
+
         if idx_batch % log_interval == 0 and idx_batch > 0:
+            track_time("wandb_running_log")
             wandb.log({"Train Running Loss": running_loss / cumul_batches})
             running_loss = 0
             cumul_batches = 0
+            track_time("wandb_running_log")
 
     total_metrics["train_loss"] = total_loss / dataset_size
 
     return total_metrics
 
 
-def test_loop(dataloader, model, loss_fn, device, log_interval=100, pairwise_dataset=False):
+def test_loop(dataloader, model, loss_fn, device, idx_epoch, log_interval=100, pairwise_dataset=False):
     """
     Executes a test loop on the given paramters. Returns metrics and votes.
     """
@@ -124,6 +139,7 @@ def run_training(training_data: torch.utils.data.Dataset,
     num_epochs = config["epochs"]
 
     if config["wandb"]:
+        track_time("init_wandb")
         run = wandb.init(project="rate-comments",
         entity="toxicity",
         config=config,
@@ -133,17 +149,21 @@ def run_training(training_data: torch.utils.data.Dataset,
 
         wandb.run.name = config["run_mode"] + "-" + wandb.run.id
         wandb.run.save()
+        track_time("init_wandb")
 
     device = torch.device("cuda" if torch.cuda.is_available() and config["use_gpu"] else "cpu")
     # loss_fn = nn.MarginRankingLoss(margin=CONFIG['margin'])
     loss_fn = nn.MSELoss()
 
+    track_time("create_dataloader")
     train_dataloader, val_dataloader = build_dataloaders([training_data, val_data], batch_sizes=(config["train_batch_size"], config["valid_batch_size"]))
+    track_time("create_dataloader")
 
+    track_time("create_model")
     model = create_model(config)
     model.to(device)
-
     optimizer = optim.Adam(model.parameters(), lr=config["learning_rate"])
+    track_time("create_model")
 
     if config["wandb"]:
         wandb.watch(model, log_freq=log_interval)
@@ -159,9 +179,14 @@ def run_training(training_data: torch.utils.data.Dataset,
 
     for epoch in range(1, num_epochs + 1):
         time_start = time.time()
+        track_time("epoch")
 
+        track_time("train")
         metrics_train = train_loop(train_dataloader, model, loss_fn, optimizer, device, epoch, log_interval=log_interval, pairwise_dataset=False)
-        metrics_val = test_loop(val_dataloader, model, loss_fn, device, pairwise_dataset=False)
+        track_time("train")
+        track_time("valid")
+        metrics_val = test_loop(val_dataloader, model, loss_fn, device, epoch, pairwise_dataset=False)
+        track_time("valid")
 
         time_end = time.time()
 
@@ -183,7 +208,9 @@ def run_training(training_data: torch.utils.data.Dataset,
             )
         
         if config["wandb"]:
+            track_time("log_wandb")
             wandb.log(all_metrics)
+            track_time("log_wandb")
         
         if all_metrics["valid_loss"] <= best_epoch_loss:
             best_epoch_loss = all_metrics["valid_loss"]
