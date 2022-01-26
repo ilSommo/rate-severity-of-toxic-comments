@@ -1,3 +1,4 @@
+from unicodedata import bidirectional
 import torch
 from torch import nn
 from transformers import AutoModel
@@ -22,12 +23,23 @@ class PretrainedModel(nn.Module):
 
 
 class RecurrentModel(nn.Module):
-    def __init__(self, embedding_matrix, dropout, hidden_dim):
+    def __init__(self, embedding_matrix, dropout, hidden_dim, architecture):
         super().__init__()
         _, embedding_dim = embedding_matrix.shape
         self.embedding = nn.Embedding.from_pretrained(
             torch.tensor(embedding_matrix), freeze=True)
-        self.lstm = nn.LSTM(embedding_dim, hidden_dim, batch_first=True)
+        if architecture == 'LSTM':
+            self.recurrent = nn.LSTM(embedding_dim, hidden_dim,
+                                     batch_first=True, dropout=dropout)
+        elif architecture == 'GRU':
+            self.recurrent = nn.GRU(embedding_dim, hidden_dim,
+                                    batch_first=True, dropout=dropout)
+        elif architecture == 'BiDi':
+            self.recurrent = nn.LSTM(embedding_dim, hidden_dim,
+                                     batch_first=True, dropout=dropout, bidirectional=True)
+        else:
+            self.recurrent = nn.LSTM(embedding_dim, hidden_dim,
+                                     batch_first=True, dropout=dropout)
         self.relu = nn.ReLU()
         self.fc = nn.Linear(hidden_dim, OUTPUT_CLASSES)
 
@@ -36,7 +48,7 @@ class RecurrentModel(nn.Module):
         lengths = torch.count_nonzero(mask, dim=1)
         embedded = torch.nn.utils.rnn.pack_padded_sequence(
             embedded, lengths, batch_first=True, enforce_sorted=False)
-        output, _ = self.lstm(embedded)
+        output, _ = self.recurrent(embedded)
         output, _ = nn.utils.rnn.pad_packed_sequence(output, batch_first=True)
         x = torch.mean(output, dim=-2)
         x = self.relu(x)
@@ -58,7 +70,8 @@ def create_model(config):
     if config["run_mode"] == "recurrent":
         hidden_dim = config["output_features"]
         drop = config['dropout']
-        return RecurrentModel(config["embedding_matrix"], drop, hidden_dim)
+        architecture = config['architecture']
+        return RecurrentModel(config["embedding_matrix"], drop, hidden_dim, architecture)
     elif config["run_mode"] == "pretrained":
         drop = config['dropout']
         output_features = config["output_features"]
