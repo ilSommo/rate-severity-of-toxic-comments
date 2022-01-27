@@ -101,3 +101,7 @@ def split_dataset(dataframe: pd.DataFrame, seed):
         np.floor(dataframe["label"]), return_counts=True)
     print(dict(zip(unique, counts)))
     return train_test_split(dataframe, stratify=np.floor(dataframe["label"]), random_state=seed)
+
+
+def normalize_L2(vector):
+    pass

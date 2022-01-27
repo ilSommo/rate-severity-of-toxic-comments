@@ -10,6 +10,8 @@ import wandb
 
 from rate_severity_of_toxic_comments.dataset import build_dataloaders
 from rate_severity_of_toxic_comments.model import create_model
+from rate_severity_of_toxic_comments.regularization import EarlyStopping
+
 
 def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_interval=100, pairwise_dataset=False):
     """
@@ -28,16 +30,20 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_int
             mask = data['mask'].to(device, dtype=torch.long)
             targets = data['target'].to(device, dtype=torch.long)
             batch_size = ids.size(0)
-            
+
             scores = model(ids, mask)
             scores = scores.to(torch.float32)
             targets = targets.to(torch.float32)
             loss = loss_fn(scores, targets)
         else:
-            more_toxic_ids = data['more_toxic_ids'].to(device, dtype=torch.long)
-            more_toxic_mask = data['more_toxic_mask'].to(device, dtype=torch.long)
-            less_toxic_ids = data['less_toxic_ids'].to(device, dtype=torch.long)
-            less_toxic_mask = data['less_toxic_mask'].to(device, dtype=torch.long)
+            more_toxic_ids = data['more_toxic_ids'].to(
+                device, dtype=torch.long)
+            more_toxic_mask = data['more_toxic_mask'].to(
+                device, dtype=torch.long)
+            less_toxic_ids = data['less_toxic_ids'].to(
+                device, dtype=torch.long)
+            less_toxic_mask = data['less_toxic_mask'].to(
+                device, dtype=torch.long)
             targets = data['target'].to(device, dtype=torch.long)
             batch_size = more_toxic_ids.size(0)
 
@@ -82,16 +88,20 @@ def test_loop(dataloader, model, loss_fn, device, log_interval=100, pairwise_dat
                 mask = data['mask'].to(device, dtype=torch.long)
                 targets = data['target'].to(device, dtype=torch.long)
                 batch_size = ids.size(0)
-                
+
                 scores = model(ids, mask)
                 scores = scores.to(torch.float32)
                 targets = targets.to(torch.float32)
                 loss = loss_fn(scores, targets)
             else:
-                more_toxic_ids = data['more_toxic_ids'].to(device, dtype=torch.long)
-                more_toxic_mask = data['more_toxic_mask'].to(device, dtype=torch.long)
-                less_toxic_ids = data['less_toxic_ids'].to(device, dtype=torch.long)
-                less_toxic_mask = data['less_toxic_mask'].to(device, dtype=torch.long)
+                more_toxic_ids = data['more_toxic_ids'].to(
+                    device, dtype=torch.long)
+                more_toxic_mask = data['more_toxic_mask'].to(
+                    device, dtype=torch.long)
+                less_toxic_ids = data['less_toxic_ids'].to(
+                    device, dtype=torch.long)
+                less_toxic_mask = data['less_toxic_mask'].to(
+                    device, dtype=torch.long)
                 targets = data['target'].to(device, dtype=torch.long)
                 batch_size = more_toxic_ids.size(0)
 
@@ -105,7 +115,8 @@ def test_loop(dataloader, model, loss_fn, device, log_interval=100, pairwise_dat
             dataset_size += batch_size
 
             if idx_batch % log_interval == 0 and idx_batch > 0:
-                wandb.log({"Validation Running Loss": running_loss / cumul_batches})
+                wandb.log(
+                    {"Validation Running Loss": running_loss / cumul_batches})
                 running_loss = 0
                 cumul_batches = 0
 
@@ -113,11 +124,12 @@ def test_loop(dataloader, model, loss_fn, device, log_interval=100, pairwise_dat
 
     return total_metrics
 
-def run_training(training_data: torch.utils.data.Dataset, 
-                  val_data: torch.utils.data.Dataset,
-                  log_interval: int, 
-                  config,
-                  verbose: bool=True) -> dict:
+
+def run_training(training_data: torch.utils.data.Dataset,
+                 val_data: torch.utils.data.Dataset,
+                 log_interval: int,
+                 config,
+                 verbose: bool = True) -> dict:
     """
     Executes the full train test loop with the given parameters
     """
@@ -125,23 +137,27 @@ def run_training(training_data: torch.utils.data.Dataset,
 
     if config["wandb"]:
         run = wandb.init(project="rate-comments",
-        entity="toxicity",
-        config=config,
-        job_type='Train',
-        # group="", TODO?
-        tags=[config["run_mode"]])
+                         entity="toxicity",
+                         config=config,
+                         job_type='Train',
+                         # group="", TODO?
+                         tags=[config["run_mode"]])
 
         wandb.run.name = config["run_mode"] + "-" + wandb.run.id
         wandb.run.save()
 
-    device = torch.device("cuda" if torch.cuda.is_available() and config["use_gpu"] else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available()
+                          and config["use_gpu"] else "cpu")
     # loss_fn = nn.MarginRankingLoss(margin=CONFIG['margin'])
     loss_fn = nn.MSELoss()
 
-    train_dataloader, val_dataloader = build_dataloaders([training_data, val_data], batch_sizes=(config["train_batch_size"], config["valid_batch_size"]))
+    train_dataloader, val_dataloader = build_dataloaders([training_data, val_data], batch_sizes=(
+        config["train_batch_size"], config["valid_batch_size"]))
 
     model = create_model(config)
     model.to(device)
+
+    early_stopping_regularization = EarlyStopping(patience=3)
 
     optimizer = optim.Adam(model.parameters(), lr=config["learning_rate"])
 
@@ -157,11 +173,15 @@ def run_training(training_data: torch.utils.data.Dataset,
 
     loop_start = time.time()
 
+    early_stopping = EarlyStopping(patience=3, verbose=verbose)
+
     for epoch in range(1, num_epochs + 1):
         time_start = time.time()
 
-        metrics_train = train_loop(train_dataloader, model, loss_fn, optimizer, device, epoch, log_interval=log_interval, pairwise_dataset=False)
-        metrics_val = test_loop(val_dataloader, model, loss_fn, device, pairwise_dataset=False)
+        metrics_train = train_loop(train_dataloader, model, loss_fn, optimizer,
+                                   device, epoch, log_interval=log_interval, pairwise_dataset=False)
+        metrics_val = test_loop(val_dataloader, model,
+                                loss_fn, device, pairwise_dataset=False)
 
         time_end = time.time()
 
@@ -180,26 +200,34 @@ def run_training(training_data: torch.utils.data.Dataset,
                   f' Loss: [{all_metrics["train_loss"]:.4f}] '
                   f' \n Val   - '
                   f' Loss: [{all_metrics["valid_loss"]:.4f}] '
-            )
-        
+                  )
+
         if config["wandb"]:
             wandb.log(all_metrics)
-        
+
+        early_stopping(all_metrics["valid_loss"], model)
+
+        if early_stopping.early_stop:
+            print("Early Stopping")
+            break
+
         if all_metrics["valid_loss"] <= best_epoch_loss:
             best_epoch_loss = all_metrics["valid_loss"]
             best_model_wts = copy.deepcopy(model.state_dict())
-    
+
     loop_end = time.time()
     time_loop = loop_end - loop_start
     if verbose:
         print(f'Time for {num_epochs} epochs (s): {(time_loop):.3f}')
 
     model.load_state_dict(best_model_wts)
-    model_filename = config["run_mode"]+"-"+time.strftime("%Y%m%d-%H%M%S")+".pth"
-    torch.save(model.state_dict(), os.path.join("res", "models", model_filename))
+    model_filename = config["run_mode"]+"-" + \
+        time.strftime("%Y%m%d-%H%M%S")+".pth"
+    torch.save(model.state_dict(), os.path.join(
+        "res", "models", model_filename))
 
     if config["wandb"]:
-        torch.save(model.state_dict(), os.path.join(wandb.run.dir, model_filename))
+        torch.save(model.state_dict(), os.path.join(
+            wandb.run.dir, model_filename))
         run.finish()
     return model, loss_history
-    
