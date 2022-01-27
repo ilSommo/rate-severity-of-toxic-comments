@@ -80,8 +80,8 @@ def import_bad_words(file):
         for line in f:
             word = line[:-1]
             word = word.replace('*', '\\*')
-            word = word.replace('(', '\(')
-            word = word.replace(')', '\)')
+            word = word.replace('(', '\\(')
+            word = word.replace(')', '\\)')
             bad_words.append(word)
     return bad_words
 
