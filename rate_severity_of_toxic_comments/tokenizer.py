@@ -124,7 +124,7 @@ class NaiveTokenizer(PreTrainedTokenizer):
         return dict(self.vocab, **self.added_tokens_encoder)
 
     def _tokenize(self, text):
-        processed_text, bad_words_counter = apply_preprocessing_pipelines(
+        processed_text, bad_words_counter, preprocessing_metric = apply_preprocessing_pipelines(
             text, self.preprocessing_pipelines)
         return self.basic_tokenizer.tokenize(processed_text, never_split=self.all_special_tokens)
 
