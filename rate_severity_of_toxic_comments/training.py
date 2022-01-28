@@ -11,7 +11,7 @@ import wandb
 from rate_severity_of_toxic_comments.dataset import build_dataloaders
 from rate_severity_of_toxic_comments.model import create_model
 
-def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_interval=100, pairwise_dataset=False):
+def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_interval=100, pairwise_dataset=False, use_wandb=True):
     """
     Executes the training loop on the given parameters. Logs metrics on TensorBoard.
     """
@@ -54,7 +54,7 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_int
         cumul_batches += 1
         dataset_size += batch_size
 
-        if idx_batch % log_interval == 0 and idx_batch > 0:
+        if idx_batch % log_interval == 0 and idx_batch > 0 and use_wandb:
             wandb.log({"Train Running Loss": running_loss / cumul_batches})
             running_loss = 0
             cumul_batches = 0
@@ -64,7 +64,7 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_int
     return total_metrics
 
 
-def test_loop(dataloader, model, loss_fn, device, log_interval=100, pairwise_dataset=False):
+def test_loop(dataloader, model, loss_fn, device, idx_epoch, log_interval=100, pairwise_dataset=False, use_wandb=True):
     """
     Executes a test loop on the given paramters. Returns metrics and votes.
     """
@@ -104,7 +104,7 @@ def test_loop(dataloader, model, loss_fn, device, log_interval=100, pairwise_dat
             cumul_batches += 1
             dataset_size += batch_size
 
-            if idx_batch % log_interval == 0 and idx_batch > 0:
+            if idx_batch % log_interval == 0 and idx_batch > 0 and use_wandb:
                 wandb.log({"Validation Running Loss": running_loss / cumul_batches})
                 running_loss = 0
                 cumul_batches = 0
@@ -160,8 +160,8 @@ def run_training(training_data: torch.utils.data.Dataset,
     for epoch in range(1, num_epochs + 1):
         time_start = time.time()
 
-        metrics_train = train_loop(train_dataloader, model, loss_fn, optimizer, device, epoch, log_interval=log_interval, pairwise_dataset=False)
-        metrics_val = test_loop(val_dataloader, model, loss_fn, device, pairwise_dataset=False)
+        metrics_train = train_loop(train_dataloader, model, loss_fn, optimizer, device, epoch, log_interval=log_interval, pairwise_dataset=False, use_wandb=config["wandb"])
+        metrics_val = test_loop(val_dataloader, model, loss_fn, device, epoch, pairwise_dataset=False, use_wandb=config["wandb"])
 
         time_end = time.time()
 
