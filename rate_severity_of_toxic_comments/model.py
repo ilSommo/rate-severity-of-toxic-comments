@@ -1,18 +1,18 @@
-from unicodedata import bidirectional
 import torch
-from torch import nn
+from torch.nn import LSTM, GRU, Embedding, Module, Dropout, ReLU, Linear
+from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from transformers import AutoModel
 
 OUTPUT_CLASSES = 1
 
 
-class PretrainedModel(nn.Module):
+class PretrainedModel(Module):
     def __init__(self, model_name, dropout, output_features):
         super().__init__()
         self.model = AutoModel.from_pretrained(model_name)
         if dropout != None:
-            self.drop = nn.Dropout(p=dropout)
-        self.fc = nn.Linear(output_features, OUTPUT_CLASSES)
+            self.drop = Dropout(p=dropout)
+        self.fc = Linear(output_features, OUTPUT_CLASSES)
 
     def forward(self, ids, mask):
         out = self.model(input_ids=ids, attention_mask=mask,
@@ -22,35 +22,36 @@ class PretrainedModel(nn.Module):
         return outputs
 
 
-class RecurrentModel(nn.Module):
+class RecurrentModel(Module):
     def __init__(self, embedding_matrix, dropout, hidden_dim, architecture):
         super().__init__()
         _, embedding_dim = embedding_matrix.shape
-        self.embedding = nn.Embedding.from_pretrained(
-            torch.tensor(embedding_matrix), freeze=True)
+        self.embedding = Embedding.from_pretrained(
+            torch.tensor(embedding_matrix))
         if architecture == 'LSTM':
-            self.recurrent = nn.LSTM(embedding_dim, hidden_dim,
-                                     batch_first=True)
+            self.recurrent = LSTM(embedding_dim, hidden_dim,
+                                  batch_first=True)
         elif architecture == 'GRU':
-            self.recurrent = nn.GRU(embedding_dim, hidden_dim,
-                                    batch_first=True)
+            self.recurrent = GRU(embedding_dim, hidden_dim,
+                                 batch_first=True)
         elif architecture == 'BiDi':
-            self.recurrent = nn.LSTM(embedding_dim, hidden_dim,
-                                     batch_first=True, bidirectional=True)
+            self.recurrent = LSTM(embedding_dim, hidden_dim,
+                                  batch_first=True, bidirectional=True)
         else:
-            self.recurrent = nn.LSTM(embedding_dim, hidden_dim,
-                                     batch_first=True)
-        self.drop = nn.Dropout(p=dropout)
-        self.relu = nn.ReLU()
-        self.fc = nn.Linear(hidden_dim, OUTPUT_CLASSES)
+            self.recurrent = LSTM(embedding_dim, hidden_dim,
+                                  batch_first=True)
+        self.drop = Dropout(p=dropout)
+        self.relu = ReLU()
+        self.fc = Linear(hidden_dim, OUTPUT_CLASSES)
 
     def forward(self, ids, mask):
         embedded = self.embedding(ids)
         lengths = torch.count_nonzero(mask, dim=1)
-        embedded = torch.nn.utils.rnn.pack_padded_sequence(
-            embedded, lengths.to('cpu'), batch_first=True, enforce_sorted=False)
+        batch_lengths = lengths.to('cpu')
+        embedded = pack_padded_sequence(
+            embedded, batch_lengths, batch_first=True, enforce_sorted=False)
         rec_out, _ = self.recurrent(embedded)
-        rec_out = nn.utils.rnn.pad_packed_sequence(
+        rec_out = pad_packed_sequence(
             rec_out, batch_first=True)
         drop_out = self.drop(rec_out[0])
         x = torch.mean(drop_out, dim=-2)
@@ -58,10 +59,10 @@ class RecurrentModel(nn.Module):
         return self.fc(x).squeeze()
 
 
-class DummyModel(nn.Module):
+class DummyModel(Module):
     def __init__(self):
         super().__init__()
-        self.fc = nn.Linear(1, OUTPUT_CLASSES)
+        self.fc = Linear(1, OUTPUT_CLASSES)
 
     def forward(self, ids, mask):
         return self.fc(ids.to(torch.float32).mean(dim=0).unsqueeze(1))

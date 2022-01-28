@@ -93,15 +93,7 @@ def split_dataset(dataframe: pd.DataFrame, seed):
 
     dataframe["label"] = dataframe["target"] * 10
 
-    # for _, row in dataframe.iterrows():
-    #     v = row['target']
-    #     row['label'] = math.floor(v*10)
-
     unique, counts = np.unique(
         np.floor(dataframe["label"]), return_counts=True)
     print(dict(zip(unique, counts)))
     return train_test_split(dataframe, stratify=np.floor(dataframe["label"]), random_state=seed)
-
-
-def normalize_L2(vector):
-    pass

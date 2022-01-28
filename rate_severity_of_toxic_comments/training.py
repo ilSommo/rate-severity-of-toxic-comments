@@ -149,7 +149,6 @@ def run_training(training_data: Dataset,
 
     device = torch.device("cuda" if torch.cuda.is_available()
                           and config["use_gpu"] else "cpu")
-    # loss_fn = nn.MarginRankingLoss(margin=CONFIG['margin'])
     loss_fn = nn.MSELoss()
 
     train_dataloader, val_dataloader = build_dataloaders([training_data, val_data], batch_sizes=(
