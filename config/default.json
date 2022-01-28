@@ -20,12 +20,12 @@
     "path": "res/data/train.csv",
       "cols": ["comment_text"],
       "type": "weighted",
-      "download": "https://1drv.ms/u/s!Aps_BI2_ZabbhwAC6MFdtru26Ncq?e=9vyn3D"
+      "download": "https://www.dropbox.com/s/33ukaurgr2lrt33/train.csv?dl=0"
   },
   "test_set": {
       "path": "res/data/validation_data.csv",
       "cols": ["more_toxic", "less_toxic"],
       "type": "pairwise",
-      "download": "https://1drv.ms/u/s!Aps_BI2_Zabbhn5emkBRsbwDltoq?e=zAqEhb"
+      "download": "https://www.dropbox.com/s/igolk06nnfxiera/validation_data.csv?dl=0"
   }
 }
