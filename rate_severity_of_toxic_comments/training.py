@@ -160,8 +160,10 @@ def run_training(training_data: Dataset,
     train_loop_stats = TrainLoopStatisticsManager(model,
                                                   early_stopping_patience=3, verbose=verbose, wandb=config["wandb"])
 
+    optimization_params = config['optimizations']
+
     optimizer = optim.Adam(model.parameters(
-    ), lr=config["learning_rate"], weight_decay=L2_REGULARITAZION_PARAM)
+    ), lr=optimization_params["learning_rate"], weight_decay=optimization_params['L2_regularization'])
 
     if config["wandb"]:
         wandb.watch(model, log_freq=log_interval)
@@ -179,7 +181,7 @@ def run_training(training_data: Dataset,
         time_end = time.time()
 
         train_loop_stats.registerEpoch(
-            metrics_train, metrics_val, config["learning_rate"], epoch, time_start, time_end)
+            metrics_train, metrics_val, optimization_params["learning_rate"], epoch, time_start, time_end)
 
         if train_loop_stats.early_stop:
             print("Early Stopping")

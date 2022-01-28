@@ -4,7 +4,6 @@
   "model_name": "roberta-base",
   "train_batch_size": 32,
   "valid_batch_size": 64,
-  "learning_rate": 1e-4,
   "max_length": 128,
   "margin": 0.5,
   "use_gpu": true,
@@ -17,7 +16,11 @@
   "dropout": 0.2,
   "output_features": 128,
   "training_set": {
-      "path": "res/data/train.csv",
-      "cols": ["comment_text"]
+    "path": "res/data/train.csv",
+    "cols": ["comment_text"]
+  },
+  "optimizations": {
+    "learning_rate": 1e-4,
+    "L2_regularization": 0.01
   }
 }

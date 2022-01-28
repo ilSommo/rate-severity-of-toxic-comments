@@ -2,8 +2,6 @@ import wandb
 import copy
 import numpy as np
 
-L2_REGULARITAZION_PARAM = 0.01
-
 
 class TrainLoopStatisticsManager:
 
