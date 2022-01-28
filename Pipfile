@@ -3,10 +3,15 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 name = "pypi"
 
+[[source]]
+url = "https://download.pytorch.org/whl/cu113"
+verify_ssl = true
+name = "downloadpytorch"
+
 [packages]
 jupyter = "*"
 numpy = "*"
-torch = "*"
+torch = {version = "*", index = "downloadpytorch"}
 pandas = "*"
 transformers = "*"
 wandb = "*"

@@ -8,9 +8,10 @@ from torch import nn, optim
 
 import wandb
 
+from torch.utils.data import Dataset
 from rate_severity_of_toxic_comments.dataset import build_dataloaders
 from rate_severity_of_toxic_comments.model import create_model
-from rate_severity_of_toxic_comments.regularization import EarlyStopping
+from rate_severity_of_toxic_comments.metrics import *
 
 
 def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_interval=100, pairwise_dataset=False):
@@ -125,8 +126,8 @@ def test_loop(dataloader, model, loss_fn, device, log_interval=100, pairwise_dat
     return total_metrics
 
 
-def run_training(training_data: torch.utils.data.Dataset,
-                 val_data: torch.utils.data.Dataset,
+def run_training(training_data: Dataset,
+                 val_data: Dataset,
                  log_interval: int,
                  config,
                  verbose: bool = True) -> dict:
@@ -157,23 +158,16 @@ def run_training(training_data: torch.utils.data.Dataset,
     model = create_model(config)
     model.to(device)
 
-    early_stopping_regularization = EarlyStopping(patience=3)
+    train_loop_stats = TrainLoopStatisticsManager(model,
+                                                  early_stopping_patience=3, verbose=verbose, wandb=config["wandb"])
 
-    optimizer = optim.Adam(model.parameters(), lr=config["learning_rate"])
+    optimizer = optim.Adam(model.parameters(
+    ), lr=config["learning_rate"], weight_decay=L2_REGULARITAZION_PARAM)
 
     if config["wandb"]:
         wandb.watch(model, log_freq=log_interval)
 
-    best_model_wts = copy.deepcopy(model.state_dict())
-    best_epoch_loss = np.inf
-    loss_history = {
-        "train": [],
-        "valid": [],
-    }
-
     loop_start = time.time()
-
-    early_stopping = EarlyStopping(patience=3, verbose=verbose)
 
     for epoch in range(1, num_epochs + 1):
         time_start = time.time()
@@ -185,42 +179,19 @@ def run_training(training_data: torch.utils.data.Dataset,
 
         time_end = time.time()
 
-        all_metrics = metrics_train
-        all_metrics.update(metrics_val)
+        train_loop_stats.registerEpoch(
+            metrics_train, metrics_val, config["learning_rate"], epoch, time_start, time_end)
 
-        loss_history['train'].append(all_metrics["train_loss"])
-        loss_history['valid'].append(all_metrics["valid_loss"])
-        lr = optimizer.param_groups[0]['lr']
-
-        if verbose:
-            print(f'Epoch: {epoch} '
-                  f' Lr: {lr:.8f} '
-                  f' | Time one epoch (s): {(time_end - time_start):.4f} '
-                  f' \n Train - '
-                  f' Loss: [{all_metrics["train_loss"]:.4f}] '
-                  f' \n Val   - '
-                  f' Loss: [{all_metrics["valid_loss"]:.4f}] '
-                  )
-
-        if config["wandb"]:
-            wandb.log(all_metrics)
-
-        early_stopping(all_metrics["valid_loss"], model)
-
-        if early_stopping.early_stop:
+        if train_loop_stats.early_stop:
             print("Early Stopping")
             break
-
-        if all_metrics["valid_loss"] <= best_epoch_loss:
-            best_epoch_loss = all_metrics["valid_loss"]
-            best_model_wts = copy.deepcopy(model.state_dict())
 
     loop_end = time.time()
     time_loop = loop_end - loop_start
     if verbose:
         print(f'Time for {num_epochs} epochs (s): {(time_loop):.3f}')
 
-    model.load_state_dict(best_model_wts)
+    model.load_state_dict(train_loop_stats.best_model_wts)
     model_filename = config["run_mode"]+"-" + \
         time.strftime("%Y%m%d-%H%M%S")+".pth"
     torch.save(model.state_dict(), os.path.join(
@@ -230,4 +201,4 @@ def run_training(training_data: torch.utils.data.Dataset,
         torch.save(model.state_dict(), os.path.join(
             wandb.run.dir, model_filename))
         run.finish()
-    return model, loss_history
+    return model, train_loop_stats.getLossHistory()

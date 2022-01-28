@@ -30,16 +30,17 @@ class RecurrentModel(nn.Module):
             torch.tensor(embedding_matrix), freeze=True)
         if architecture == 'LSTM':
             self.recurrent = nn.LSTM(embedding_dim, hidden_dim,
-                                     batch_first=True, dropout=dropout)
+                                     batch_first=True)
         elif architecture == 'GRU':
             self.recurrent = nn.GRU(embedding_dim, hidden_dim,
-                                    batch_first=True, dropout=dropout)
+                                    batch_first=True)
         elif architecture == 'BiDi':
             self.recurrent = nn.LSTM(embedding_dim, hidden_dim,
-                                     batch_first=True, dropout=dropout, bidirectional=True)
+                                     batch_first=True, bidirectional=True)
         else:
             self.recurrent = nn.LSTM(embedding_dim, hidden_dim,
-                                     batch_first=True, dropout=dropout)
+                                     batch_first=True)
+        self.drop = nn.Dropout(p=dropout)
         self.relu = nn.ReLU()
         self.fc = nn.Linear(hidden_dim, OUTPUT_CLASSES)
 
@@ -47,10 +48,12 @@ class RecurrentModel(nn.Module):
         embedded = self.embedding(ids)
         lengths = torch.count_nonzero(mask, dim=1)
         embedded = torch.nn.utils.rnn.pack_padded_sequence(
-            embedded, lengths, batch_first=True, enforce_sorted=False)
-        output, _ = self.recurrent(embedded)
-        output, _ = nn.utils.rnn.pad_packed_sequence(output, batch_first=True)
-        x = torch.mean(output, dim=-2)
+            embedded, lengths.to('cpu'), batch_first=True, enforce_sorted=False)
+        rec_out, _ = self.recurrent(embedded)
+        rec_out = nn.utils.rnn.pad_packed_sequence(
+            rec_out, batch_first=True)
+        drop_out = self.drop(rec_out[0])
+        x = torch.mean(drop_out, dim=-2)
         x = self.relu(x)
         return self.fc(x).squeeze()
 
