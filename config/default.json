@@ -8,6 +8,7 @@
   "margin": 0.5,
   "use_gpu": true,
   "run_mode": "recurrent",
+  "architecture": "LSTM",
   "wandb": true,
   "preprocessing": [],
   "vocab_file": "res/vocab/naive.txt",
@@ -17,7 +18,13 @@
   "output_features": 128,
   "training_set": {
     "path": "res/data/train.csv",
-    "cols": ["comment_text"]
+    "cols": ["comment_text"],
+    "type": "weighted"
+  },
+  "test_set": {
+    "path": "res/data/validation_data.csv",
+    "cols": ["more_toxic", "less_toxic"],
+    "type": "pairwise"
   },
   "optimizations": {
     "learning_rate": 1e-4,
