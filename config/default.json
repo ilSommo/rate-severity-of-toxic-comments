@@ -17,7 +17,15 @@
   "dropout": 0.2,
   "output_features": 128,
   "training_set": {
-      "path": "res/data/train.csv",
-      "cols": ["comment_text"]
+    "path": "res/data/train.csv",
+      "cols": ["comment_text"],
+      "type": "weighted",
+      "download": "https://1drv.ms/u/s!Aps_BI2_ZabbhwAC6MFdtru26Ncq?e=9vyn3D"
+  },
+  "test_set": {
+      "path": "res/data/validation_data.csv",
+      "cols": ["more_toxic", "less_toxic"],
+      "type": "pairwise",
+      "download": "https://1drv.ms/u/s!Aps_BI2_Zabbhn5emkBRsbwDltoq?e=zAqEhb"
   }
 }
