@@ -177,7 +177,6 @@ def run_training(training_data: Dataset,
                                    device, epoch, log_interval=log_interval, pairwise_dataset=False)
         metrics_val = test_loop(val_dataloader, model,
                                 loss_fn, device, pairwise_dataset=False)
-
         time_end = time.time()
 
         train_loop_stats.registerEpoch(

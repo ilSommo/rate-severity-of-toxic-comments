@@ -79,7 +79,7 @@ def build_embedding_matrix(embedding_model: gensim.models.keyedvectors.KeyedVect
     return embedding_matrix
 
 
-def check_OOV_terms(embedding_model: gensim.models.keyedvectors.KeyedVectors, vocab: Vocab):
+def check_OOV_terms(embedding_model: gensim.models.keyedvectors.KeyedVectors, vocab):
     """
     Checks differences between pre-trained embedding model vocabulary
     and dataset specific vocabulary in order to highlight out-of-vocabulary terms.
@@ -92,5 +92,5 @@ def check_OOV_terms(embedding_model: gensim.models.keyedvectors.KeyedVectors, vo
     """
 
     embedding_vocabulary = set(embedding_model.index_to_key)
-    oov = set(vocab.get_itos()).difference(embedding_vocabulary)
+    oov = set(vocab.keys()).difference(embedding_vocabulary)
     return list(oov)

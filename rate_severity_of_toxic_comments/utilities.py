@@ -11,7 +11,7 @@ import torch
 from transformers import AutoTokenizer
 
 from sklearn.model_selection import train_test_split
-from rate_severity_of_toxic_comments.embedding import build_embedding_matrix, load_embedding_model
+from rate_severity_of_toxic_comments.embedding import build_embedding_matrix, check_OOV_terms, load_embedding_model
 from rate_severity_of_toxic_comments.preprocessing import AVAILABLE_PREPROCESSING_PIPELINES
 from rate_severity_of_toxic_comments.tokenizer import NaiveTokenizer, build_vocab
 
@@ -71,7 +71,7 @@ def process_config(config):
     elif config['run_mode'] == 'recurrent':
         # Creates vocab file if it doens't exist
         if not os.path.isfile(config["vocab_file"]):
-            open(config["vocab_file"], 'a').close()
+            open(config["vocab_file"], 'a+').close()
         config["tokenizer"] = NaiveTokenizer(config["vocab_file"])
 
         # If vocab is empty, populate it with training sets
@@ -82,6 +82,9 @@ def process_config(config):
             print(type(vocab))
             config["tokenizer"].set_vocab(vocab)
         embedding_model = load_embedding_model(config)
+        oov = check_OOV_terms(embedding_model, vocab)
+        print('OOV Len ', len(oov))
+        print(oov[:10])
         embedding_matrix = build_embedding_matrix(embedding_model, config)
         config["embedding_matrix"] = embedding_matrix
     else:

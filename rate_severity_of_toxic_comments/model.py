@@ -1,5 +1,5 @@
 import torch
-from torch.nn import LSTM, GRU, Embedding, Module, Dropout, ReLU, Linear
+from torch.nn import LSTM, GRU, Embedding, Module, Dropout, ReLU, Linear, Sigmoid
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from transformers import AutoModel
 
@@ -42,6 +42,7 @@ class RecurrentModel(Module):
                                   batch_first=True)
         self.drop = Dropout(p=dropout)
         self.relu = ReLU()
+        self.sig = Sigmoid()
         self.fc = Linear(hidden_dim, OUTPUT_CLASSES)
 
     def forward(self, ids, mask):
@@ -56,7 +57,8 @@ class RecurrentModel(Module):
         drop_out = self.drop(rec_out[0])
         x = torch.mean(drop_out, dim=-2)
         x = self.relu(x)
-        return self.fc(x).squeeze()
+        x = self.fc(x)
+        return self.sig(x).squeeze()
 
 
 class DummyModel(Module):
