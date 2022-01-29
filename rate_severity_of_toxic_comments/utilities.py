@@ -1,9 +1,7 @@
 __version__ = '0.1.0'
 __author__ = 'Lorenzo Menghini, Martino Pulici, Alessandro Stockman, Luca Zucchini'
 
-import math
 import random
-import os
 
 import numpy as np
 import pandas as pd
@@ -11,9 +9,8 @@ import torch
 from transformers import AutoTokenizer
 
 from sklearn.model_selection import train_test_split
-from rate_severity_of_toxic_comments.embedding import build_embedding_matrix, check_OOV_terms, load_embedding_model
 from rate_severity_of_toxic_comments.preprocessing import AVAILABLE_PREPROCESSING_PIPELINES
-from rate_severity_of_toxic_comments.tokenizer import NaiveTokenizer, build_vocab
+from rate_severity_of_toxic_comments.tokenizer import NaiveTokenizer, create_recurrent_model_tokenizer
 
 _bad_words = []
 
@@ -50,42 +47,20 @@ def fix_random_seed(seed):
 
 
 def process_config(config):
-    if not all([p not in AVAILABLE_PREPROCESSING_PIPELINES for p in config["preprocessing"]]):
+    if not all([p in AVAILABLE_PREPROCESSING_PIPELINES for p in config["preprocessing"]]):
+        print(f" Preprocessing pipeline not supported")
         raise ValueError()
-
     try:
         config['output_features']
     except:
         raise ValueError()
-    # TODO Add validation for other values
-
-    """ 
-    
-    CHECKS CORRCT CONFIG FILE AND ELABORATION OF DATA DEPENDING ON CONFIGURATION
-    
-    """
 
     if config["run_mode"] == "pretrained":
         config["tokenizer"] = AutoTokenizer.from_pretrained(
             config['model_name'])
     elif config['run_mode'] == 'recurrent':
-        # Creates vocab file if it doens't exist
-        if not os.path.isfile(config["vocab_file"]):
-            open(config["vocab_file"], 'a+').close()
-        config["tokenizer"] = NaiveTokenizer(config["vocab_file"])
-
-        # If vocab is empty, populate it with training sets
-        if len(config["tokenizer"].get_vocab()) == 0:
-            df = pd.read_csv(config["training_set"]["path"])
-            vocab, _ = build_vocab(
-                df, config["training_set"]["cols"], config["tokenizer"], save_path=config["vocab_file"])
-            print(type(vocab))
-            config["tokenizer"].set_vocab(vocab)
-        embedding_model = load_embedding_model(config)
-        oov = check_OOV_terms(embedding_model, vocab)
-        print('OOV Len ', len(oov))
-        print(oov[:10])
-        embedding_matrix = build_embedding_matrix(embedding_model, config)
+        tokenizer, embedding_matrix = create_recurrent_model_tokenizer(config)
+        config["tokenizer"] = tokenizer
         config["embedding_matrix"] = embedding_matrix
     else:
         config["tokenizer"] = NaiveTokenizer(config["vocab_file"])

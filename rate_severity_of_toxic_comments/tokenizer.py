@@ -1,58 +1,34 @@
 import os
 import collections
 from typing import Optional
-
+import pandas as pd
 import torch
-import torchtext
 from transformers import BasicTokenizer, PreTrainedTokenizer
 from rate_severity_of_toxic_comments.preprocessing import apply_preprocessing_pipelines
+from rate_severity_of_toxic_comments.embedding import build_embedding_matrix, check_OOV_terms, load_embedding_model
+from rate_severity_of_toxic_comments.vocabulary import load_vocabulary, build_vocabulary_and_tokenize
 
 
-def load_vocab(vocab_file):
-    """Loads a vocabulary file into a dictionary."""
-    vocab = collections.OrderedDict()
-    with open(vocab_file, "r", encoding="utf-8") as reader:
-        tokens = reader.readlines()
-    for index, token in enumerate(tokens):
-        token = token.rstrip("\n")
-        vocab[token] = index
-    return vocab
+def create_recurrent_model_tokenizer(config):
+    vocab_file_path = config["vocab_file"]
+    dataframe_path = config["training_set"]["path"]
+    dataframe_cols = config["training_set"]["cols"]
+    embedding_dim = config["embedding_dimension"]
+    tokenizer = NaiveTokenizer()
+    vocab = load_vocabulary(vocab_file_path)
+    df = pd.read_csv(dataframe_path)
+    if len(vocab) == 0:
+        vocab, tokenizer = build_vocabulary_and_tokenize(df,
+                                                         dataframe_cols, tokenizer, save_path=vocab_file_path)
+    else:
+        tokenizer.set_vocab(vocab)
+        tokenizer.tokenize_comments(df, dataframe_cols)
 
-
-def build_vocab(df, cols, tokenizer: PreTrainedTokenizer, min_freq=1, save_path=None):
-    """
-    Returns a Vocab object containing all the tokens appearing in the `cols` columns of the dataframe `df`
-    """
-    # vocab = collections.OrderedDict()
-    counter = collections.Counter()
-
-    # Append to vocab special tokens expected by the tokenizer
-    for token in tokenizer.special_tokens_map.values():
-        counter[token] = min_freq + 1
-
-    for sentence in [v for col in cols for v in df[col].values]:
-        # for token in tokenizer._tokenize(sentence:
-        #     vocab[token] = index
-        counter.update(tokenizer._tokenize(sentence))
-
-    v = torchtext.vocab.vocab(counter, min_freq=min_freq).get_stoi()
-    if save_path:
-        save_vocabulary(save_path, v)
-    return v, counter
-
-
-def save_vocabulary(save_path: str, vocab: collections.OrderedDict) -> tuple[str]:
-    index = 0
-    with open(save_path, "w", encoding="utf-8") as writer:
-        for token, token_index in sorted(vocab.items(), key=lambda kv: kv[1]):
-            if index != token_index:
-                # logger.warning(
-                #     f"Saving vocabulary to {vocab_file}: vocabulary indices are not consecutive."
-                #     " Please check that the vocabulary is not corrupted!"
-                # )
-                index = token_index
-            writer.write(token + "\n")
-            index += 1
+    embedding_model = load_embedding_model(config)
+    check_OOV_terms(embedding_model, vocab)
+    embedding_matrix = build_embedding_matrix(
+        embedding_model, embedding_dim, tokenizer)
+    return tokenizer, embedding_matrix
 
 
 class NaiveTokenizer(PreTrainedTokenizer):
@@ -97,9 +73,7 @@ class NaiveTokenizer(PreTrainedTokenizer):
         )
 
         if vocab_file:
-            self.vocab = load_vocab(vocab_file)
-            self.ids_to_tokens = collections.OrderedDict(
-                [(ids, tok) for tok, ids in self.vocab.items()])
+            self.set_vocab(load_vocabulary(vocab_file))
 
         self.preprocessing_pipelines = preprocessing_pipelines
         self.basic_tokenizer = BasicTokenizer(
@@ -141,14 +115,21 @@ class NaiveTokenizer(PreTrainedTokenizer):
         out_string = " ".join(tokens).replace(" ##", "").strip()
         return out_string
 
-    def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> tuple[str]:
-        if os.path.isdir(save_directory):
-            vocab_file = os.path.join(
-                save_directory, (filename_prefix +
-                                 "-" if filename_prefix else "") + "naive-vocab"
-            )
-        else:
-            vocab_file = (filename_prefix +
-                          "-" if filename_prefix else "") + save_directory
-        save_vocabulary(vocab_file, self.vocab)
-        return (vocab_file,)
+    def tokenize_comments(self, df, csv_cols):
+        # If vocab is empty, populate it with training sets
+        sentences_in_cols = [v for col in csv_cols for v in df[col].values]
+        num_sentences = len(sentences_in_cols)
+        percentage_printed = 0.0
+        print(f" Tokenizing on datasets columns {csv_cols}")
+        for index, sentence in enumerate(sentences_in_cols):
+            percentage = round(index / num_sentences, 2)
+            if percentage == 0.25 and percentage_printed == 0.0:
+                print(f"25% tokenization done")
+                percentage_printed = 0.25
+            elif percentage == 0.50 and percentage_printed == 0.25:
+                print(f"50% tokenization done")
+                percentage_printed = 0.50
+            elif percentage == 0.75 and percentage_printed == 0.5:
+                print(f"75% tokenization done")
+                percentage_printed = 0.75
+            self._tokenize(sentence)

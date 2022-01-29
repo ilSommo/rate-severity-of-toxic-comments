@@ -5,7 +5,6 @@ from tqdm import tqdm
 import numpy as np
 import gensim
 import gensim.downloader as gloader
-from torchtext.vocab import vocab, Vocab
 
 
 def load_embedding_model(config) -> gensim.models.keyedvectors.KeyedVectors:
@@ -45,7 +44,7 @@ def load_embedding_model(config) -> gensim.models.keyedvectors.KeyedVectors:
     return emb_model
 
 
-def build_embedding_matrix(embedding_model: gensim.models.keyedvectors.KeyedVectors, config) -> np.ndarray:
+def build_embedding_matrix(embedding_model: gensim.models.keyedvectors.KeyedVectors, embedding_dim, tokenizer) -> np.ndarray:
     """
     Builds the embedding matrix of a specific dataset given a pre-trained word embedding model
 
@@ -57,8 +56,7 @@ def build_embedding_matrix(embedding_model: gensim.models.keyedvectors.KeyedVect
     :return
         - embedding matrix that assigns a high dimensional vector to each word in the dataset specific vocabulary (shape |V| x d)
     """
-    embedding_dimension, vocab = config["embedding_dimension"], config["tokenizer"].get_vocab(
-    )
+    embedding_dimension, vocab = embedding_dim, tokenizer.get_vocab()
     embedding_matrix = np.zeros(
         (len(vocab), embedding_dimension), dtype=np.float32)
 
@@ -93,4 +91,7 @@ def check_OOV_terms(embedding_model: gensim.models.keyedvectors.KeyedVectors, vo
 
     embedding_vocabulary = set(embedding_model.index_to_key)
     oov = set(vocab.keys()).difference(embedding_vocabulary)
-    return list(oov)
+    oov = list(oov)
+    print('OOV Len ', len(oov))
+    print(oov[:10])
+    return oov
