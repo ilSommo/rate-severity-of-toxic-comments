@@ -6,7 +6,7 @@ import torch
 from transformers import BasicTokenizer, PreTrainedTokenizer
 from rate_severity_of_toxic_comments.preprocessing import apply_preprocessing_pipelines
 from rate_severity_of_toxic_comments.embedding import build_embedding_matrix, check_OOV_terms, load_embedding_model
-from rate_severity_of_toxic_comments.vocabulary import load_vocabulary, build_vocabulary_and_tokenize
+from rate_severity_of_toxic_comments.vocabulary import load_vocabulary, build_vocabulary
 
 
 def create_recurrent_model_tokenizer(config):
@@ -16,13 +16,11 @@ def create_recurrent_model_tokenizer(config):
     embedding_dim = config["embedding_dimension"]
     tokenizer = NaiveTokenizer()
     vocab = load_vocabulary(vocab_file_path)
-    df = pd.read_csv(dataframe_path)
     if len(vocab) == 0:
-        vocab, tokenizer = build_vocabulary_and_tokenize(df,
-                                                         dataframe_cols, tokenizer, save_path=vocab_file_path)
-    else:
-        tokenizer.set_vocab(vocab)
-        tokenizer.tokenize_comments(df, dataframe_cols)
+        df = pd.read_csv(dataframe_path)
+        vocab, tokenizer = build_vocabulary(df,
+                                            dataframe_cols, tokenizer, save_path=vocab_file_path)
+    tokenizer.set_vocab(vocab)
 
     embedding_model = load_embedding_model(config)
     check_OOV_terms(embedding_model, vocab)
@@ -114,22 +112,3 @@ class NaiveTokenizer(PreTrainedTokenizer):
         """Converts a sequence of tokens (string) in a single string."""
         out_string = " ".join(tokens).replace(" ##", "").strip()
         return out_string
-
-    def tokenize_comments(self, df, csv_cols):
-        # If vocab is empty, populate it with training sets
-        sentences_in_cols = [v for col in csv_cols for v in df[col].values]
-        num_sentences = len(sentences_in_cols)
-        percentage_printed = 0.0
-        print(f" Tokenizing on datasets columns {csv_cols}")
-        for index, sentence in enumerate(sentences_in_cols):
-            percentage = round(index / num_sentences, 2)
-            if percentage == 0.25 and percentage_printed == 0.0:
-                print(f"25% tokenization done")
-                percentage_printed = 0.25
-            elif percentage == 0.50 and percentage_printed == 0.25:
-                print(f"50% tokenization done")
-                percentage_printed = 0.50
-            elif percentage == 0.75 and percentage_printed == 0.5:
-                print(f"75% tokenization done")
-                percentage_printed = 0.75
-            self._tokenize(sentence)

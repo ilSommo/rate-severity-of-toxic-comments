@@ -1,6 +1,5 @@
 import collections
 import torchtext
-from transformers import PreTrainedTokenizer
 import os
 
 from rate_severity_of_toxic_comments.tokenizer import NaiveTokenizer
@@ -22,7 +21,7 @@ def load_vocabulary(vocab_file):
     return vocab
 
 
-def build_vocabulary_and_tokenize(df, cols, tokenizer: NaiveTokenizer, min_freq=1, save_path=None):
+def build_vocabulary(df, cols, tokenizer: NaiveTokenizer, min_freq=1, save_path=None):
     """
     Returns a Vocab object containing all the tokens appearing in the `cols` columns of the dataframe `df`
     """
@@ -61,7 +60,7 @@ def build_vocabulary_and_tokenize(df, cols, tokenizer: NaiveTokenizer, min_freq=
     return v, tokenizer
 
 
-def save_vocabulary(save_path: str, vocab: collections.OrderedDict) -> tuple[str]:
+def save_vocabulary(save_path, vocab):
     index = 0
     print(f" Saving vocabulary to path: {save_path}")
     with open(save_path, "w", encoding="utf-8") as writer:
