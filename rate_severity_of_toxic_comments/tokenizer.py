@@ -9,15 +9,13 @@ from rate_severity_of_toxic_comments.embedding import build_embedding_matrix, ch
 from rate_severity_of_toxic_comments.vocabulary import load_vocabulary, build_vocabulary
 
 
-def create_recurrent_model_tokenizer(config):
+def create_recurrent_model_tokenizer(config, df):
     vocab_file_path = config["vocab_file"]
-    dataframe_path = config["training_set"]["path"]
     dataframe_cols = config["training_set"]["cols"]
     embedding_dim = config["embedding_dimension"]
     tokenizer = NaiveTokenizer()
     vocab = load_vocabulary(vocab_file_path)
     if len(vocab) == 0:
-        df = pd.read_csv(dataframe_path)
         vocab, tokenizer = build_vocabulary(df,
                                             dataframe_cols, tokenizer, save_path=vocab_file_path)
     tokenizer.set_vocab(vocab)

@@ -26,25 +26,20 @@ def apply_preprocessing_pipelines(text, pipelines):
 
 def apply_preprocessing_pipeline(text, counter, metric, pipeline):
     if(pipeline in AVAILABLE_PREPROCESSING_PIPELINES):
+        additional_metric = 0
         if pipeline == 'LOWER':
-            text, additional_metric = _apply_lower_pipeline(text)
-            log_pipeline_results(text, additional_metric)
+            text, counter = _apply_lower_pipeline(text)
         elif pipeline == 'PUNCTUATION':
-            text, additional_metric = _apply_punctuation_pipeline(text)
-            log_pipeline_results(text, additional_metric)
+            text, counter = _apply_punctuation_pipeline(text)
         elif pipeline == 'WHITESPACES':
-            text, additional_metric = _apply_whitespaces_pipeline(text)
-            log_pipeline_results(text, additional_metric)
+            text, counter = _apply_whitespaces_pipeline(text)
         elif pipeline == 'NUMBERS':
-            text, additional_metric = _apply_numbers_pipeline(text)
-            log_pipeline_results(text, additional_metric)
+            text, counter = _apply_numbers_pipeline(text)
         elif pipeline == 'TRIPLE':
-            text, additional_metric = _apply_triple_pipeline(text)
-            log_pipeline_results(text, additional_metric)
+            text, counter = _apply_triple_pipeline(text)
         elif pipeline == 'REPLACE_BAD_WORDS':
             bad_words = import_bad_words(BAD_WORDS_FILE)
-            text, additional_metric = _apply_bad_word_pipeline(text)
-            log_pipeline_results(text, additional_metric)
+            text, counter = _apply_bad_word_pipeline(text)
         elif pipeline == 'COUNT_BAD_WORDS':
             bad_words = import_bad_words(BAD_WORDS_FILE)
             counter += count_bad_words(text, bad_words)
@@ -117,6 +112,18 @@ def count_bad_words(text, bad_words):
     return counter
 
 
-def log_pipeline_results(text, addictional_metrics):
-    print(f"TEXT\n", text)
-    print(f"\nADDICTIONAL METRICS\n", addictional_metrics + "\n")
+def preprocess_dataframe(df, cols, pipelines: list):
+    if pipelines is None or len(pipelines) == 0:
+        return df
+    sentences_in_cols = [v for col in cols for v in df[col].values]
+    num_sentences = len(sentences_in_cols)
+    print(f"Dataset comments to preprocess:\t{num_sentences}")
+    counter = 0
+    for col in cols:
+        for i in df.index:
+            df.at[i, col], count, __ = apply_preprocessing_pipelines(
+                df.at[i, col], pipelines)
+            counter += count
+
+    print(f"Dataframe preprocessed in {counter} occurrenrcies")
+    return df

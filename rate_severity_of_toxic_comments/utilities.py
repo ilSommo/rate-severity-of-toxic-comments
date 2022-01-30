@@ -4,12 +4,10 @@ __author__ = 'Lorenzo Menghini, Martino Pulici, Alessandro Stockman, Luca Zucchi
 import random
 
 import numpy as np
-import pandas as pd
 import torch
 from transformers import AutoTokenizer
 
-from sklearn.model_selection import train_test_split
-from rate_severity_of_toxic_comments.preprocessing import AVAILABLE_PREPROCESSING_PIPELINES
+from rate_severity_of_toxic_comments.preprocessing import AVAILABLE_PREPROCESSING_PIPELINES, preprocess_dataframe
 from rate_severity_of_toxic_comments.tokenizer import NaiveTokenizer, create_recurrent_model_tokenizer
 
 _bad_words = []
@@ -46,7 +44,7 @@ def fix_random_seed(seed):
         torch.use_deterministic_algorithms(True)
 
 
-def process_config(config):
+def process_config(config, df):
     if not all([p in AVAILABLE_PREPROCESSING_PIPELINES for p in config["preprocessing"]]):
         print(f" Preprocessing pipeline not supported")
         raise ValueError()
@@ -55,23 +53,17 @@ def process_config(config):
     except:
         raise ValueError()
 
+    df = preprocess_dataframe(
+        df, config["training_set"]["cols"], config["preprocessing"])
+
     if config["run_mode"] == "pretrained":
         config["tokenizer"] = AutoTokenizer.from_pretrained(
             config['model_name'])
     elif config['run_mode'] == 'recurrent':
-        tokenizer, embedding_matrix = create_recurrent_model_tokenizer(config)
+        tokenizer, embedding_matrix = create_recurrent_model_tokenizer(
+            config, df)
         config["tokenizer"] = tokenizer
         config["embedding_matrix"] = embedding_matrix
     else:
         config["tokenizer"] = NaiveTokenizer(config["vocab_file"])
     return config
-
-
-def split_dataset(dataframe: pd.DataFrame, seed):
-
-    dataframe["label"] = dataframe["target"] * 10
-
-    unique, counts = np.unique(
-        np.floor(dataframe["label"]), return_counts=True)
-    print(dict(zip(unique, counts)))
-    return train_test_split(dataframe, stratify=np.floor(dataframe["label"]), random_state=seed)

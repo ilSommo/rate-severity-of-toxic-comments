@@ -2,8 +2,6 @@ import collections
 import torchtext
 import os
 
-from rate_severity_of_toxic_comments.tokenizer import NaiveTokenizer
-
 
 def load_vocabulary(vocab_file):
     """Loads a vocabulary file into a dictionary."""
@@ -21,7 +19,7 @@ def load_vocabulary(vocab_file):
     return vocab
 
 
-def build_vocabulary(df, cols, tokenizer: NaiveTokenizer, min_freq=1, save_path=None):
+def build_vocabulary(df, cols, tokenizer, min_freq=1, save_path=None):
     """
     Returns a Vocab object containing all the tokens appearing in the `cols` columns of the dataframe `df`
     """
@@ -36,9 +34,9 @@ def build_vocabulary(df, cols, tokenizer: NaiveTokenizer, min_freq=1, save_path=
 
     num_sentences = len(sentences_in_cols)
 
-    print(f" Raw DataSet records:\t{num_sentences}")
+    print(f"Comments count:\t{num_sentences}")
 
-    print(f" Creating vocabulary...")
+    print(f"Creating vocabulary from comments...")
     percentage_printed = 0.0
     for index, sentence in enumerate(sentences_in_cols):
         percentage = round(index / num_sentences, 2)
@@ -53,7 +51,7 @@ def build_vocabulary(df, cols, tokenizer: NaiveTokenizer, min_freq=1, save_path=
             percentage_printed = 0.75
         counter.update(tokenizer._tokenize(sentence))
 
-    print(f" Vocabulary created")
+    print(f"Vocabulary created")
     v = torchtext.vocab.vocab(counter, min_freq=min_freq).get_stoi()
     if save_path:
         save_vocabulary(save_path, v)
@@ -62,7 +60,7 @@ def build_vocabulary(df, cols, tokenizer: NaiveTokenizer, min_freq=1, save_path=
 
 def save_vocabulary(save_path, vocab):
     index = 0
-    print(f" Saving vocabulary to path: {save_path}")
+    print(f"Saving vocabulary to path: {save_path}")
     with open(save_path, "w", encoding="utf-8") as writer:
         for token, token_index in sorted(vocab.items(), key=lambda kv: kv[1]):
             if index != token_index:

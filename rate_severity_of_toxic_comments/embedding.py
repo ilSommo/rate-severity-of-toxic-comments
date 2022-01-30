@@ -90,8 +90,13 @@ def check_OOV_terms(embedding_model: gensim.models.keyedvectors.KeyedVectors, vo
     """
 
     embedding_vocabulary = set(embedding_model.index_to_key)
-    oov = set(vocab.keys()).difference(embedding_vocabulary)
+    vocab_set = set(vocab.keys())
+    oov = vocab_set.difference(embedding_vocabulary)
+    known_words = vocab_set.intersection(embedding_vocabulary)
     oov = list(oov)
-    print('OOV Len ', len(oov))
-    print(oov[:10])
+    print('OOV words: ', len(oov))
+    print('OOV examples: ', oov[:10])
+    print('Known words embedding:', len(known_words))
+    print('Pretrained embeddings size: ', len(list(embedding_vocabulary)))
+    print(f'{(len(known_words) / len(list(embedding_vocabulary)) * 100):.2f}% Embedding used')
     return oov

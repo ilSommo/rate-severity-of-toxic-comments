@@ -1,6 +1,9 @@
 import torch
 from torch.utils.data import Dataset
 from torch.utils.data.dataloader import DataLoader
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
 
 
 class PairwiseDataset(Dataset):
@@ -47,6 +50,7 @@ class PairwiseDataset(Dataset):
             'target': torch.tensor(target, dtype=torch.long)
         }
 
+
 class WeightedDataset(Dataset):
     def __init__(self, df, weights, tokenizer, max_length):
         self.df = df
@@ -78,15 +82,29 @@ class WeightedDataset(Dataset):
             'target': torch.tensor(target, dtype=torch.float32),
         }
 
+
 def build_datasets(dfs, config, dataset_types):
     dts = []
     for df, ds_type in zip(dfs, dataset_types):
         if ds_type == "pairwise":
-            dts.append(PairwiseDataset(df, tokenizer=config["tokenizer"], max_length=config["max_length"]))
+            dts.append(PairwiseDataset(
+                df, tokenizer=config["tokenizer"], max_length=config["max_length"]))
         elif ds_type == "weighted":
-            dts.append(WeightedDataset(df, [], tokenizer=config["tokenizer"], max_length=config["max_length"]))
+            dts.append(WeightedDataset(
+                df, [], tokenizer=config["tokenizer"], max_length=config["max_length"]))
     return dts
+
 
 def build_dataloaders(datasets, batch_sizes):
     return [DataLoader(ds, batch_size=batch_size, num_workers=2, shuffle=False, pin_memory=True)
             for ds, batch_size in zip(datasets, batch_sizes)]
+
+
+def split_dataset(dataframe: pd.DataFrame, seed):
+
+    dataframe["label"] = dataframe["target"] * 10
+
+    unique, counts = np.unique(
+        np.floor(dataframe["label"]), return_counts=True)
+    print(dict(zip(unique, counts)))
+    return train_test_split(dataframe, stratify=np.floor(dataframe["label"]), random_state=seed)
