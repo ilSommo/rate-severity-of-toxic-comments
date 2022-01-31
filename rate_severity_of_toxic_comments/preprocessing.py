@@ -16,34 +16,34 @@ MASTER_WORD = 'shit'
 
 
 def apply_preprocessing_pipelines(text, pipelines):
-    counter = 0
+    bad_words_counter = 0
     metric = 0
     for pipeline in pipelines:
-        text, counter, metric = apply_preprocessing_pipeline(
-            text, counter, metric, pipeline)
-    return text, counter, metric
+        text, bad_words_counter, metric = apply_preprocessing_pipeline(
+            text, bad_words_counter, metric, pipeline)
+    return text, bad_words_counter, metric
 
 
-def apply_preprocessing_pipeline(text, counter, metric, pipeline):
+def apply_preprocessing_pipeline(text, bad_words_counter, metric, pipeline):
     if(pipeline in AVAILABLE_PREPROCESSING_PIPELINES):
         additional_metric = 0
         if pipeline == 'LOWER':
-            text, counter = _apply_lower_pipeline(text)
+            text, additional_metric = _apply_lower_pipeline(text)
         elif pipeline == 'PUNCTUATION':
-            text, counter = _apply_punctuation_pipeline(text)
+            text, additional_metric = _apply_punctuation_pipeline(text)
         elif pipeline == 'WHITESPACES':
-            text, counter = _apply_whitespaces_pipeline(text)
+            text, additional_metric = _apply_whitespaces_pipeline(text)
         elif pipeline == 'NUMBERS':
-            text, counter = _apply_numbers_pipeline(text)
+            text, additional_metric = _apply_numbers_pipeline(text)
         elif pipeline == 'TRIPLE':
-            text, counter = _apply_triple_pipeline(text)
+            text, additional_metric = _apply_triple_pipeline(text)
         elif pipeline == 'REPLACE_BAD_WORDS':
             bad_words = import_bad_words(BAD_WORDS_FILE)
-            text, counter = _apply_bad_word_pipeline(text)
+            text, additional_metric = _apply_bad_word_pipeline(text, bad_words)
         elif pipeline == 'COUNT_BAD_WORDS':
             bad_words = import_bad_words(BAD_WORDS_FILE)
-            counter += count_bad_words(text, bad_words)
-    return text, counter, metric + additional_metric
+            bad_words_counter += count_bad_words(text, bad_words)
+    return text, bad_words_counter, metric + additional_metric
 
 
 def _apply_lower_pipeline(text):
@@ -110,20 +110,3 @@ def count_bad_words(text, bad_words):
         if word in text:
             counter += 1
     return counter
-
-
-def preprocess_dataframe(df, cols, pipelines: list):
-    if pipelines is None or len(pipelines) == 0:
-        return df
-    sentences_in_cols = [v for col in cols for v in df[col].values]
-    num_sentences = len(sentences_in_cols)
-    print(f"Dataset comments to preprocess:\t{num_sentences}")
-    counter = 0
-    for col in cols:
-        for i in df.index:
-            df.at[i, col], count, __ = apply_preprocessing_pipelines(
-                df.at[i, col], pipelines)
-            counter += count
-
-    print(f"Dataframe preprocessed in {counter} occurrenrcies")
-    return df

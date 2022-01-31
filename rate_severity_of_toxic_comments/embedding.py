@@ -44,7 +44,7 @@ def load_embedding_model(config) -> gensim.models.keyedvectors.KeyedVectors:
     return emb_model
 
 
-def build_embedding_matrix(embedding_model: gensim.models.keyedvectors.KeyedVectors, embedding_dim, tokenizer) -> np.ndarray:
+def build_embedding_matrix(embedding_model: gensim.models.keyedvectors.KeyedVectors, embedding_dim, vocab) -> np.ndarray:
     """
     Builds the embedding matrix of a specific dataset given a pre-trained word embedding model
 
@@ -56,21 +56,21 @@ def build_embedding_matrix(embedding_model: gensim.models.keyedvectors.KeyedVect
     :return
         - embedding matrix that assigns a high dimensional vector to each word in the dataset specific vocabulary (shape |V| x d)
     """
-    embedding_dimension, vocab = embedding_dim, tokenizer.get_vocab()
+
     embedding_matrix = np.zeros(
-        (len(vocab), embedding_dimension), dtype=np.float32)
+        (len(vocab), embedding_dim), dtype=np.float32)
 
     for idx, word in tqdm(enumerate(vocab.items())):
         if idx == 0:
             # Zeros vector for padding token
-            embedding_vector = np.zeros(embedding_dimension)
+            embedding_vector = np.zeros(embedding_dim)
         else:
             try:
                 # TODO: Why 2 vectors?
                 embedding_vector = embedding_model[word][0]
             except (KeyError, TypeError):
                 embedding_vector = np.random.uniform(
-                    low=-0.05, high=0.05, size=embedding_dimension)
+                    low=-0.05, high=0.05, size=embedding_dim)
 
         embedding_matrix[idx] = embedding_vector
 

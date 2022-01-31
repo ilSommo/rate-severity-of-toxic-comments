@@ -7,7 +7,8 @@ import numpy as np
 import torch
 from transformers import AutoTokenizer
 
-from rate_severity_of_toxic_comments.preprocessing import AVAILABLE_PREPROCESSING_PIPELINES, preprocess_dataframe
+from rate_severity_of_toxic_comments.preprocessing import AVAILABLE_PREPROCESSING_PIPELINES
+from rate_severity_of_toxic_comments.dataset import load_dataframe
 from rate_severity_of_toxic_comments.tokenizer import NaiveTokenizer, create_recurrent_model_tokenizer
 
 _bad_words = []
@@ -44,17 +45,14 @@ def fix_random_seed(seed):
         torch.use_deterministic_algorithms(True)
 
 
-def process_config(config, df):
+def process_config(df, config):
     if not all([p in AVAILABLE_PREPROCESSING_PIPELINES for p in config["preprocessing"]]):
-        print(f" Preprocessing pipeline not supported")
+        print(f"Preprocessing pipeline not supported")
         raise ValueError()
     try:
         config['output_features']
     except:
         raise ValueError()
-
-    df = preprocess_dataframe(
-        df, config["training_set"]["cols"], config["preprocessing"])
 
     if config["run_mode"] == "pretrained":
         config["tokenizer"] = AutoTokenizer.from_pretrained(

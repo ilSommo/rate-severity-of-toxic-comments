@@ -23,7 +23,7 @@ def create_recurrent_model_tokenizer(config, df):
     embedding_model = load_embedding_model(config)
     check_OOV_terms(embedding_model, vocab)
     embedding_matrix = build_embedding_matrix(
-        embedding_model, embedding_dim, tokenizer)
+        embedding_model, embedding_dim, vocab)
     return tokenizer, embedding_matrix
 
 
@@ -46,8 +46,6 @@ class NaiveTokenizer(PreTrainedTokenizer):
 
     def __init__(
         self,
-        vocab_file=None,
-        preprocessing_pipelines=[],
         do_lower_case=True,
         never_split=None,
         unk_token="[UNK]",
@@ -67,11 +65,6 @@ class NaiveTokenizer(PreTrainedTokenizer):
             strip_accents=None,
             **kwargs,
         )
-
-        if vocab_file:
-            self.set_vocab(load_vocabulary(vocab_file))
-
-        self.preprocessing_pipelines = preprocessing_pipelines
         self.basic_tokenizer = BasicTokenizer(
             do_lower_case=do_lower_case,
             never_split=never_split,
@@ -94,9 +87,7 @@ class NaiveTokenizer(PreTrainedTokenizer):
         return dict(self.vocab, **self.added_tokens_encoder)
 
     def _tokenize(self, text):
-        processed_text, bad_words_counter, preprocessing_metric = apply_preprocessing_pipelines(
-            text, self.preprocessing_pipelines)
-        return self.basic_tokenizer.tokenize(processed_text, never_split=self.all_special_tokens)
+        return self.basic_tokenizer.tokenize(text, never_split=self.all_special_tokens)
 
     def _convert_token_to_id(self, token):
         """Converts a token (str) in an id using the vocab."""

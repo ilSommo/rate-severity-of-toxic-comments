@@ -10,7 +10,7 @@
   "run_mode": "recurrent",
   "architecture": "LSTM",
   "wandb": true,
-  "preprocessing": [],
+  "preprocessing": ["LOWER", "NUMBERS"],
   "vocab_file": "res/vocab/naive.txt",
   "embedding_dimension": 300,
   "embedding_type": "glove",

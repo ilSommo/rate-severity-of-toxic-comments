@@ -6,15 +6,17 @@ import os
 def load_vocabulary(vocab_file):
     """Loads a vocabulary file into a dictionary."""
     vocab_dict = collections.OrderedDict()
-    print(f" Loading vocabulary from {vocab_file}")
+    print(f"Loading vocabulary from {vocab_file}")
     if not os.path.isfile(vocab_file):
+        print(f"Vocabulary file not found")
         open(vocab_file, 'a+').close()
+    else:
+        print(f"Loaded vocabulary")
     with open(vocab_file, "r", encoding="utf-8") as reader:
         tokens = reader.readlines()
     for index, token in enumerate(tokens):
         token = token.rstrip("\n")
         vocab_dict[token] = index
-    print(f" Loaded vocabulary")
     vocab = torchtext.vocab.vocab(vocab_dict, min_freq=1).get_stoi()
     return vocab
 
@@ -34,7 +36,7 @@ def build_vocabulary(df, cols, tokenizer, min_freq=1, save_path=None):
 
     num_sentences = len(sentences_in_cols)
 
-    print(f"Comments count:\t{num_sentences}")
+    print(f"Comments count: {num_sentences}")
 
     print(f"Creating vocabulary from comments...")
     percentage_printed = 0.0
@@ -51,8 +53,8 @@ def build_vocabulary(df, cols, tokenizer, min_freq=1, save_path=None):
             percentage_printed = 0.75
         counter.update(tokenizer._tokenize(sentence))
 
-    print(f"Vocabulary created")
     v = torchtext.vocab.vocab(counter, min_freq=min_freq).get_stoi()
+    print(f"Vocabulary created ({len(v)} words)")
     if save_path:
         save_vocabulary(save_path, v)
     return v, tokenizer

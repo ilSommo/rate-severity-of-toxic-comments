@@ -3,7 +3,9 @@ from torch.utils.data import Dataset
 from torch.utils.data.dataloader import DataLoader
 import pandas as pd
 import numpy as np
+from rate_severity_of_toxic_comments.preprocessing import apply_preprocessing_pipelines
 from sklearn.model_selection import train_test_split
+import os
 
 
 class PairwiseDataset(Dataset):
@@ -108,3 +110,56 @@ def split_dataset(dataframe: pd.DataFrame, seed):
         np.floor(dataframe["label"]), return_counts=True)
     print(dict(zip(unique, counts)))
     return train_test_split(dataframe, stratify=np.floor(dataframe["label"]), random_state=seed)
+
+
+def load_dataframe(config):
+    pipelines = config["preprocessing"]
+    pipelines.sort()
+    base_train_file_path = config["training_set"]["path"]
+    vocab_file = config["vocab_file"]
+    if pipelines is None or len(pipelines) == 0:
+        print(f'Loaded base dataframe from {base_train_file_path}')
+        return pd.read_csv(base_train_file_path)
+
+    data_frame_to_load = base_train_file_path[:-3]
+    vocab_to_load = vocab_file[:-3]
+
+    for pipeline in pipelines:
+        data_frame_to_load += '_' + pipeline
+        vocab_to_load += '_' + pipeline
+    data_frame_to_load += '.csv'
+    vocab_to_load += '.txt'
+
+    print(f'Trying to load dataframe from {data_frame_to_load}')
+    print(f'New vocab file path {vocab_to_load}')
+    config["vocab_file"] = vocab_to_load
+
+    if os.path.exists(data_frame_to_load):
+        print(f'Loading preprocessed dataframe from {data_frame_to_load}')
+        df = pd.read_csv(data_frame_to_load)
+        return df
+    else:
+        df = pd.read_csv(base_train_file_path)
+
+    cols = config["training_set"]["cols"]
+    sentences_in_cols = [v for col in cols for v in df[col].values]
+    num_sentences = len(sentences_in_cols)
+    print(f"Dataset comments to preprocess: {num_sentences}")
+    print(f"Pipelines to apply: {pipelines}")
+
+    counter = 0
+    for col in cols:
+        for i in df.index:
+            if i == int(num_sentences / 4):
+                print(f"25% comments preprocessed")
+            elif i == int(num_sentences / 2):
+                print(f"50% comments preprocessed")
+            elif i == int(num_sentences / 1.5):
+                print(f"75% comments preprocessed")
+            df.at[i, col], bad_words_count, count = apply_preprocessing_pipelines(
+                df.at[i, col], pipelines)
+            counter += count
+
+    print(f"Dataframe preprocessed in {counter} occurrencies")
+    df.to_csv(data_frame_to_load)
+    return df
