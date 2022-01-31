@@ -118,11 +118,11 @@ def load_dataframe(config):
     base_train_file_path = config["training_set"]["path"]
     vocab_file = config["vocab_file"]
     if pipelines is None or len(pipelines) == 0:
-        print(f'Loaded base dataframe from {base_train_file_path}')
+        print(f'Loaded base dataframe from {base_train_file_path}\n')
         return pd.read_csv(base_train_file_path)
 
-    data_frame_to_load = base_train_file_path[:-3]
-    vocab_to_load = vocab_file[:-3]
+    data_frame_to_load = base_train_file_path[:-4]
+    vocab_to_load = vocab_file[:-4]
 
     for pipeline in pipelines:
         data_frame_to_load += '_' + pipeline
@@ -135,7 +135,7 @@ def load_dataframe(config):
     config["vocab_file"] = vocab_to_load
 
     if os.path.exists(data_frame_to_load):
-        print(f'Loading preprocessed dataframe from {data_frame_to_load}')
+        print(f'Loading preprocessed dataframe from {data_frame_to_load}\n')
         df = pd.read_csv(data_frame_to_load)
         return df
     else:
@@ -160,6 +160,6 @@ def load_dataframe(config):
                 df.at[i, col], pipelines)
             counter += count
 
-    print(f"Dataframe preprocessed in {counter} occurrencies")
+    print(f"Dataframe preprocessed in {counter} occurrencies\n")
     df.to_csv(data_frame_to_load)
     return df

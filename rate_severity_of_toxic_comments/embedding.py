@@ -60,6 +60,8 @@ def build_embedding_matrix(embedding_model: gensim.models.keyedvectors.KeyedVect
     embedding_matrix = np.zeros(
         (len(vocab), embedding_dim), dtype=np.float32)
 
+    print(f"Building embedding matrix")
+
     for idx, word in tqdm(enumerate(vocab.items())):
         if idx == 0:
             # Zeros vector for padding token
@@ -100,3 +102,10 @@ def check_OOV_terms(embedding_model: gensim.models.keyedvectors.KeyedVectors, vo
     print('Pretrained embeddings size: ', len(list(embedding_vocabulary)))
     print(f'{(len(known_words) / len(list(embedding_vocabulary)) * 100):.2f}% Embedding used')
     return oov
+
+
+def count_OOV_frequency(df, cols, oov):
+    counts = {word: df[col].str.count(word) for word in oov for col in cols}
+    sorted_counts = {k: v for k, v in sorted(
+        counts.items(), key=lambda item: item[1])[-10:]}
+    print(f"Top 10 OOV occurrencies\n{sorted_counts}")

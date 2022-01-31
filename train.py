@@ -5,7 +5,7 @@ import os
 import pandas as pd
 import torch
 
-from rate_severity_of_toxic_comments.dataset import build_datasets
+from rate_severity_of_toxic_comments.dataset import build_datasets, load_dataframe
 from rate_severity_of_toxic_comments.training import run_training
 from rate_severity_of_toxic_comments.utilities import process_config, split_dataset
 
@@ -27,7 +27,12 @@ if __name__ == "__main__":
         with open(LOCAL_CONFIG_FILE_PATH) as local:
             CONFIG.update(json.load(local))
 
-    CONFIG = process_config(CONFIG)
+    if CONFIG["run_mode"] == "pretrained":
+        CONFIG["preprocessing"] = []
+
+    df = load_dataframe(CONFIG)
+
+    CONFIG = process_config(df, CONFIG)
 
     df = pd.read_csv(CONFIG["training_set"]["path"])
     df_train, df_valid = split_dataset(df, CONFIG['seed'])

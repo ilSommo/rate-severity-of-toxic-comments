@@ -18,13 +18,14 @@ MASTER_WORD = 'shit'
 def apply_preprocessing_pipelines(text, pipelines):
     bad_words_counter = 0
     metric = 0
+    bad_words = import_bad_words(BAD_WORDS_FILE)
     for pipeline in pipelines:
         text, bad_words_counter, metric = apply_preprocessing_pipeline(
-            text, bad_words_counter, metric, pipeline)
+            text, bad_words_counter, metric, pipeline, bad_words)
     return text, bad_words_counter, metric
 
 
-def apply_preprocessing_pipeline(text, bad_words_counter, metric, pipeline):
+def apply_preprocessing_pipeline(text, bad_words_counter, metric, pipeline, bad_words):
     if(pipeline in AVAILABLE_PREPROCESSING_PIPELINES):
         additional_metric = 0
         if pipeline == 'LOWER':
@@ -38,10 +39,8 @@ def apply_preprocessing_pipeline(text, bad_words_counter, metric, pipeline):
         elif pipeline == 'TRIPLE':
             text, additional_metric = _apply_triple_pipeline(text)
         elif pipeline == 'REPLACE_BAD_WORDS':
-            bad_words = import_bad_words(BAD_WORDS_FILE)
             text, additional_metric = _apply_bad_word_pipeline(text, bad_words)
         elif pipeline == 'COUNT_BAD_WORDS':
-            bad_words = import_bad_words(BAD_WORDS_FILE)
             bad_words_counter += count_bad_words(text, bad_words)
     return text, bad_words_counter, metric + additional_metric
 

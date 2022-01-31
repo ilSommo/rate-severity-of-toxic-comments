@@ -4,8 +4,7 @@ from typing import Optional
 import pandas as pd
 import torch
 from transformers import BasicTokenizer, PreTrainedTokenizer
-from rate_severity_of_toxic_comments.preprocessing import apply_preprocessing_pipelines
-from rate_severity_of_toxic_comments.embedding import build_embedding_matrix, check_OOV_terms, load_embedding_model
+from rate_severity_of_toxic_comments.embedding import build_embedding_matrix, load_embedding_model, check_OOV_terms, count_OOV_frequency
 from rate_severity_of_toxic_comments.vocabulary import load_vocabulary, build_vocabulary
 
 
@@ -21,7 +20,8 @@ def create_recurrent_model_tokenizer(config, df):
     tokenizer.set_vocab(vocab)
 
     embedding_model = load_embedding_model(config)
-    check_OOV_terms(embedding_model, vocab)
+    oov = check_OOV_terms(embedding_model, vocab)
+    count_OOV_frequency(df, dataframe_cols, oov)
     embedding_matrix = build_embedding_matrix(
         embedding_model, embedding_dim, vocab)
     return tokenizer, embedding_matrix
