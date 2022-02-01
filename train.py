@@ -5,14 +5,12 @@ import os
 import pandas as pd
 import torch
 
-from rate_severity_of_toxic_comments.dataset import build_datasets, load_dataframe
+from rate_severity_of_toxic_comments.dataset import build_dataset, load_dataframe, split_dataset
 from rate_severity_of_toxic_comments.training import run_training
-from rate_severity_of_toxic_comments.utilities import process_config, split_dataset
-
+from rate_severity_of_toxic_comments.utilities import process_config, validate_config
 
 DEFAULT_CONFIG_FILE_PATH = "config/default.json"
 LOCAL_CONFIG_FILE_PATH = "config/local.json"
-TRAIN_TEST_SPLIT = 0.7
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -27,17 +25,21 @@ if __name__ == "__main__":
         with open(LOCAL_CONFIG_FILE_PATH) as local:
             CONFIG.update(json.load(local))
 
-    if CONFIG["run_mode"] == "pretrained":
-        CONFIG["preprocessing"] = []
+    validate_config(CONFIG)
 
-    df = load_dataframe(CONFIG)
+    run_mode = CONFIG["options"]["run_mode"]
+    df = load_dataframe(run_mode, CONFIG["training"], CONFIG[run_mode])
 
-    CONFIG = process_config(df, CONFIG)
+    support_bag = process_config(df, CONFIG)
 
-    df = pd.read_csv(CONFIG["training_set"]["path"])
-    df_train, df_valid = split_dataset(df, CONFIG['seed'])
+    df_train, df_valid = split_dataset(df, CONFIG['options']['seed'])
 
-    training_data, val_data = build_datasets([df_train, df_valid], CONFIG, [
-                                             CONFIG["training_set"]["type"], CONFIG["training_set"]["type"]])
-    stats = run_training(training_data, val_data,
-                         log_interval=10, config=CONFIG, verbose=args.verbose)
+    training_data = build_dataset(df_train, CONFIG["training"]["dataset"], 
+            CONFIG[run_mode], support_bag["tokenizer"])
+    val_data = build_dataset(df_valid, CONFIG["training"]["dataset"], 
+            CONFIG[run_mode], support_bag["tokenizer"])
+
+    model, loss_history = run_training(run_mode, training_data, val_data, 
+            CONFIG["training"], CONFIG[run_mode], support_bag, CONFIG["options"]["seed"], 
+            CONFIG["options"]["wandb"], CONFIG["options"]["use_gpu"], 
+            verbose=True, log_interval=100)
