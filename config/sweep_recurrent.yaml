@@ -1,4 +1,6 @@
 program: train.py
+project: "rate-comments"
+entity: toxicity
 method: bayes
 metric:
   name: valid_loss
