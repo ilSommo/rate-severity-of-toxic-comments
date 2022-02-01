@@ -12,8 +12,8 @@ class TrainLoopStatisticsManager:
         self.model = model
         self.counter = 0
         self.best_val_loss = None
-        self.train_loss_history = [],
-        self.val_loss_history = [],
+        self.train_loss_history = []
+        self.val_loss_history = []
         self.early_stop = False,
         self.best_model_wts = copy.deepcopy(self.model.state_dict())
 
