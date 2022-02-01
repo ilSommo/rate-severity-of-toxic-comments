@@ -1,0 +1,23 @@
+program: train.py
+method: bayes
+metric:
+  name: valid_loss
+  goal: minimize
+parameters:
+  training.learning_rate:
+    min: 0.01
+    max: 0.1
+  training.optimizer:
+    values: ["adam", "adamw"]
+  training.droput:
+    min: 0.1
+    max: 0.5
+  training.L2_regularization:
+    min: 0.01
+    max: 0.1
+  model.architecture:
+    values: ["LSTM", "GRU", "BiDi"]
+  # model.preprocessing:
+#
+  model.hidden_dim:
+    values: [32, 64, 128]

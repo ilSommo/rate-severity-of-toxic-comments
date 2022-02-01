@@ -13,11 +13,6 @@ DEFAULT_CONFIG_FILE_PATH = "config/default.json"
 LOCAL_CONFIG_FILE_PATH = "config/local.json"
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--verbose", action="store_true")
-
-    args = parser.parse_args()
-
     default = open(DEFAULT_CONFIG_FILE_PATH)
     CONFIG = json.load(default)
 

@@ -141,17 +141,19 @@ def run_training(run_mode, training_data: Dataset,
     if use_wandb:
         run = wandb.init(project="rate-comments",
                         entity="toxicity",
-                        config={
-                             "model": model_params, 
-                             "training": training_params,
-                             "seed": seed,
-                             "run_mode": run_mode
-                        },
                         job_type='Train',
                         # group="", TODO?
                         tags=[run_mode])
 
         wandb.run.name = run_mode + "-" + wandb.run.id
+        wandb.config.update({
+                "model": model_params, 
+                "training": training_params,
+                "seed": seed,
+                "run_mode": run_mode
+        })
+        training_params = wandb.config["training"]
+        model_params = wandb.config["model"]
         wandb.run.save()
 
     device = torch.device("cuda" if torch.cuda.is_available()
@@ -166,8 +168,12 @@ def run_training(run_mode, training_data: Dataset,
 
     train_loop_stats = TrainLoopStatisticsManager(model, early_stopping_patience=3, verbose=verbose, use_wandb=use_wandb)
 
-    optimizer = optim.Adam(model.parameters(
-    ), lr=training_params["learning_rate"], weight_decay=training_params['L2_regularization'])
+    if training_params["optimizer"] == "adam":
+        optimizer = optim.Adam(model.parameters(
+        ), lr=training_params["learning_rate"], weight_decay=training_params['L2_regularization'])
+    elif training_params["optimizer"] == "adamw":
+        optimizer = optim.AdamW(model.parameters(
+        ), lr=training_params["learning_rate"], weight_decay=training_params['L2_regularization'])
 
     if use_wandb:
         wandb.watch(model, log_freq=log_interval)
