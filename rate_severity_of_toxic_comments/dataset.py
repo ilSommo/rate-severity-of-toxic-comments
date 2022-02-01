@@ -7,6 +7,7 @@ from rate_severity_of_toxic_comments.preprocessing import apply_preprocessing_pi
 from sklearn.model_selection import train_test_split
 import os
 
+AVAILABLE_DATASET_TYPES = ["pairwise", "weighted"]
 
 class PairwiseDataset(Dataset):
     def __init__(self, df, tokenizer, max_length):
@@ -22,20 +23,35 @@ class PairwiseDataset(Dataset):
     def __getitem__(self, index):
         more_toxic = self.more_toxic[index]
         less_toxic = self.less_toxic[index]
-        inputs_more_toxic = self.tokenizer(
-            more_toxic,
-            truncation=True,
-            add_special_tokens=True,
-            max_length=self.max_len,
-            padding='max_length'
-        )
-        inputs_less_toxic = self.tokenizer(
-            less_toxic,
-            truncation=True,
-            add_special_tokens=True,
-            max_length=self.max_len,
-            padding='max_length'
-        )
+
+        if self.max_len:
+            inputs_more_toxic = self.tokenizer(
+                more_toxic,
+                truncation=True,
+                add_special_tokens=True,
+                max_length=self.max_len,
+                padding='max_length'
+            )
+            inputs_less_toxic = self.tokenizer(
+                less_toxic,
+                truncation=True,
+                add_special_tokens=True,
+                max_length=self.max_len,
+                padding='max_length'
+            )
+        else:
+            inputs_more_toxic = self.tokenizer(
+                more_toxic,
+                truncation=True,
+                add_special_tokens=True,
+                padding='longest'
+            )
+            inputs_less_toxic = self.tokenizer(
+                less_toxic,
+                truncation=True,
+                add_special_tokens=True,
+                padding='longest'
+            )
         target = 1
 
         more_toxic_ids = inputs_more_toxic['input_ids']
@@ -67,13 +83,23 @@ class WeightedDataset(Dataset):
 
     def __getitem__(self, index):
         text = self.text[index]
-        inputs = self.tokenizer(
-            text,
-            truncation=True,
-            add_special_tokens=True,
-            max_length=self.max_len,
-            padding='max_length'
-        )
+
+        if self.max_len:
+            inputs = self.tokenizer(
+                text,
+                truncation=True,
+                add_special_tokens=True,
+                max_length=self.max_len,
+                padding='max_length'
+            )
+        else:
+            inputs = self.tokenizer(
+                text,
+                truncation=True,
+                add_special_tokens=True,
+                padding='longest'
+            )
+            
         target = self.target[index]
 
         ids = inputs['input_ids']
@@ -85,16 +111,11 @@ class WeightedDataset(Dataset):
         }
 
 
-def build_datasets(dfs, config, dataset_types):
-    dts = []
-    for df, ds_type in zip(dfs, dataset_types):
-        if ds_type == "pairwise":
-            dts.append(PairwiseDataset(
-                df, tokenizer=config["tokenizer"], max_length=config["max_length"]))
-        elif ds_type == "weighted":
-            dts.append(WeightedDataset(
-                df, [], tokenizer=config["tokenizer"], max_length=config["max_length"]))
-    return dts
+def build_dataset(df, dataset_params, model_params, tokenizer):
+    if dataset_params["type"] == "pairwise":
+        return PairwiseDataset(df, tokenizer=tokenizer, max_length=model_params["max_length"])
+    elif dataset_params["type"] == "weighted":
+        return WeightedDataset(df, [], tokenizer=tokenizer, max_length=model_params["max_length"])
 
 
 def build_dataloaders(datasets, batch_sizes):
@@ -112,27 +133,32 @@ def split_dataset(dataframe: pd.DataFrame, seed):
     return train_test_split(dataframe, stratify=np.floor(dataframe["label"]), random_state=seed)
 
 
-def load_dataframe(config):
-    pipelines = config["preprocessing"]
-    pipelines.sort()
-    base_train_file_path = config["training_set"]["path"]
-    vocab_file = config["vocab_file"]
-    if pipelines is None or len(pipelines) == 0:
-        print(f'Loaded base dataframe from {base_train_file_path}\n')
-        return pd.read_csv(base_train_file_path)
+def load_dataframe(run_mode, train_params, model_params):
+    base_train_file_path = train_params["dataset"]["path"]
+    cols = train_params["dataset"]["cols"]
+    data_frame_to_load = base_train_file_path
+    pipelines = []
 
-    data_frame_to_load = base_train_file_path[:-4]
-    vocab_to_load = vocab_file[:-4]
+    if run_mode == "recurrent":
+        pipelines = model_params["preprocessing"]
+        pipelines.sort()
+        vocab_file = model_params["vocab_file"]
+        if pipelines is None or len(pipelines) == 0:
+            print(f'Loaded base dataframe from {base_train_file_path}\n')
+            return pd.read_csv(base_train_file_path)
 
-    for pipeline in pipelines:
-        data_frame_to_load += '_' + pipeline
-        vocab_to_load += '_' + pipeline
-    data_frame_to_load += '.csv'
-    vocab_to_load += '.txt'
+        data_frame_to_load = base_train_file_path[:-4]
+        vocab_to_load = vocab_file[:-4]
 
-    print(f'Trying to load dataframe from {data_frame_to_load}')
-    print(f'New vocab file path {vocab_to_load}')
-    config["vocab_file"] = vocab_to_load
+        for pipeline in pipelines:
+            data_frame_to_load += '_' + pipeline
+            vocab_to_load += '_' + pipeline
+        data_frame_to_load += '.csv'
+        vocab_to_load += '.txt'
+
+        print(f'Trying to load dataframe from {data_frame_to_load}')
+        print(f'New vocab file path {vocab_to_load}')
+        model_params["vocab_file"] = vocab_to_load
 
     if os.path.exists(data_frame_to_load):
         print(f'Loading preprocessed dataframe from {data_frame_to_load}\n')
@@ -141,7 +167,6 @@ def load_dataframe(config):
     else:
         df = pd.read_csv(base_train_file_path)
 
-    cols = config["training_set"]["cols"]
     sentences_in_cols = [v for col in cols for v in df[col].values]
     num_sentences = len(sentences_in_cols)
     print(f"Dataset comments to preprocess: {num_sentences}")

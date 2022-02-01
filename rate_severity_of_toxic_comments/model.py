@@ -4,7 +4,7 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from transformers import AutoModel
 
 OUTPUT_CLASSES = 1
-
+AVAILABLE_ARCHITECTURES = ["LSTM", "GRU", "BiDi"]
 
 class PretrainedModel(Module):
     def __init__(self, model_name, dropout, output_features):
@@ -37,9 +37,7 @@ class RecurrentModel(Module):
         elif architecture == 'BiDi':
             self.recurrent = LSTM(embedding_dim, hidden_dim,
                                   batch_first=True, bidirectional=True)
-        else:
-            self.recurrent = LSTM(embedding_dim, hidden_dim,
-                                  batch_first=True)
+
         self.drop = Dropout(p=dropout)
         self.relu = ReLU()
         self.sig = Sigmoid()
@@ -70,15 +68,10 @@ class DummyModel(Module):
         return self.fc(ids.to(torch.float32).mean(dim=0).unsqueeze(1))
 
 
-def create_model(config):
-    if config["run_mode"] == "test":
+def create_model(run_mode, train_params, model_params, support_bag):
+    if run_mode == "debug":
         return DummyModel()
-    if config["run_mode"] == "recurrent":
-        hidden_dim = config["output_features"]
-        drop = config['dropout']
-        architecture = config['architecture']
-        return RecurrentModel(config["embedding_matrix"], drop, hidden_dim, architecture)
-    elif config["run_mode"] == "pretrained":
-        drop = config['dropout']
-        output_features = config["output_features"]
-        return PretrainedModel(config["model_name"], drop, output_features)
+    if run_mode == "recurrent":
+        return RecurrentModel(support_bag["embedding_matrix"], train_params['dropout'], model_params['hidden_dim'], model_params['architecture'])
+    elif run_mode == "pretrained":
+        return PretrainedModel(model_params["model_name"], train_params['dropout'], model_params["output_features"])

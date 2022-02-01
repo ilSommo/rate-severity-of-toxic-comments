@@ -2,6 +2,7 @@ import time
 import os
 import copy
 import numpy as np
+from tqdm import tqdm
 
 import torch
 from torch import nn, optim
@@ -25,7 +26,7 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_int
     cumul_batches = 0
     dataset_size = 0
 
-    for idx_batch, data in enumerate(dataloader):
+    for idx_batch, data in tqdm(enumerate(dataloader)):
         if not pairwise_dataset:
             ids = data["ids"].to(device, dtype=torch.long)
             mask = data['mask'].to(device, dtype=torch.long)
@@ -47,7 +48,7 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_int
                 device, dtype=torch.long)
             targets = data['target'].to(device, dtype=torch.long)
             batch_size = more_toxic_ids.size(0)
-
+            # TODO Check output size
             more_toxic_outputs = model(more_toxic_ids, more_toxic_mask)
             less_toxic_outputs = model(less_toxic_ids, less_toxic_mask)
             loss = loss_fn(more_toxic_outputs, less_toxic_outputs, targets)
@@ -126,62 +127,66 @@ def test_loop(dataloader, model, loss_fn, device, idx_epoch, log_interval=100, p
     return total_metrics
 
 
-def run_training(training_data: Dataset,
+def run_training(run_mode, training_data: Dataset,
                  val_data: Dataset,
-                 log_interval: int,
-                 config,
-                 verbose: bool = True) -> dict:
+                 training_params, model_params, support_bag,
+                 seed, use_wandb, use_gpu,
+                 verbose: bool = True,
+                 log_interval: int = 100) -> dict:
     """
     Executes the full train test loop with the given parameters
     """
-    num_epochs = config["epochs"]
 
-    if config["wandb"]:
+    run = None
+    if use_wandb:
         run = wandb.init(project="rate-comments",
-                         entity="toxicity",
-                         config=config,
-                         job_type='Train',
-                         # group="", TODO?
-                         tags=[config["run_mode"]])
+                        entity="toxicity",
+                        config={
+                             "model": model_params, 
+                             "training": training_params,
+                             "seed": seed,
+                             "run_mode": run_mode
+                        },
+                        job_type='Train',
+                        # group="", TODO?
+                        tags=[run_mode])
 
-        wandb.run.name = config["run_mode"] + "-" + wandb.run.id
+        wandb.run.name = run_mode + "-" + wandb.run.id
         wandb.run.save()
 
     device = torch.device("cuda" if torch.cuda.is_available()
-                          and config["use_gpu"] else "cpu")
+                          and use_gpu else "cpu")
     loss_fn = nn.MSELoss()
 
     train_dataloader, val_dataloader = build_dataloaders([training_data, val_data], batch_sizes=(
-        config["train_batch_size"], config["valid_batch_size"]))
+        training_params["train_batch_size"], training_params["valid_batch_size"]))
 
-    model = create_model(config)
+    model = create_model(run_mode, training_params, model_params, support_bag)
     model.to(device)
 
-    train_loop_stats = TrainLoopStatisticsManager(model,
-                                                  early_stopping_patience=3, verbose=verbose, wandb=config["wandb"])
-
-    optimization_params = config['optimizations']
+    train_loop_stats = TrainLoopStatisticsManager(model, early_stopping_patience=3, verbose=verbose, use_wandb=use_wandb)
 
     optimizer = optim.Adam(model.parameters(
-    ), lr=optimization_params["learning_rate"], weight_decay=optimization_params['L2_regularization'])
+    ), lr=training_params["learning_rate"], weight_decay=training_params['L2_regularization'])
 
-    if config["wandb"]:
+    if use_wandb:
         wandb.watch(model, log_freq=log_interval)
 
     loop_start = time.time()
 
+    num_epochs = training_params["epochs"]
     for epoch in range(1, num_epochs + 1):
         time_start = time.time()
 
         metrics_train = train_loop(train_dataloader, model, loss_fn, optimizer, device, epoch,
-                                   log_interval=log_interval, pairwise_dataset=False, use_wandb=config["wandb"])
+                                   log_interval=log_interval, pairwise_dataset=False, use_wandb=use_wandb)
         metrics_val = test_loop(val_dataloader, model, loss_fn, device,
-                                epoch, pairwise_dataset=False, use_wandb=config["wandb"])
+                                epoch, pairwise_dataset=False, use_wandb=use_wandb)
 
         time_end = time.time()
 
         train_loop_stats.registerEpoch(
-            metrics_train, metrics_val, optimization_params["learning_rate"], epoch, time_start, time_end)
+            metrics_train, metrics_val, training_params["learning_rate"], epoch, time_start, time_end)
 
         if train_loop_stats.early_stop:
             print("Early Stopping")
@@ -193,12 +198,12 @@ def run_training(training_data: Dataset,
         print(f'Time for {num_epochs} epochs (s): {(time_loop):.3f}')
 
     model.load_state_dict(train_loop_stats.best_model_wts)
-    model_filename = config["run_mode"]+"-" + \
+    model_filename = run_mode + "-" + \
         time.strftime("%Y%m%d-%H%M%S")+".pth"
     torch.save(model.state_dict(), os.path.join(
         "res", "models", model_filename))
 
-    if config["wandb"]:
+    if use_wandb:
         torch.save(model.state_dict(), os.path.join(
             wandb.run.dir, model_filename))
         run.finish()

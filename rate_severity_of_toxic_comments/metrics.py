@@ -5,10 +5,10 @@ import numpy as np
 
 class TrainLoopStatisticsManager:
 
-    def __init__(self, model, early_stopping_patience=7, verbose=True, wandb=None):
+    def __init__(self, model, early_stopping_patience=7, verbose=True, use_wandb=None):
         self.early_stopping_patience = early_stopping_patience
         self.verbose = verbose
-        self.wandb = wandb
+        self.use_wandb = use_wandb
         self.model = model
         self.counter = 0
         self.best_val_loss = None
@@ -27,7 +27,7 @@ class TrainLoopStatisticsManager:
         self.train_loss_history.append(train_loss)
         self.val_loss_history.append(valid_loss)
 
-        if self.wandb != None:
+        if self.use_wandb:
             wandb.log(all_metrics)
 
         if self.verbose:

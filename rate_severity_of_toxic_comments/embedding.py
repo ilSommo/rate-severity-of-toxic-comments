@@ -6,8 +6,11 @@ import numpy as np
 import gensim
 import gensim.downloader as gloader
 
+AVAILABLE_EMBEDDINGS = [
+    ("word2vec", 300), ("glove", 50), ("glove", 100), ("glove", 200), ("glove", 300), ("fasttext", 300)
+]
 
-def load_embedding_model(config) -> gensim.models.keyedvectors.KeyedVectors:
+def load_embedding_model(model_params) -> gensim.models.keyedvectors.KeyedVectors:
     """
     Loads a pre-trained word embedding model via gensim library.
 
@@ -17,7 +20,7 @@ def load_embedding_model(config) -> gensim.models.keyedvectors.KeyedVectors:
     :return
         - pre-trained word embedding model (gensim KeyedVectors object)
     """
-    model_type, embedding_dimension = config["embedding_type"], config["embedding_dimension"]
+    model_type, embedding_dimension = model_params["embedding_type"], model_params["embedding_dimension"]
 
     download_path = ""
 
@@ -105,7 +108,6 @@ def check_OOV_terms(embedding_model: gensim.models.keyedvectors.KeyedVectors, vo
 
 
 def count_OOV_frequency(df, cols, oov):
-    counts = {word: df[col].str.count(word) for word in oov for col in cols}
-    sorted_counts = {k: v for k, v in sorted(
-        counts.items(), key=lambda item: item[1])[-10:]}
+    counts = {word: df[col].str.count(word).sum() for word in oov for col in cols}
+    sorted_counts = {k: v for idx, (k, v) in enumerate(sorted(counts.items(), key=lambda item: item[1], reverse=True)) if idx < 10}
     print(f"Top 10 OOV occurrencies\n{sorted_counts}")

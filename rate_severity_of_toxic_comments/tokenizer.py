@@ -9,9 +9,9 @@ from rate_severity_of_toxic_comments.vocabulary import load_vocabulary, build_vo
 
 
 def create_recurrent_model_tokenizer(config, df):
-    vocab_file_path = config["vocab_file"]
-    dataframe_cols = config["training_set"]["cols"]
-    embedding_dim = config["embedding_dimension"]
+    vocab_file_path = config["recurrent"]["vocab_file"]
+    dataframe_cols = config["training"]["dataset"]["cols"]
+    embedding_dim = config["recurrent"]["embedding_dimension"]
     tokenizer = NaiveTokenizer()
     vocab = load_vocabulary(vocab_file_path)
     if len(vocab) == 0:
@@ -19,7 +19,7 @@ def create_recurrent_model_tokenizer(config, df):
                                             dataframe_cols, tokenizer, save_path=vocab_file_path)
     tokenizer.set_vocab(vocab)
 
-    embedding_model = load_embedding_model(config)
+    embedding_model = load_embedding_model(config["recurrent"])
     oov = check_OOV_terms(embedding_model, vocab)
     count_OOV_frequency(df, dataframe_cols, oov)
     embedding_matrix = build_embedding_matrix(
