@@ -26,7 +26,7 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_int
     cumul_batches = 0
     dataset_size = 0
 
-    for idx_batch, data in tqdm(enumerate(dataloader)):
+    for idx_batch, data in tqdm(enumerate(dataloader), total=len(dataloader)):
         if not pairwise_dataset:
             ids = data["ids"].to(device, dtype=torch.long)
             mask = data['mask'].to(device, dtype=torch.long)

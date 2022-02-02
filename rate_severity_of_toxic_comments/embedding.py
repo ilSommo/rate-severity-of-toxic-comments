@@ -37,7 +37,9 @@ def load_embedding_model(model_params) -> gensim.models.keyedvectors.KeyedVector
 
     # Check download
     try:
+        print("Loading embedding model")
         emb_model = gloader.load(download_path)
+        print("Embedding model loaded")
     except ValueError as e:
         print("Invalid embedding model name! Check the embedding dimension:")
         print("Word2Vec: 300")
@@ -65,7 +67,7 @@ def build_embedding_matrix(embedding_model: gensim.models.keyedvectors.KeyedVect
 
     print(f"Building embedding matrix")
 
-    for idx, word in tqdm(enumerate(vocab.items())):
+    for idx, word in tqdm(enumerate(vocab.items()), total=len(vocab)):
         if idx == 0:
             # Zeros vector for padding token
             embedding_vector = np.zeros(embedding_dim)

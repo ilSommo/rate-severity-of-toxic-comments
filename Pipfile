@@ -20,6 +20,7 @@ torchtext = "*"
 scikit-learn = "*"
 mlxtend = "*"
 kaggle = "*"
+tqdm = "*"
 
 [dev-packages]
 autopep8 = "*"

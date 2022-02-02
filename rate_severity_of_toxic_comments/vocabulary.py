@@ -2,6 +2,8 @@ import collections
 import torchtext
 import os
 
+from tqdm import tqdm
+
 
 def load_vocabulary(vocab_file):
     """Loads a vocabulary file into a dictionary."""
@@ -10,14 +12,17 @@ def load_vocabulary(vocab_file):
     if not os.path.isfile(vocab_file):
         print(f"Vocabulary file not found")
         open(vocab_file, 'a+').close()
-    else:
-        print(f"Loaded vocabulary")
+
     with open(vocab_file, "r", encoding="utf-8") as reader:
         tokens = reader.readlines()
-    for index, token in enumerate(tokens):
+
+    for index, token in tqdm(enumerate(tokens), total=len(tokens)):
         token = token.rstrip("\n")
         vocab_dict[token] = index
+
     vocab = torchtext.vocab.vocab(vocab_dict, min_freq=1).get_stoi()
+    print(f"Loaded vocabulary")
+    
     return vocab
 
 
