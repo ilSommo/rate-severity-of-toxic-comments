@@ -14,7 +14,7 @@ class TrainLoopStatisticsManager:
         self.best_val_loss = None
         self.train_loss_history = []
         self.val_loss_history = []
-        self.early_stop = False,
+        self.early_stop = False
         self.best_model_wts = copy.deepcopy(self.model.state_dict())
 
     def registerEpoch(self, metrics_train: dict, metrics_val: dict, lr, epoch, time_start, time_end, early_stop_delta_sensibility=0.01):
