@@ -7,7 +7,7 @@ from rate_severity_of_toxic_comments.preprocessing import apply_preprocessing_pi
 from sklearn.model_selection import train_test_split
 import os
 
-AVAILABLE_DATASET_TYPES = ["pairwise", "weighted"]
+AVAILABLE_DATASET_TYPES = ["pairwise", "scored"]
 
 class PairwiseDataset(Dataset):
     def __init__(self, df, tokenizer, max_length):
@@ -69,10 +69,9 @@ class PairwiseDataset(Dataset):
         }
 
 
-class WeightedDataset(Dataset):
-    def __init__(self, df, weights, tokenizer, max_length):
+class ScoredDataset(Dataset):
+    def __init__(self, df, tokenizer, max_length):
         self.df = df
-        self.weights = weights
         self.text = df["comment_text"].values
         self.target = df["target"].values
         self.tokenizer = tokenizer
@@ -114,8 +113,8 @@ class WeightedDataset(Dataset):
 def build_dataset(df, dataset_params, model_params, tokenizer):
     if dataset_params["type"] == "pairwise":
         return PairwiseDataset(df, tokenizer=tokenizer, max_length=model_params["max_length"])
-    elif dataset_params["type"] == "weighted":
-        return WeightedDataset(df, [], tokenizer=tokenizer, max_length=model_params["max_length"])
+    elif dataset_params["type"] == "scored":
+        return ScoredDataset(df, tokenizer=tokenizer, max_length=model_params["max_length"])
 
 
 def build_dataloaders(datasets, batch_sizes):

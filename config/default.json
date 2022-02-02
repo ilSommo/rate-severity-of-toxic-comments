@@ -29,7 +29,8 @@
         "L2_regularization": 0.01,
         "dataset": {
             "path": "res/data/train.csv",
-            "cols": ["comment_text"]
+            "cols": ["comment_text"],
+            "type": "scored"
         }
     },
     "debug": {"max_length": 128},
