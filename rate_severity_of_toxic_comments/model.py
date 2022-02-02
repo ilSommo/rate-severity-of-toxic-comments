@@ -18,9 +18,13 @@ class PretrainedModel(Module):
     def forward(self, ids, mask):
         out = self.model(input_ids=ids, attention_mask=mask,
                          output_hidden_states=False)
-        out = self.drop(out.last_hidden_state)
-        outputs = self.fc(out)
-        return self.sig(outputs)
+        cls_token = out.last_hidden_state[:, 0, :]
+        outputs = self.fc(cls_token)
+
+        # out = self.drop(out.last_hidden_state)
+        # outputs = self.fc(out)
+        
+        return self.sig(outputs).squeeze()
 
 
 class RecurrentModel(Module):

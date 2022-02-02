@@ -48,7 +48,6 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_int
                 device, dtype=torch.long)
             targets = data['target'].to(device, dtype=torch.long)
             batch_size = more_toxic_ids.size(0)
-            # TODO Check output size
             more_toxic_outputs = model(more_toxic_ids, more_toxic_mask)
             less_toxic_outputs = model(less_toxic_ids, less_toxic_mask)
             loss = loss_fn(more_toxic_outputs, less_toxic_outputs, targets)
