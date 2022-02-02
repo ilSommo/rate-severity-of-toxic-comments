@@ -146,14 +146,30 @@ def run_training(run_mode, training_data: Dataset,
                         tags=[run_mode])
 
         wandb.run.name = run_mode + "-" + wandb.run.id
+        
         wandb.config.update({
                 "model": model_params, 
                 "training": training_params,
                 "seed": seed,
                 "run_mode": run_mode
         })
-        training_params = wandb.config["training"]
-        model_params = wandb.config["model"]
+
+        # Overriding configurations using wandb when executing sweeps
+        for key in wandb.config.keys():
+            if "." in key:
+                portions = key.split(".")
+                param_type, remaining = portions[0], portions[1:]
+
+                target_dict = None
+                if param_type == "model":
+                    target_dict = model_params
+                elif param_type == "training":
+                    target_dict = training_params
+                for subkey in remaining[:-1]:
+                    target_dict = target_dict[subkey]
+                
+                target_dict[remaining[-1]] = wandb.config[key]
+
         wandb.run.save()
 
     device = torch.device("cuda" if torch.cuda.is_available()

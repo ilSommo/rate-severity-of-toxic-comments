@@ -11,7 +11,7 @@ parameters:
     max: 0.1
   training.optimizer:
     values: ["adam", "adamw"]
-  training.droput:
+  training.dropout:
     min: 0.1
     max: 0.5
   training.L2_regularization:
