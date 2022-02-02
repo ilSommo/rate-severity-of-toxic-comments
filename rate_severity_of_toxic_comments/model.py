@@ -12,6 +12,7 @@ class PretrainedModel(Module):
         self.model = AutoModel.from_pretrained(model_name)
         if dropout != None:
             self.drop = Dropout(p=dropout)
+        self.sig = Sigmoid()
         self.fc = Linear(output_features, OUTPUT_CLASSES)
 
     def forward(self, ids, mask):
@@ -19,7 +20,7 @@ class PretrainedModel(Module):
                          output_hidden_states=False)
         out = self.drop(out.last_hidden_state)
         outputs = self.fc(out)
-        return outputs
+        return self.sig(outputs)
 
 
 class RecurrentModel(Module):
