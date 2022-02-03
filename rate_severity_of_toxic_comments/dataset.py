@@ -180,7 +180,7 @@ def load_dataframe(run_mode, train_params, model_params):
                 print(f"50% comments preprocessed")
             elif i == int(num_sentences / 1.5):
                 print(f"75% comments preprocessed")
-            df.at[i, col], bad_words_count, count = apply_preprocessing_pipelines(
+            df.at[i, col], count = apply_preprocessing_pipelines(
                 df.at[i, col], pipelines)
             counter += count
 
