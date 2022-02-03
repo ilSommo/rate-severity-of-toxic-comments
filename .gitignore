@@ -145,3 +145,6 @@ res/models/*
 
 # Dataset
 res/data/*
+
+# Vocabs
+res/vocab/*

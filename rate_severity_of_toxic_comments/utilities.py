@@ -1,23 +1,20 @@
 __version__ = '0.1.0'
 __author__ = 'Lorenzo Menghini, Martino Pulici, Alessandro Stockman, Luca Zucchini'
 
-import math
 import random
-import os
 
 import numpy as np
-import pandas as pd
 import torch
-from transformers import AutoTokenizer, pipeline
+from transformers import AutoTokenizer
 
-from verstack.stratified_continuous_split import scsplit
-from sklearn.model_selection import train_test_split
-from rate_severity_of_toxic_comments.embedding import build_embedding_matrix, load_embedding_model
 from rate_severity_of_toxic_comments.preprocessing import AVAILABLE_PREPROCESSING_PIPELINES
-from rate_severity_of_toxic_comments.tokenizer import NaiveTokenizer, build_vocab
+from rate_severity_of_toxic_comments.model import AVAILABLE_ARCHITECTURES
+from rate_severity_of_toxic_comments.embedding import AVAILABLE_EMBEDDINGS
+from rate_severity_of_toxic_comments.dataset import AVAILABLE_DATASET_TYPES, load_dataframe
+from rate_severity_of_toxic_comments.tokenizer import NaiveTokenizer, create_recurrent_model_tokenizer
 
 _bad_words = []
-
+AVAILABLE_MODES = ["recurrent", "pretrained", "debug"]
 
 def obfuscator(text):
     global _bad_words
@@ -49,55 +46,56 @@ def fix_random_seed(seed):
         torch.backends.cudnn.benchmark = False
         torch.use_deterministic_algorithms(True)
 
+def validate_config(config):
+    # Check for value correctness
+    if config["options"]["run_mode"] not in AVAILABLE_MODES:
+        raise ValueError("Invalid configuration! Run Mode not supported")
+    elif config["recurrent"]["architecture"] not in AVAILABLE_ARCHITECTURES:
+        raise ValueError("Invalid configuration! Recurrent architecture not supported")
+    elif not all([p in AVAILABLE_PREPROCESSING_PIPELINES for p in config["recurrent"]["preprocessing"]]):
+        raise ValueError("Invalid configuration! Preprocessing pipeline not supported")
+    elif (config["recurrent"]["embedding_type"], config["recurrent"]["embedding_dimension"]) not in AVAILABLE_EMBEDDINGS:
+        raise ValueError("Invalid configuration! Embedding type and dimension not supported")
+    elif config["training"]["dataset"]["type"] not in AVAILABLE_DATASET_TYPES:
+        raise ValueError("Invalid configuration! Dataset type not supported")
+    elif config["evaluation"]["dataset"]["type"] not in AVAILABLE_DATASET_TYPES:
+        raise ValueError("Invalid configuration! Dataset type not supported")
 
-def process_config(config):
-    if not all([p not in AVAILABLE_PREPROCESSING_PIPELINES for p in config["preprocessing"]]):
-        raise ValueError()
+    # Check if mandatory attributes are present
+    if not all(item in config["options"].keys() for item in 
+        ["run_mode", "use_gpu", "wandb"]):
+        raise ValueError("Invalid configuration! Value missing under 'options'")
+    elif not all(item in config["pretrained"].keys() for item in 
+        ["model_name", "output_features"]):
+        raise ValueError("Invalid configuration! Value missing under 'pretrained'")
+    elif not all(item in config["recurrent"].keys() for item in 
+        ["architecture", "preprocessing", "vocab_file", "embedding_type", "embedding_dimension", "hidden_dim"]):
+        raise ValueError("Invalid configuration! Value missing under 'recurrent'")
+    elif not all(item in config["training"].keys() for item in 
+        ["epochs", "train_batch_size", "valid_batch_size", "learning_rate", "dataset"]):
+        raise ValueError("Invalid configuration! Value missing under 'training'")
+    elif not all(item in config["evaluation"].keys() for item in 
+        ["dataset"]):
+        raise ValueError("Invalid configuration! Value missing under 'evaluation'")
 
-    try:
-        config['output_features']
-    except:
-        raise ValueError()
-    # TODO Add validation for other values
+def process_config(df, config):
+    support_bag = {}
+    if config["options"]["run_mode"] == "pretrained":
+        support_bag["tokenizer"] = AutoTokenizer.from_pretrained(
+            config["pretrained"]["model_name"])
 
-    """ 
+    elif config["options"]["run_mode"] == "recurrent":
+        tokenizer, embedding_matrix = create_recurrent_model_tokenizer(
+            config, df)
+        support_bag["tokenizer"] = tokenizer
+        support_bag["embedding_matrix"] = embedding_matrix
+
+    elif config["options"]["run_mode"] == "debug":
+        support_bag["tokenizer"] = NaiveTokenizer()
+        support_bag["tokenizer"].set_vocab({"[UNK]": 0, "[PAD]": 1})
+
+    # If requested, fixes random seed
+    if config["options"]["seed"]:
+        fix_random_seed(config["options"]["seed"])
     
-    CHECKS CORRCT CONFIG FILE AND ELABORATION OF DATA DEPENDING ON CONFIGURATION
-    
-    """
-
-    if config["run_mode"] == "pretrained":
-        config["tokenizer"] = AutoTokenizer.from_pretrained(
-            config['model_name'])
-    elif config['run_mode'] == 'recurrent':
-        # Creates vocab file if it doens't exist
-        if not os.path.isfile(config["vocab_file"]):
-            open(config["vocab_file"], 'a').close()
-        config["tokenizer"] = NaiveTokenizer(config["vocab_file"])
-
-        # If vocab is empty, populate it with training sets
-        if len(config["tokenizer"].get_vocab()) == 0:
-            df = pd.read_csv(config["training_set"]["path"])
-            vocab, _ = build_vocab(df, config["training_set"]["cols"], config["tokenizer"], save_path=config["vocab_file"])
-            print(type(vocab))
-            config["tokenizer"].set_vocab(vocab)
-        embedding_model = load_embedding_model(config)
-        embedding_matrix = build_embedding_matrix(embedding_model, config)
-        config["embedding_matrix"] = embedding_matrix
-    else:
-        config["tokenizer"] = NaiveTokenizer(config["vocab_file"])
-    return config
-
-
-def split_dataset(dataframe: pd.DataFrame, seed):
-
-    dataframe["label"] = dataframe["target"] * 10
-    
-    
-    # for _, row in dataframe.iterrows():
-    #     v = row['target']
-    #     row['label'] = math.floor(v*10)
-
-    unique, counts = np.unique(np.floor(dataframe["label"]), return_counts=True)
-    print(dict(zip(unique, counts)))
-    return train_test_split(dataframe, stratify=np.floor(dataframe["label"]), random_state=seed)
+    return support_bag

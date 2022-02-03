@@ -1,58 +1,34 @@
 import os
 import collections
 from typing import Optional
-
+import pandas as pd
 import torch
-import torchtext
 from transformers import BasicTokenizer, PreTrainedTokenizer
-from rate_severity_of_toxic_comments.preprocessing import apply_preprocessing_pipelines
+from rate_severity_of_toxic_comments.embedding import build_embedding_matrix, load_embedding_model, check_OOV_terms, count_OOV_frequency
+from rate_severity_of_toxic_comments.vocabulary import load_vocabulary, build_vocabulary
 
 
-def load_vocab(vocab_file):
-    """Loads a vocabulary file into a dictionary."""
-    vocab = collections.OrderedDict()
-    with open(vocab_file, "r", encoding="utf-8") as reader:
-        tokens = reader.readlines()
-    for index, token in enumerate(tokens):
-        token = token.rstrip("\n")
-        vocab[token] = index
-    return vocab
+def create_recurrent_model_tokenizer(config, df, verbose=False):
+    vocab_file_path = config["recurrent"]["vocab_file"]
+    dataframe_cols = config["training"]["dataset"]["cols"]
+    embedding_dim = config["recurrent"]["embedding_dimension"]
+    tokenizer = NaiveTokenizer()
+    vocab = load_vocabulary(vocab_file_path)
+    if len(vocab) == 0:
+        vocab, tokenizer = build_vocabulary(df,
+                                            dataframe_cols, tokenizer, save_path=vocab_file_path)
+    tokenizer.set_vocab(vocab)
 
+    embedding_model = load_embedding_model(config["recurrent"])
 
-def build_vocab(df, cols, tokenizer: PreTrainedTokenizer, min_freq=1, save_path=None):
-    """
-    Returns a Vocab object containing all the tokens appearing in the `cols` columns of the dataframe `df`
-    """
-    # vocab = collections.OrderedDict()
-    counter = collections.Counter()
-
-    # Append to vocab special tokens expected by the tokenizer
-    for token in tokenizer.special_tokens_map.values():
-        counter[token] = min_freq + 1
-
-    for sentence in [v for col in cols for v in df[col].values]:
-        # for token in tokenizer._tokenize(sentence:
-        #     vocab[token] = index
-        counter.update(tokenizer._tokenize(sentence))
-
-    v = torchtext.vocab.vocab(counter, min_freq=min_freq).get_stoi()
-    if save_path:
-        save_vocabulary(save_path, v)
-    return v, counter
-
-
-def save_vocabulary(save_path: str, vocab: collections.OrderedDict) -> tuple[str]:
-    index = 0
-    with open(save_path, "w", encoding="utf-8") as writer:
-        for token, token_index in sorted(vocab.items(), key=lambda kv: kv[1]):
-            if index != token_index:
-                # logger.warning(
-                #     f"Saving vocabulary to {vocab_file}: vocabulary indices are not consecutive."
-                #     " Please check that the vocabulary is not corrupted!"
-                # )
-                index = token_index
-            writer.write(token + "\n")
-            index += 1
+    if verbose:
+        oov = check_OOV_terms(embedding_model, vocab)
+        count_OOV_frequency(df, dataframe_cols, oov)
+    
+    embedding_matrix = build_embedding_matrix(
+        embedding_model, embedding_dim, vocab)
+    
+    return tokenizer, embedding_matrix
 
 
 class NaiveTokenizer(PreTrainedTokenizer):
@@ -74,8 +50,6 @@ class NaiveTokenizer(PreTrainedTokenizer):
 
     def __init__(
         self,
-        vocab_file=None,
-        preprocessing_pipelines=[],
         do_lower_case=True,
         never_split=None,
         unk_token="[UNK]",
@@ -95,13 +69,6 @@ class NaiveTokenizer(PreTrainedTokenizer):
             strip_accents=None,
             **kwargs,
         )
-
-        if vocab_file:
-            self.vocab = load_vocab(vocab_file)
-            self.ids_to_tokens = collections.OrderedDict(
-                [(ids, tok) for tok, ids in self.vocab.items()])
-
-        self.preprocessing_pipelines = preprocessing_pipelines
         self.basic_tokenizer = BasicTokenizer(
             do_lower_case=do_lower_case,
             never_split=never_split,
@@ -124,9 +91,7 @@ class NaiveTokenizer(PreTrainedTokenizer):
         return dict(self.vocab, **self.added_tokens_encoder)
 
     def _tokenize(self, text):
-        processed_text, bad_words_counter, preprocessing_metric = apply_preprocessing_pipelines(
-            text, self.preprocessing_pipelines)
-        return self.basic_tokenizer.tokenize(processed_text, never_split=self.all_special_tokens)
+        return self.basic_tokenizer.tokenize(text, never_split=self.all_special_tokens)
 
     def _convert_token_to_id(self, token):
         """Converts a token (str) in an id using the vocab."""
@@ -140,15 +105,3 @@ class NaiveTokenizer(PreTrainedTokenizer):
         """Converts a sequence of tokens (string) in a single string."""
         out_string = " ".join(tokens).replace(" ##", "").strip()
         return out_string
-
-    def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> tuple[str]:
-        if os.path.isdir(save_directory):
-            vocab_file = os.path.join(
-                save_directory, (filename_prefix +
-                                 "-" if filename_prefix else "") + "naive-vocab"
-            )
-        else:
-            vocab_file = (filename_prefix +
-                          "-" if filename_prefix else "") + save_directory
-        save_vocabulary(vocab_file, self.vocab)
-        return (vocab_file,)

@@ -5,10 +5,12 @@ from tqdm import tqdm
 import numpy as np
 import gensim
 import gensim.downloader as gloader
-from torchtext.vocab import vocab, Vocab
 
+AVAILABLE_EMBEDDINGS = [
+    ("word2vec", 300), ("glove", 50), ("glove", 100), ("glove", 200), ("glove", 300), ("fasttext", 300)
+]
 
-def load_embedding_model(config) -> gensim.models.keyedvectors.KeyedVectors:
+def load_embedding_model(model_params) -> gensim.models.keyedvectors.KeyedVectors:
     """
     Loads a pre-trained word embedding model via gensim library.
 
@@ -18,7 +20,7 @@ def load_embedding_model(config) -> gensim.models.keyedvectors.KeyedVectors:
     :return
         - pre-trained word embedding model (gensim KeyedVectors object)
     """
-    model_type, embedding_dimension = config["embedding_type"], config["embedding_dimension"]
+    model_type, embedding_dimension = model_params["embedding_type"], model_params["embedding_dimension"]
 
     download_path = ""
 
@@ -35,7 +37,9 @@ def load_embedding_model(config) -> gensim.models.keyedvectors.KeyedVectors:
 
     # Check download
     try:
+        print("Loading embedding model")
         emb_model = gloader.load(download_path)
+        print("Embedding model loaded")
     except ValueError as e:
         print("Invalid embedding model name! Check the embedding dimension:")
         print("Word2Vec: 300")
@@ -45,7 +49,7 @@ def load_embedding_model(config) -> gensim.models.keyedvectors.KeyedVectors:
     return emb_model
 
 
-def build_embedding_matrix(embedding_model: gensim.models.keyedvectors.KeyedVectors, config) -> np.ndarray:
+def build_embedding_matrix(embedding_model: gensim.models.keyedvectors.KeyedVectors, embedding_dim, vocab) -> np.ndarray:
     """
     Builds the embedding matrix of a specific dataset given a pre-trained word embedding model
 
@@ -57,29 +61,30 @@ def build_embedding_matrix(embedding_model: gensim.models.keyedvectors.KeyedVect
     :return
         - embedding matrix that assigns a high dimensional vector to each word in the dataset specific vocabulary (shape |V| x d)
     """
-    embedding_dimension, vocab = config["embedding_dimension"], config["tokenizer"].get_vocab(
-    )
-    embedding_matrix = np.zeros(
-        (len(vocab), embedding_dimension), dtype=np.float32)
 
-    for idx, word in tqdm(enumerate(vocab.items())):
+    embedding_matrix = np.zeros(
+        (len(vocab), embedding_dim), dtype=np.float32)
+
+    print(f"Building embedding matrix")
+
+    for idx, word in tqdm(enumerate(vocab.items()), total=len(vocab)):
         if idx == 0:
             # Zeros vector for padding token
-            embedding_vector = np.zeros(embedding_dimension)
+            embedding_vector = np.zeros(embedding_dim)
         else:
             try:
                 # TODO: Why 2 vectors?
                 embedding_vector = embedding_model[word][0]
             except (KeyError, TypeError):
                 embedding_vector = np.random.uniform(
-                    low=-0.05, high=0.05, size=embedding_dimension)
+                    low=-0.05, high=0.05, size=embedding_dim)
 
         embedding_matrix[idx] = embedding_vector
 
     return embedding_matrix
 
 
-def check_OOV_terms(embedding_model: gensim.models.keyedvectors.KeyedVectors, vocab: Vocab):
+def check_OOV_terms(embedding_model: gensim.models.keyedvectors.KeyedVectors, vocab):
     """
     Checks differences between pre-trained embedding model vocabulary
     and dataset specific vocabulary in order to highlight out-of-vocabulary terms.
@@ -92,5 +97,19 @@ def check_OOV_terms(embedding_model: gensim.models.keyedvectors.KeyedVectors, vo
     """
 
     embedding_vocabulary = set(embedding_model.index_to_key)
-    oov = set(vocab.get_itos()).difference(embedding_vocabulary)
-    return list(oov)
+    vocab_set = set(vocab.keys())
+    oov = vocab_set.difference(embedding_vocabulary)
+    known_words = vocab_set.intersection(embedding_vocabulary)
+    oov = list(oov)
+    print('OOV words: ', len(oov))
+    print('OOV examples: ', oov[:10])
+    print('Known words embedding:', len(known_words))
+    print('Pretrained embeddings size: ', len(list(embedding_vocabulary)))
+    print(f'{(len(known_words) / len(list(embedding_vocabulary)) * 100):.2f}% Embedding used')
+    return oov
+
+
+def count_OOV_frequency(df, cols, oov):
+    counts = {word: df[col].str.count(word).sum() for word in oov for col in cols}
+    sorted_counts = {k: v for idx, (k, v) in enumerate(sorted(counts.items(), key=lambda item: item[1], reverse=True)) if idx < 10}
+    print(f"Top 10 OOV occurrencies\n{sorted_counts}")
