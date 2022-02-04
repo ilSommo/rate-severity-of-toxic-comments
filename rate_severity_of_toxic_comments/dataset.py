@@ -15,7 +15,9 @@ class PairwiseDataset(Dataset):
         self.max_len = max_length
         self.tokenizer = tokenizer
         self.more_toxic = df['more_toxic'].values
+        self.more_toxic_metric = df['more_toxic_metric'].values
         self.less_toxic = df['less_toxic'].values
+        self.less_toxic_metric = df['less_toxic_metric'].values
 
     def __len__(self):
         return len(self.df)
@@ -73,6 +75,7 @@ class ScoredDataset(Dataset):
     def __init__(self, df, tokenizer, max_length):
         self.df = df
         self.text = df["comment_text"].values
+        self.preprocessing_metric = df["comment_text_metric"].values
         self.target = df["target"].values
         self.tokenizer = tokenizer
         self.max_len = max_length
@@ -179,7 +182,7 @@ def load_dataframe(run_mode, train_params, model_params):
                 print(f"50% comments preprocessed")
             elif i == int(num_sentences / 1.5):
                 print(f"75% comments preprocessed")
-            df.at[i, col], df.at[i, col+'preprocessing_metric'] = apply_preprocessing_pipelines(df.at[i, col], pipelines)
+            df.at[i, col], df.at[i, col+'_metric'] = apply_preprocessing_pipelines(df.at[i, col], pipelines)
 
     print(f"Dataframe preprocessed\n")
     df.to_csv(data_frame_to_load)
