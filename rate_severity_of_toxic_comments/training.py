@@ -83,7 +83,7 @@ def test_loop(dataloader, model, loss_fn, device, idx_epoch, log_interval=100, p
     dataset_size = 0
 
     with torch.no_grad():
-        for idx_batch, data in enumerate(dataloader):
+        for idx_batch, data in tqdm(enumerate(dataloader), total=len(dataloader)):
             if not pairwise_dataset:
                 ids = data["ids"].to(device, dtype=torch.long)
                 mask = data['mask'].to(device, dtype=torch.long)
