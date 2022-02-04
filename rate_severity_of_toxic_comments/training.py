@@ -31,9 +31,10 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_int
             ids = data["ids"].to(device, dtype=torch.long)
             mask = data['mask'].to(device, dtype=torch.long)
             targets = data['target'].to(device, dtype=torch.long)
+            preprocessing_metric = data['preprocessing_metric'].to(device, dtype=torch.float32)
             batch_size = ids.size(0)
 
-            scores = model(ids, mask)
+            scores = model(ids, mask, preprocessing_metric)
             scores = scores.to(torch.float32)
             targets = targets.to(torch.float32)
             loss = loss_fn(scores, targets)

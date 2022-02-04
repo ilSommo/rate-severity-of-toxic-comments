@@ -58,15 +58,19 @@ class PairwiseDataset(Dataset):
 
         more_toxic_ids = inputs_more_toxic['input_ids']
         more_toxic_mask = inputs_more_toxic['attention_mask']
+        more_toxic_metric = self.more_toxic_metric[index]
 
         less_toxic_ids = inputs_less_toxic['input_ids']
         less_toxic_mask = inputs_less_toxic['attention_mask']
+        less_toxic_metric = self.less_toxic_metric[index]
 
         return {
             'more_toxic_ids': torch.tensor(more_toxic_ids, dtype=torch.long),
             'more_toxic_mask': torch.tensor(more_toxic_mask, dtype=torch.long),
+            'more_toxic_metric': torch.tensor(more_toxic_metric, dtype=torch.float32),
             'less_toxic_ids': torch.tensor(less_toxic_ids, dtype=torch.long),
             'less_toxic_mask': torch.tensor(less_toxic_mask, dtype=torch.long),
+            'less_toxic_metric': torch.tensor(less_toxic_metric, dtype=torch.float32),
             'target': torch.tensor(target, dtype=torch.long)
         }
 
@@ -103,6 +107,7 @@ class ScoredDataset(Dataset):
             )
             
         target = self.target[index]
+        preprocessing_metric = self.preprocessing_metric[index]
 
         ids = inputs['input_ids']
         mask = inputs['attention_mask']
@@ -110,6 +115,7 @@ class ScoredDataset(Dataset):
             'ids': torch.tensor(ids, dtype=torch.long),
             'mask': torch.tensor(mask, dtype=torch.long),
             'target': torch.tensor(target, dtype=torch.float32),
+            'preprocessing_metric': torch.tensor(preprocessing_metric, dtype=torch.float32)
         }
 
 

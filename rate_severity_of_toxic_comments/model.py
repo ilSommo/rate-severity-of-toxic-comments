@@ -28,8 +28,9 @@ class PretrainedModel(Module):
 
 
 class RecurrentModel(Module):
-    def __init__(self, embedding_matrix, dropout, hidden_dim, architecture):
+    def __init__(self, embedding_matrix, dropout, hidden_dim, architecture, preprocessing_metric):
         super().__init__()
+        self.preprocessing_metric = preprocessing_metric
         _, embedding_dim = embedding_matrix.shape
         self.embedding = Embedding.from_pretrained(
             torch.tensor(embedding_matrix))
@@ -46,9 +47,9 @@ class RecurrentModel(Module):
         self.drop = Dropout(p=dropout)
         self.relu = ReLU()
         self.sig = Sigmoid()
-        self.fc = Linear(hidden_dim, OUTPUT_CLASSES)
+        self.fc = Linear(hidden_dim+int(preprocessing_metric), OUTPUT_CLASSES)
 
-    def forward(self, ids, mask):
+    def forward(self, ids, mask, preprocessing_metric):
         embedded = self.embedding(ids)
         lengths = torch.count_nonzero(mask, dim=1)
         batch_lengths = lengths.to('cpu')
@@ -61,6 +62,8 @@ class RecurrentModel(Module):
         x = torch.mean(drop_out, dim=-2)
         x = self.relu(x)
         x = self.fc(x)
+        if self.preprocessing_metric:
+            x = torch.cat((x, preprocessing_metric[:,None]),dim=1)
         return self.sig(x).squeeze()
 
 
@@ -77,6 +80,6 @@ def create_model(run_mode, train_params, model_params, support_bag):
     if run_mode == "debug":
         return DummyModel()
     if run_mode == "recurrent":
-        return RecurrentModel(support_bag["embedding_matrix"], train_params['dropout'], model_params['hidden_dim'], model_params['architecture'])
+        return RecurrentModel(support_bag["embedding_matrix"], train_params['dropout'], model_params['hidden_dim'], model_params['architecture'], model_params['preprocessing_metric'])
     elif run_mode == "pretrained":
         return PretrainedModel(model_params["model_name"], train_params['dropout'], model_params["output_features"])
