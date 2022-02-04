@@ -138,6 +138,7 @@ def load_dataframe(run_mode, train_params, model_params):
     data_frame_to_load = base_train_file_path
     pipelines = []
 
+    #TODO: Use vocabulary.get_preprocess_filenames ?
     if run_mode == "recurrent":
         pipelines = model_params["preprocessing"]
         pipelines.sort()

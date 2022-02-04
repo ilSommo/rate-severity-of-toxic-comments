@@ -4,6 +4,25 @@ import os
 
 from tqdm import tqdm
 
+def get_preprocess_filenames(pipelines, vocab_file, dataset_file=None): 
+    pipelines.sort()
+    if pipelines is None or len(pipelines) == 0:
+        return None
+
+    dataset_to_load = dataset_file[:-4] if dataset_file else ""
+    vocab_to_load = vocab_file[:-4]
+
+    for pipeline in pipelines:
+        dataset_to_load += '_' + pipeline
+        vocab_to_load += '_' + pipeline
+    
+    dataset_to_load += '.csv'
+    vocab_to_load += '.txt'
+
+    if dataset_file:
+        return vocab_to_load, dataset_to_load
+    else:
+        return vocab_to_load
 
 def load_vocabulary(vocab_file):
     """Loads a vocabulary file into a dictionary."""
