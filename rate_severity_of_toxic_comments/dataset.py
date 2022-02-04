@@ -171,7 +171,6 @@ def load_dataframe(run_mode, train_params, model_params):
     print(f"Dataset comments to preprocess: {num_sentences}")
     print(f"Pipelines to apply: {pipelines}")
 
-    counter = 0
     for col in cols:
         for i in df.index:
             if i == int(num_sentences / 4):
@@ -180,10 +179,8 @@ def load_dataframe(run_mode, train_params, model_params):
                 print(f"50% comments preprocessed")
             elif i == int(num_sentences / 1.5):
                 print(f"75% comments preprocessed")
-            df.at[i, col], count = apply_preprocessing_pipelines(
-                df.at[i, col], pipelines)
-            counter += count
+            df.at[i, col], df.at[i, col+'preprocessing_metric'] = apply_preprocessing_pipelines(df.at[i, col], pipelines)
 
-    print(f"Dataframe preprocessed in {counter} occurrencies\n")
+    print(f"Dataframe preprocessed\n")
     df.to_csv(data_frame_to_load)
     return df
