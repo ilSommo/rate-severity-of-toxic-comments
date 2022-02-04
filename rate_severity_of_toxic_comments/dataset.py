@@ -1,3 +1,4 @@
+from sqlalchemy import true
 import torch
 from torch.utils.data import Dataset
 from torch.utils.data.dataloader import DataLoader
@@ -15,7 +16,9 @@ class PairwiseDataset(Dataset):
         self.max_len = max_length
         self.tokenizer = tokenizer
         self.more_toxic = df['more_toxic'].values
+        self.more_toxic_metric = df['more_toxic_metric'].values
         self.less_toxic = df['less_toxic'].values
+        self.less_toxic_metric = df['less_toxic_metric'].values
 
     def __len__(self):
         return len(self.df)
@@ -56,15 +59,19 @@ class PairwiseDataset(Dataset):
 
         more_toxic_ids = inputs_more_toxic['input_ids']
         more_toxic_mask = inputs_more_toxic['attention_mask']
+        more_toxic_metric = self.more_toxic_metric[index]
 
         less_toxic_ids = inputs_less_toxic['input_ids']
         less_toxic_mask = inputs_less_toxic['attention_mask']
+        less_toxic_metric = self.less_toxic_metric[index]
 
         return {
             'more_toxic_ids': torch.tensor(more_toxic_ids, dtype=torch.long),
             'more_toxic_mask': torch.tensor(more_toxic_mask, dtype=torch.long),
+            'more_toxic_metric': torch.tensor(more_toxic_metric, dtype=torch.float32),
             'less_toxic_ids': torch.tensor(less_toxic_ids, dtype=torch.long),
             'less_toxic_mask': torch.tensor(less_toxic_mask, dtype=torch.long),
+            'less_toxic_metric': torch.tensor(less_toxic_metric, dtype=torch.float32),
             'target': torch.tensor(target, dtype=torch.long)
         }
 
@@ -73,6 +80,7 @@ class ScoredDataset(Dataset):
     def __init__(self, df, tokenizer, max_length):
         self.df = df
         self.text = df["comment_text"].values
+        self.preprocessing_metric = df["comment_text_metric"].values
         self.target = df["target"].values
         self.tokenizer = tokenizer
         self.max_len = max_length
@@ -100,6 +108,7 @@ class ScoredDataset(Dataset):
             )
             
         target = self.target[index]
+        preprocessing_metric = self.preprocessing_metric[index]
 
         ids = inputs['input_ids']
         mask = inputs['attention_mask']
@@ -107,6 +116,7 @@ class ScoredDataset(Dataset):
             'ids': torch.tensor(ids, dtype=torch.long),
             'mask': torch.tensor(mask, dtype=torch.long),
             'target': torch.tensor(target, dtype=torch.float32),
+            'preprocessing_metric': torch.tensor(preprocessing_metric, dtype=torch.float32)
         }
 
 
@@ -145,7 +155,10 @@ def load_dataframe(run_mode, train_params, model_params):
         vocab_file = model_params["vocab_file"]
         if pipelines is None or len(pipelines) == 0:
             print(f'Loaded base dataframe from {base_train_file_path}\n')
-            return pd.read_csv(base_train_file_path)
+            df = pd.read_csv(base_train_file_path)
+            for col in cols:
+                df[col+'_metric'] = 0
+            return df
 
         data_frame_to_load = base_train_file_path[:-4]
         vocab_to_load = vocab_file[:-4]
@@ -166,13 +179,12 @@ def load_dataframe(run_mode, train_params, model_params):
         return df
     else:
         df = pd.read_csv(base_train_file_path)
-
+  
     sentences_in_cols = [v for col in cols for v in df[col].values]
     num_sentences = len(sentences_in_cols)
     print(f"Dataset comments to preprocess: {num_sentences}")
     print(f"Pipelines to apply: {pipelines}")
 
-    counter = 0
     for col in cols:
         for i in df.index:
             if i == int(num_sentences / 4):
@@ -181,10 +193,8 @@ def load_dataframe(run_mode, train_params, model_params):
                 print(f"50% comments preprocessed")
             elif i == int(num_sentences / 1.5):
                 print(f"75% comments preprocessed")
-            df.at[i, col], bad_words_count, count = apply_preprocessing_pipelines(
-                df.at[i, col], pipelines)
-            counter += count
+            df.at[i, col], df.at[i, col+'_metric'] = apply_preprocessing_pipelines(df.at[i, col], pipelines)
 
-    print(f"Dataframe preprocessed in {counter} occurrencies\n")
+    print(f"Dataframe preprocessed\n")
     df.to_csv(data_frame_to_load)
     return df
