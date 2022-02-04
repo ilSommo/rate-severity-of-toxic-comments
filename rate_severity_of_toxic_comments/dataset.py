@@ -1,3 +1,4 @@
+from sqlalchemy import true
 import torch
 from torch.utils.data import Dataset
 from torch.utils.data.dataloader import DataLoader
@@ -153,7 +154,10 @@ def load_dataframe(run_mode, train_params, model_params):
         vocab_file = model_params["vocab_file"]
         if pipelines is None or len(pipelines) == 0:
             print(f'Loaded base dataframe from {base_train_file_path}\n')
-            return pd.read_csv(base_train_file_path)
+            df = pd.read_csv(base_train_file_path)
+            for col in cols:
+                df[col+'_metric'] = 0
+            return df
 
         data_frame_to_load = base_train_file_path[:-4]
         vocab_to_load = vocab_file[:-4]
@@ -174,7 +178,7 @@ def load_dataframe(run_mode, train_params, model_params):
         return df
     else:
         df = pd.read_csv(base_train_file_path)
-
+  
     sentences_in_cols = [v for col in cols for v in df[col].values]
     num_sentences = len(sentences_in_cols)
     print(f"Dataset comments to preprocess: {num_sentences}")

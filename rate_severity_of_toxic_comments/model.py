@@ -60,10 +60,10 @@ class RecurrentModel(Module):
             rec_out, batch_first=True)
         drop_out = self.drop(rec_out[0])
         x = torch.mean(drop_out, dim=-2)
-        x = self.relu(x)
-        x = self.fc(x)
         if self.preprocessing_metric:
             x = torch.cat((x, preprocessing_metric[:,None]),dim=1)
+        x = self.relu(x)
+        x = self.fc(x)
         return self.sig(x).squeeze()
 
 
