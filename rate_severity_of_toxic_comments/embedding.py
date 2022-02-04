@@ -67,14 +67,14 @@ def build_embedding_matrix(embedding_model: gensim.models.keyedvectors.KeyedVect
 
     print(f"Building embedding matrix")
 
-    for idx, word in tqdm(enumerate(vocab.items()), total=len(vocab)):
+    for idx, (word, word_idx) in tqdm(enumerate(vocab.items()), total=len(vocab)):
         if idx == 0:
             # Zeros vector for padding token
             embedding_vector = np.zeros(embedding_dim)
         else:
             try:
                 # TODO: Why 2 vectors?
-                embedding_vector = embedding_model[word][0]
+                embedding_vector = embedding_model[word]
             except (KeyError, TypeError):
                 embedding_vector = np.random.uniform(
                     low=-0.05, high=0.05, size=embedding_dim)
