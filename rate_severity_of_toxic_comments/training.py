@@ -214,7 +214,7 @@ def run_training(run_mode, training_data: Dataset,
 
         metrics_train = train_loop(train_dataloader, model, loss_fn, optimizer, device, grad_clipping,
                                    log_interval=log_interval, pairwise_dataset=False, use_wandb=use_wandb)
-        metrics_val = test_loop(val_dataloader, model, loss_fn, device,
+        metrics_val = test_loop(val_dataloader, model, loss_fn, device, log_interval=log_interval,
                                 pairwise_dataset=False, use_wandb=use_wandb)
 
         time_end = time.time()
