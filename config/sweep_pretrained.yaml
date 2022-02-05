@@ -17,9 +17,7 @@ parameters:
   training.L2_regularization:
     min: 0.01
     max: 0.1
-  model.architecture:
-    values: ["LSTM", "GRU", "BiDi"]
-  # model.preprocessing:
-#
+  model.model_name:
+    values: ["roberta-base", "distilbert-base-cased", "DeBERTa-v3-base"]
   model.hidden_dim:
     values: [32, 64, 128]

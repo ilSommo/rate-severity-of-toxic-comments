@@ -1,46 +1,47 @@
 {
-    "options": {
-        "run_mode": "recurrent",
-        "use_gpu": true,
-        "wandb": true,
-        "seed": 42
-    },
-    "pretrained": {
-        "model_name": "roberta-base",
-        "output_features": 768,
-        "max_length": 128
-    },
-    "recurrent": {
-        "architecture": "LSTM",
-        "preprocessing": ["LOWER", "NUMBERS"],
-        "vocab_file": "res/vocab/naive.txt",
-        "embedding_dimension": 300,
-        "embedding_type": "glove",
-        "hidden_dim": 128,
-        "max_length": 128,
-        "preprocessing_metric": true
-    },
-    "training": {
-        "epochs": 3,
-        "train_batch_size": 32,
-        "valid_batch_size": 64,
-        "optimizer": "adam",
-        "learning_rate": 1e-4,
-        "dropout": 0.2,
-        "L2_regularization": 0.01,
-        "dataset": {
-            "path": "res/data/train.csv",
-            "cols": ["comment_text"],
-            "type": "scored"
-        }
-    },
-    "debug": {"max_length": 128},
-    "evaluation": {
-        "dataset": {
-            "path": "res/data/validation_data.csv",
-            "cols": ["more_toxic", "less_toxic"],
-            "type": "pairwise",
-            "loss_margin": 0.5
-        }
+  "options": {
+    "run_mode": "recurrent",
+    "use_gpu": true,
+    "wandb": true,
+    "seed": 42
+  },
+  "pretrained": {
+    "model_name": "roberta-base",
+    "output_features": 768,
+    "max_length": 128
+  },
+  "recurrent": {
+    "architecture": "LSTM",
+    "preprocessing": ["LOWER", "NUMBERS"],
+    "vocab_file": "res/vocab/naive.txt",
+    "embedding_dimension": 300,
+    "embedding_type": "glove",
+    "hidden_dim": 128,
+    "max_length": 128,
+    "preprocessing_metric": true
+  },
+  "training": {
+    "epochs": 3,
+    "train_batch_size": 32,
+    "valid_batch_size": 64,
+    "optimizer": "adam",
+    "learning_rate": 1e-4,
+    "dropout": 0.2,
+    "L2_regularization": 0.01,
+    "gradient_clipping": 1e-4,
+    "dataset": {
+      "path": "res/data/train.csv",
+      "cols": ["comment_text"],
+      "type": "scored"
     }
+  },
+  "debug": { "max_length": 128 },
+  "evaluation": {
+    "dataset": {
+      "path": "res/data/validation_data.csv",
+      "cols": ["more_toxic", "less_toxic"],
+      "type": "pairwise",
+      "loss_margin": 0.5
+    }
+  }
 }
