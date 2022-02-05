@@ -26,14 +26,15 @@ def store_vocab(df, cols, vocab_file, pipelines):
         if len(vocab) > 0:
             return vocab
 
-    sentences_in_cols = [v for col in cols for v in df[col].values]
-    num_sentences = len(sentences_in_cols)
-    print(f"Dataset comments to preprocess: {num_sentences}")
-    print(f"Pipelines to apply: {pipelines}")
+    if len(pipelines) > 0:
+        sentences_in_cols = [v for col in cols for v in df[col].values]
+        num_sentences = len(sentences_in_cols)
+        print(f"Dataset comments to preprocess: {num_sentences}")
+        print(f"Pipelines to apply: {pipelines}")
 
-    for col in cols:
-        for i in tqdm(df.index, total=len(df)):
-            df.at[i, col], bad_words_count, count = apply_preprocessing_pipelines(df.at[i, col], pipelines)
+        for col in cols:
+            for i in tqdm(df.index, total=len(df)):
+                df.at[i, col], bad_words_count, count = apply_preprocessing_pipelines(df.at[i, col], pipelines)
 
     tokenizer = NaiveTokenizer()
     vocab, tokenizer = build_vocabulary(df, cols, tokenizer, save_path=vocab_to_load)
