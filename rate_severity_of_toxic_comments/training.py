@@ -95,7 +95,7 @@ def test_loop(dataloader, model, loss_fn, device, log_interval, pairwise_dataset
                 mask = data['mask'].to(device, dtype=torch.long)
                 targets = data['target'].to(device, dtype=torch.long)
                 preprocessing_metrics = data['preprocessing_metric'].to(
-                    device, dtype=torch.long)
+                    device, dtype=torch.float32)
                 batch_size = ids.size(0)
 
                 scores = model(ids, mask, preprocessing_metrics)
