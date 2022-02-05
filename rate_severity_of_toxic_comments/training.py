@@ -10,12 +10,13 @@ from torch import nn, optim
 import wandb
 
 from torch.utils.data import Dataset
+from torch.nn.utils.clip_grad import clip_grad_norm_
 from rate_severity_of_toxic_comments.dataset import build_dataloaders
 from rate_severity_of_toxic_comments.model import create_model
 from rate_severity_of_toxic_comments.metrics import *
 
 
-def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_interval=100, pairwise_dataset=False, use_wandb=True):
+def train_loop(dataloader, model, loss_fn, optimizer, device, gradient_clipping, log_interval, pairwise_dataset=False, use_wandb=True):
     """
     Executes the training loop on the given parameters. Logs metrics on TensorBoard.
     """
@@ -31,7 +32,8 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_int
             ids = data["ids"].to(device, dtype=torch.long)
             mask = data['mask'].to(device, dtype=torch.long)
             targets = data['target'].to(device, dtype=torch.long)
-            preprocessing_metric = data['preprocessing_metric'].to(device, dtype=torch.float32)
+            preprocessing_metric = data['preprocessing_metric'].to(
+                device, dtype=torch.float32)
             batch_size = ids.size(0)
 
             scores = model(ids, mask, preprocessing_metric)
@@ -55,6 +57,9 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_int
 
         optimizer.zero_grad()
         loss.backward()
+
+        clip_grad_norm_(model.parameters(), gradient_clipping)
+
         optimizer.step()
 
         total_loss += (loss.item() * batch_size)
@@ -72,7 +77,7 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, idx_epoch, log_int
     return total_metrics
 
 
-def test_loop(dataloader, model, loss_fn, device, idx_epoch, log_interval=100, pairwise_dataset=False, use_wandb=True):
+def test_loop(dataloader, model, loss_fn, device, log_interval, pairwise_dataset=False, use_wandb=True):
     """
     Executes a test loop on the given paramters. Returns metrics and votes.
     """
@@ -132,7 +137,7 @@ def run_training(run_mode, training_data: Dataset,
                  training_params, model_params, support_bag,
                  seed, use_wandb, use_gpu,
                  verbose: bool = True,
-                 log_interval: int = 100) -> dict:
+                 log_interval=100) -> dict:
     """
     Executes the full train test loop with the given parameters
     """
@@ -140,18 +145,18 @@ def run_training(run_mode, training_data: Dataset,
     run = None
     if use_wandb:
         run = wandb.init(project="rate-comments",
-                        entity="toxicity",
-                        job_type='Train',
-                        # group="", TODO?
-                        tags=[run_mode])
+                         entity="toxicity",
+                         job_type='Train',
+                         # group="", TODO?
+                         tags=[run_mode])
 
         wandb.run.name = run_mode + "-" + wandb.run.id
-        
+
         wandb.config.update({
-                "model": model_params, 
-                "training": training_params,
-                "seed": seed,
-                "run_mode": run_mode
+            "model": model_params,
+            "training": training_params,
+            "seed": seed,
+            "run_mode": run_mode
         })
 
         # Overriding configurations using wandb when executing sweeps
@@ -167,7 +172,7 @@ def run_training(run_mode, training_data: Dataset,
                     target_dict = training_params
                 for subkey in remaining[:-1]:
                     target_dict = target_dict[subkey]
-                
+
                 target_dict[remaining[-1]] = wandb.config[key]
 
         wandb.run.save()
@@ -176,20 +181,27 @@ def run_training(run_mode, training_data: Dataset,
                           and use_gpu else "cpu")
     loss_fn = nn.MSELoss()
 
+    train_batch_size = training_params["train_batch_size"]
+    valid_batch_size = training_params["valid_batch_size"]
+    lr = training_params['learning_rate']
+    l2_reg = training_params['L2_regularization']
+    grad_clipping = training_params['gradient_clipping']
+
     train_dataloader, val_dataloader = build_dataloaders([training_data, val_data], batch_sizes=(
-        training_params["train_batch_size"], training_params["valid_batch_size"]))
+        train_batch_size, valid_batch_size))
 
     model = create_model(run_mode, training_params, model_params, support_bag)
     model.to(device)
 
-    train_loop_stats = TrainLoopStatisticsManager(model, early_stopping_patience=3, verbose=verbose, use_wandb=use_wandb)
+    train_loop_stats = TrainLoopStatisticsManager(
+        model, early_stopping_patience=3, verbose=verbose, use_wandb=use_wandb)
 
     if training_params["optimizer"] == "adam":
         optimizer = optim.Adam(model.parameters(
-        ), lr=training_params["learning_rate"], weight_decay=training_params['L2_regularization'])
+        ), lr=lr, weight_decay=l2_reg)
     elif training_params["optimizer"] == "adamw":
         optimizer = optim.AdamW(model.parameters(
-        ), lr=training_params["learning_rate"], weight_decay=training_params['L2_regularization'])
+        ), lr=lr, weight_decay=l2_reg)
 
     if use_wandb:
         wandb.watch(model, log_freq=log_interval)
@@ -200,15 +212,15 @@ def run_training(run_mode, training_data: Dataset,
     for epoch in range(1, num_epochs + 1):
         time_start = time.time()
 
-        metrics_train = train_loop(train_dataloader, model, loss_fn, optimizer, device, epoch,
+        metrics_train = train_loop(train_dataloader, model, loss_fn, optimizer, device, grad_clipping,
                                    log_interval=log_interval, pairwise_dataset=False, use_wandb=use_wandb)
-        metrics_val = test_loop(val_dataloader, model, loss_fn, device,
-                                epoch, pairwise_dataset=False, use_wandb=use_wandb)
+        metrics_val = test_loop(val_dataloader, model, loss_fn, device, log_interval=log_interval,
+                                pairwise_dataset=False, use_wandb=use_wandb)
 
         time_end = time.time()
 
         train_loop_stats.registerEpoch(
-            metrics_train, metrics_val, training_params["learning_rate"], epoch, time_start, time_end)
+            metrics_train, metrics_val, lr, epoch, time_start, time_end)
 
         if train_loop_stats.early_stop:
             print("Early Stopping")

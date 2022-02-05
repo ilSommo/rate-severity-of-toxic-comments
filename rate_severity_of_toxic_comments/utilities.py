@@ -16,6 +16,7 @@ from rate_severity_of_toxic_comments.tokenizer import NaiveTokenizer, create_rec
 _bad_words = []
 AVAILABLE_MODES = ["recurrent", "pretrained", "debug"]
 
+
 def obfuscator(text):
     global _bad_words
     if len(_bad_words) == 0:
@@ -40,43 +41,53 @@ def fix_random_seed(seed):
 
     if torch.cuda.is_available():
         torch.cuda.manual_seed(seed)
-        torch.cuda.manual_seed_all(seed)
-        torch.backends.cudnn.enabled = False
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = False
-        torch.use_deterministic_algorithms(True)
+        # torch.cuda.manual_seed_all(seed)
+        #torch.backends.cudnn.enabled = False
+        #torch.backends.cudnn.deterministic = True
+        #torch.backends.cudnn.benchmark = False
+        # torch.use_deterministic_algorithms(True)
+
 
 def validate_config(config):
     # Check for value correctness
     if config["options"]["run_mode"] not in AVAILABLE_MODES:
         raise ValueError("Invalid configuration! Run Mode not supported")
     elif config["recurrent"]["architecture"] not in AVAILABLE_ARCHITECTURES:
-        raise ValueError("Invalid configuration! Recurrent architecture not supported")
+        raise ValueError(
+            "Invalid configuration! Recurrent architecture not supported")
     elif not all([p in AVAILABLE_PREPROCESSING_PIPELINES for p in config["recurrent"]["preprocessing"]]):
-        raise ValueError("Invalid configuration! Preprocessing pipeline not supported")
+        raise ValueError(
+            "Invalid configuration! Preprocessing pipeline not supported")
     elif (config["recurrent"]["embedding_type"], config["recurrent"]["embedding_dimension"]) not in AVAILABLE_EMBEDDINGS:
-        raise ValueError("Invalid configuration! Embedding type and dimension not supported")
+        raise ValueError(
+            "Invalid configuration! Embedding type and dimension not supported")
     elif config["training"]["dataset"]["type"] not in AVAILABLE_DATASET_TYPES:
         raise ValueError("Invalid configuration! Dataset type not supported")
     elif config["evaluation"]["dataset"]["type"] not in AVAILABLE_DATASET_TYPES:
         raise ValueError("Invalid configuration! Dataset type not supported")
 
     # Check if mandatory attributes are present
-    if not all(item in config["options"].keys() for item in 
-        ["run_mode", "use_gpu", "wandb"]):
-        raise ValueError("Invalid configuration! Value missing under 'options'")
-    elif not all(item in config["pretrained"].keys() for item in 
-        ["model_name", "output_features"]):
-        raise ValueError("Invalid configuration! Value missing under 'pretrained'")
-    elif not all(item in config["recurrent"].keys() for item in 
-        ["architecture", "preprocessing", "vocab_file", "embedding_type", "embedding_dimension", "hidden_dim"]):
-        raise ValueError("Invalid configuration! Value missing under 'recurrent'")
-    elif not all(item in config["training"].keys() for item in 
-        ["epochs", "train_batch_size", "valid_batch_size", "learning_rate", "dataset"]):
-        raise ValueError("Invalid configuration! Value missing under 'training'")
-    elif not all(item in config["evaluation"].keys() for item in 
-        ["dataset"]):
-        raise ValueError("Invalid configuration! Value missing under 'evaluation'")
+    if not all(item in config["options"].keys() for item in
+               ["run_mode", "use_gpu", "wandb"]):
+        raise ValueError(
+            "Invalid configuration! Value missing under 'options'")
+    elif not all(item in config["pretrained"].keys() for item in
+                 ["model_name", "output_features"]):
+        raise ValueError(
+            "Invalid configuration! Value missing under 'pretrained'")
+    elif not all(item in config["recurrent"].keys() for item in
+                 ["architecture", "preprocessing", "vocab_file", "embedding_type", "embedding_dimension", "hidden_dim"]):
+        raise ValueError(
+            "Invalid configuration! Value missing under 'recurrent'")
+    elif not all(item in config["training"].keys() for item in
+                 ["epochs", "train_batch_size", "valid_batch_size", "learning_rate", "dataset"]):
+        raise ValueError(
+            "Invalid configuration! Value missing under 'training'")
+    elif not all(item in config["evaluation"].keys() for item in
+                 ["dataset"]):
+        raise ValueError(
+            "Invalid configuration! Value missing under 'evaluation'")
+
 
 def process_config(df, config):
     support_bag = {}
@@ -97,5 +108,5 @@ def process_config(df, config):
     # If requested, fixes random seed
     if config["options"]["seed"]:
         fix_random_seed(config["options"]["seed"])
-    
+
     return support_bag
