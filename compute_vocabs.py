@@ -42,7 +42,7 @@ def store_vocab(df, cols, vocab_file, pipelines):
 
 def print_oov_stats(vocab, df, cols, embedding_model):
     oov = check_OOV_terms(embedding_model, vocab)
-    count_OOV_frequency(df, cols, oov)
+    # count_OOV_frequency(df, cols, oov)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
