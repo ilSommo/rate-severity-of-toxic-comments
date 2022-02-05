@@ -23,7 +23,7 @@ def create_recurrent_model_tokenizer(config, df, verbose=False):
 
     if verbose:
         oov = check_OOV_terms(embedding_model, vocab)
-        count_OOV_frequency(df, dataframe_cols, oov)
+        # count_OOV_frequency(df, dataframe_cols, oov)
     
     embedding_matrix = build_embedding_matrix(
         embedding_model, embedding_dim, vocab)
