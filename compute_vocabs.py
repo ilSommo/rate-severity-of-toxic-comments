@@ -34,7 +34,7 @@ def store_vocab(df, cols, vocab_file, pipelines):
 
         for col in cols:
             for i in tqdm(df.index, total=len(df)):
-                df.at[i, col], bad_words_count, count = apply_preprocessing_pipelines(df.at[i, col], pipelines)
+                df.at[i, col], df.at[i, col+'_metric'] = apply_preprocessing_pipelines(df.at[i, col], pipelines)
 
     tokenizer = NaiveTokenizer()
     vocab, tokenizer = build_vocabulary(df, cols, tokenizer, save_path=vocab_to_load)
