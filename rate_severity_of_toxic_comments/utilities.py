@@ -10,7 +10,7 @@ from transformers import AutoTokenizer
 from rate_severity_of_toxic_comments.preprocessing import AVAILABLE_PREPROCESSING_PIPELINES
 from rate_severity_of_toxic_comments.model import AVAILABLE_ARCHITECTURES
 from rate_severity_of_toxic_comments.embedding import AVAILABLE_EMBEDDINGS
-from rate_severity_of_toxic_comments.dataset import AVAILABLE_DATASET_TYPES, load_dataframe
+from rate_severity_of_toxic_comments.dataset import AVAILABLE_DATASET_TYPES
 from rate_severity_of_toxic_comments.tokenizer import NaiveTokenizer, create_recurrent_model_tokenizer
 
 _bad_words = []
@@ -87,10 +87,10 @@ def validate_config(config):
                  ["dataset"]):
         raise ValueError(
             "Invalid configuration! Value missing under 'evaluation'")
-    elif config["training"]["dataset"]["type"] == "pairwise" and not "margin" in config["training"]["dataset"]:
+    elif config["training"]["dataset"]["type"] == "pairwise" and not "loss_margin" in config["training"]["dataset"]:
         raise ValueError(
             "Pairwise dataset requires a margin attribute!")
-    elif config["evaluation"]["dataset"]["type"] == "pairwise" and not "margin" in config["evaluation"]["dataset"]:
+    elif config["evaluation"]["dataset"]["type"] == "pairwise" and not "loss_margin" in config["evaluation"]["dataset"]:
         raise ValueError(
             "Pairwise dataset requires a margin attribute!")
 

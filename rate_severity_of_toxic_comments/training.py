@@ -89,6 +89,7 @@ def test_loop(dataloader, model, loss_fn, device, log_interval, dataset_type, us
     model.eval()
     total_metrics = {}
     total_loss = 0.0
+    total_accuracy = 0.0
     running_loss = 0.0
     cumul_batches = 0
     dataset_size = 0
@@ -195,7 +196,7 @@ def run_training(run_mode, training_data: Dataset,
     if train_dataset_params["type"] == "scored":
         loss_fn = nn.MSELoss()
     elif train_dataset_params["type"] == "pairwise":
-        loss_fn = nn.MarginRankingLoss(margin=train_dataset_params["margin"])
+        loss_fn = nn.MarginRankingLoss(margin=train_dataset_params["loss_margin"])
 
     train_batch_size = training_params["train_batch_size"]
     valid_batch_size = training_params["valid_batch_size"]

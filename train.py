@@ -23,7 +23,7 @@ if __name__ == "__main__":
     validate_config(CONFIG)
 
     run_mode = CONFIG["options"]["run_mode"]
-    df = load_dataframe(run_mode, CONFIG["training"], CONFIG[run_mode])
+    df = load_dataframe(run_mode, CONFIG["training"]["dataset"], CONFIG[run_mode])
 
     support_bag = process_config(df, CONFIG)
 

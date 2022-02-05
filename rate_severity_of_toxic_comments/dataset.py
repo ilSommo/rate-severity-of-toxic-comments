@@ -142,9 +142,9 @@ def split_dataset(dataframe: pd.DataFrame, seed):
     return train_test_split(dataframe, stratify=np.floor(dataframe["label"]), random_state=seed)
 
 
-def load_dataframe(run_mode, train_params, model_params):
-    base_train_file_path = train_params["dataset"]["path"]
-    cols = train_params["dataset"]["cols"]
+def load_dataframe(run_mode, dataset_params, model_params):
+    base_train_file_path = dataset_params["path"]
+    cols = dataset_params["cols"]
     data_frame_to_load = base_train_file_path
     pipelines = []
 
