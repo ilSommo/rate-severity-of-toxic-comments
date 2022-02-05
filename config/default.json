@@ -28,7 +28,7 @@
     "learning_rate": 1e-4,
     "dropout": 0.2,
     "L2_regularization": 0.01,
-    "gradient_clipping": 1e-4,
+    "gradient_clipping": 0.75,
     "dataset": {
       "path": "res/data/train.csv",
       "cols": ["comment_text"],
