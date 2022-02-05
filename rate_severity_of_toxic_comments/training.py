@@ -16,19 +16,20 @@ from rate_severity_of_toxic_comments.model import create_model
 from rate_severity_of_toxic_comments.metrics import *
 
 
-def train_loop(dataloader, model, loss_fn, optimizer, device, gradient_clipping, log_interval, pairwise_dataset=False, use_wandb=True):
+def train_loop(dataloader, model, loss_fn, optimizer, device, gradient_clipping, log_interval, dataset_type, use_wandb=True):
     """
     Executes the training loop on the given parameters. Logs metrics on TensorBoard.
     """
     model.train()
     total_metrics = {}
     total_loss = 0.0
+    total_accuracy = 0.0
     running_loss = 0.0
     cumul_batches = 0
     dataset_size = 0
 
     for idx_batch, data in tqdm(enumerate(dataloader), total=len(dataloader)):
-        if not pairwise_dataset:
+        if dataset_type == "scored":
             ids = data["ids"].to(device, dtype=torch.long)
             mask = data['mask'].to(device, dtype=torch.long)
             targets = data['target'].to(device, dtype=torch.long)
@@ -40,7 +41,7 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, gradient_clipping,
             scores = scores.to(torch.float32)
             targets = targets.to(torch.float32)
             loss = loss_fn(scores, targets)
-        else:
+        elif dataset_type == "pairwise":
             more_toxic_ids = data['more_toxic_ids'].to(
                 device, dtype=torch.long)
             more_toxic_mask = data['more_toxic_mask'].to(
@@ -54,6 +55,8 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, gradient_clipping,
             more_toxic_outputs = model(more_toxic_ids, more_toxic_mask)
             less_toxic_outputs = model(less_toxic_ids, less_toxic_mask)
             loss = loss_fn(more_toxic_outputs, less_toxic_outputs, targets)
+
+            total_accuracy = (more_toxic_outputs > less_toxic_outputs).sum().item()
 
         optimizer.zero_grad()
         loss.backward()
@@ -73,11 +76,13 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, gradient_clipping,
             cumul_batches = 0
 
     total_metrics["train_loss"] = total_loss / dataset_size
+    if total_accuracy > 0:
+        total_metrics["train_accuracy"] = total_accuracy / dataset_size
 
     return total_metrics
 
 
-def test_loop(dataloader, model, loss_fn, device, log_interval, pairwise_dataset=False, use_wandb=True):
+def test_loop(dataloader, model, loss_fn, device, log_interval, dataset_type, use_wandb=True):
     """
     Executes a test loop on the given paramters. Returns metrics and votes.
     """
@@ -90,7 +95,7 @@ def test_loop(dataloader, model, loss_fn, device, log_interval, pairwise_dataset
 
     with torch.no_grad():
         for idx_batch, data in tqdm(enumerate(dataloader), total=len(dataloader)):
-            if not pairwise_dataset:
+            if dataset_type == "scored":
                 ids = data["ids"].to(device, dtype=torch.long)
                 mask = data['mask'].to(device, dtype=torch.long)
                 targets = data['target'].to(device, dtype=torch.long)
@@ -102,7 +107,7 @@ def test_loop(dataloader, model, loss_fn, device, log_interval, pairwise_dataset
                 scores = scores.to(torch.float32)
                 targets = targets.to(torch.float32)
                 loss = loss_fn(scores, targets)
-            else:
+            elif dataset_type == "pairwise":
                 more_toxic_ids = data['more_toxic_ids'].to(
                     device, dtype=torch.long)
                 more_toxic_mask = data['more_toxic_mask'].to(
@@ -118,6 +123,8 @@ def test_loop(dataloader, model, loss_fn, device, log_interval, pairwise_dataset
                 less_toxic_outputs = model(less_toxic_ids, less_toxic_mask)
                 loss = loss_fn(more_toxic_outputs, less_toxic_outputs, targets)
 
+                total_accuracy = (more_toxic_outputs > less_toxic_outputs).sum().item()
+
             total_loss += (loss.item() * batch_size)
             running_loss += loss.item()
             cumul_batches += 1
@@ -130,6 +137,8 @@ def test_loop(dataloader, model, loss_fn, device, log_interval, pairwise_dataset
                 cumul_batches = 0
 
     total_metrics["valid_loss"] = total_loss / dataset_size
+    if total_accuracy > 0:
+        total_metrics["valid_accuracy"] = total_accuracy / dataset_size
 
     return total_metrics
 
@@ -181,7 +190,12 @@ def run_training(run_mode, training_data: Dataset,
 
     device = torch.device("cuda" if torch.cuda.is_available()
                           and use_gpu else "cpu")
-    loss_fn = nn.MSELoss()
+    
+    train_dataset_params = training_params["dataset"]
+    if train_dataset_params["type"] == "scored":
+        loss_fn = nn.MSELoss()
+    elif train_dataset_params["type"] == "pairwise":
+        loss_fn = nn.MarginRankingLoss(margin=train_dataset_params["margin"])
 
     train_batch_size = training_params["train_batch_size"]
     valid_batch_size = training_params["valid_batch_size"]
@@ -215,9 +229,9 @@ def run_training(run_mode, training_data: Dataset,
         time_start = time.time()
 
         metrics_train = train_loop(train_dataloader, model, loss_fn, optimizer, device, grad_clipping,
-                                   log_interval=log_interval, pairwise_dataset=False, use_wandb=use_wandb)
+                                   log_interval=log_interval, dataset_type=train_dataset_params["type"], use_wandb=use_wandb)
         metrics_val = test_loop(val_dataloader, model, loss_fn, device, log_interval=log_interval,
-                                pairwise_dataset=False, use_wandb=use_wandb)
+                                dataset_type=train_dataset_params["type"], use_wandb=use_wandb)
 
         time_end = time.time()
 

@@ -87,6 +87,12 @@ def validate_config(config):
                  ["dataset"]):
         raise ValueError(
             "Invalid configuration! Value missing under 'evaluation'")
+    elif config["training"]["dataset"]["type"] == "pairwise" and not "margin" in config["training"]["dataset"]:
+        raise ValueError(
+            "Pairwise dataset requires a margin attribute!")
+    elif config["evaluation"]["dataset"]["type"] == "pairwise" and not "margin" in config["evaluation"]["dataset"]:
+        raise ValueError(
+            "Pairwise dataset requires a margin attribute!")
 
 
 def process_config(df, config):
