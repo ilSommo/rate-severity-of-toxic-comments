@@ -51,5 +51,5 @@ if __name__ == "__main__":
         ids = inputs['input_ids']
         mask = inputs['attention_mask']
 
-        score = model(ids.unsqueeze(dim=0), mask.unsqueeze(dim=0), torch.tensor([0]))
+        score = model(ids.unsqueeze(dim=0).to(device), mask.unsqueeze(dim=0).to(device), torch.tensor([0]).to(device))
         print("Score:", score.item())
