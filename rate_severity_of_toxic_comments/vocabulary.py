@@ -37,7 +37,7 @@ def load_vocabulary(vocab_file):
 
     for index, token in tqdm(enumerate(tokens), total=len(tokens)):
         token = token.rstrip("\n")
-        vocab_dict[token] = index
+        vocab_dict[token] = index + 1
 
     vocab = torchtext.vocab.vocab(vocab_dict, min_freq=1).get_stoi()
     print(f"Loaded vocabulary")

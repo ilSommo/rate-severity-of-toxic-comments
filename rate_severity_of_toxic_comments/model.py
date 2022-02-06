@@ -15,7 +15,7 @@ class PretrainedModel(Module):
         self.sig = Sigmoid()
         self.fc = Linear(output_features, OUTPUT_CLASSES)
 
-    def forward(self, ids, mask):
+    def forward(self, ids, mask, preprocessing_metric):
         out = self.model(input_ids=ids, attention_mask=mask,
                          output_hidden_states=False)
         cls_token = out.last_hidden_state[:, 0, :]

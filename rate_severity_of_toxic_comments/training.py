@@ -46,14 +46,18 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, gradient_clipping,
                 device, dtype=torch.long)
             more_toxic_mask = data['more_toxic_mask'].to(
                 device, dtype=torch.long)
+            more_toxic_metric = data['more_toxic_metric'].to(
+                device, dtype=torch.long)
             less_toxic_ids = data['less_toxic_ids'].to(
                 device, dtype=torch.long)
             less_toxic_mask = data['less_toxic_mask'].to(
                 device, dtype=torch.long)
+            less_toxic_metric = data['less_toxic_metric'].to(
+                device, dtype=torch.long)
             targets = data['target'].to(device, dtype=torch.long)
             batch_size = more_toxic_ids.size(0)
-            more_toxic_outputs = model(more_toxic_ids, more_toxic_mask)
-            less_toxic_outputs = model(less_toxic_ids, less_toxic_mask)
+            more_toxic_outputs = model(more_toxic_ids, more_toxic_mask, more_toxic_metric)
+            less_toxic_outputs = model(less_toxic_ids, less_toxic_mask, less_toxic_metric)
             loss = loss_fn(more_toxic_outputs, less_toxic_outputs, targets)
 
             total_accuracy = (more_toxic_outputs > less_toxic_outputs).sum().item()
@@ -113,15 +117,19 @@ def test_loop(dataloader, model, loss_fn, device, log_interval, dataset_type, us
                     device, dtype=torch.long)
                 more_toxic_mask = data['more_toxic_mask'].to(
                     device, dtype=torch.long)
+                more_toxic_metric = data['more_toxic_metric'].to(
+                    device, dtype=torch.long)
                 less_toxic_ids = data['less_toxic_ids'].to(
                     device, dtype=torch.long)
                 less_toxic_mask = data['less_toxic_mask'].to(
                     device, dtype=torch.long)
+                less_toxic_metric = data['less_toxic_metric'].to(
+                    device, dtype=torch.long)
                 targets = data['target'].to(device, dtype=torch.long)
                 batch_size = more_toxic_ids.size(0)
 
-                more_toxic_outputs = model(more_toxic_ids, more_toxic_mask)
-                less_toxic_outputs = model(less_toxic_ids, less_toxic_mask)
+                more_toxic_outputs = model(more_toxic_ids, more_toxic_mask, more_toxic_metric)
+                less_toxic_outputs = model(less_toxic_ids, less_toxic_mask, less_toxic_metric)
                 loss = loss_fn(more_toxic_outputs, less_toxic_outputs, targets)
 
                 total_accuracy = (more_toxic_outputs > less_toxic_outputs).sum().item()
