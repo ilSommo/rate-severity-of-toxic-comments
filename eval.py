@@ -2,6 +2,8 @@ import argparse
 import json
 import os
 from lightgbm import train
+from sklearn.metrics import roc_curve, auc, roc_auc_score
+import matplotlib.pyplot as plt
 
 import pandas as pd
 import torch
@@ -47,6 +49,8 @@ if __name__ == "__main__":
         loss_fn = nn.MSELoss()
     elif eval_dataset_params["type"] == "pairwise":
         loss_fn = nn.MarginRankingLoss(margin=eval_dataset_params["loss_margin"])
+    else:
+        loss_fn = nn.MSELoss()
 
     device = torch.device("cuda" if torch.cuda.is_available()
                         and CONFIG["options"]["use_gpu"] else "cpu")
@@ -56,4 +60,25 @@ if __name__ == "__main__":
         model = create_model(run_mode, CONFIG["training"], model_params, support_bag)
         model.load_state_dict(torch.load(model_details["path"]))
         metrics = test_loop(test_dl, model, loss_fn, device, log_interval=1000, dataset_type=eval_dataset_params["type"], use_wandb=False)
-        print(model_details["description"], metrics)
+        if eval_dataset_params["type"] == "binarized":
+            y_test = metrics['binarization_targets']
+            y_score = metrics['binarization_scores']
+            fpr, tpr, thresholds = roc_curve(y_test, y_score)
+            roc_auc = auc(y_test, y_score)
+            ns_probs = ns_probs = [0 for _ in range(len(y_test))]    
+            ns_auc = roc_auc_score(y_test, ns_probs)
+            lr_auc = roc_auc_score(y_test, y_score)
+            print('Random: ROC AUC=%.3f' % (ns_auc))
+            print('Trained: ROC AUC=%.3f' % (lr_auc))
+            ns_fpr, ns_tpr, _ = roc_curve(y_test, ns_probs)
+            lr_fpr, lr_tpr, _ = roc_curve(y_test, y_score)
+            plt.plot(ns_fpr, ns_tpr, linestyle='--', label='Random')
+            plt.plot(lr_fpr, lr_tpr, marker='.', label='Trained')
+            plt.xlabel('False Positive Rate')
+            plt.ylabel('True Positive Rate')
+            plt.legend()
+            plt.show()
+            points = pd.DataFrame({'lr_fpr':lr_fpr,'lr_tpr':lr_tpr})
+            points.to_csv('res/roc/'+model_details["path"].split('/')[-1][11:-4]+'.csv')
+        else:
+            print(model_details["description"], metrics)

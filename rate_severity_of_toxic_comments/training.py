@@ -97,6 +97,8 @@ def test_loop(dataloader, model, loss_fn, device, log_interval, dataset_type, us
     running_loss = 0.0
     cumul_batches = 0
     dataset_size = 0
+    binarization_scores = []
+    binarization_targets = []
 
     with torch.no_grad():
         for idx_batch, data in tqdm(enumerate(dataloader), total=len(dataloader)):
@@ -132,7 +134,22 @@ def test_loop(dataloader, model, loss_fn, device, log_interval, dataset_type, us
                 less_toxic_outputs = model(less_toxic_ids, less_toxic_mask, less_toxic_metric)
                 loss = loss_fn(more_toxic_outputs, less_toxic_outputs, targets)
 
-                total_accuracy = (more_toxic_outputs > less_toxic_outputs).sum().item()
+                total_accuracy += (more_toxic_outputs > less_toxic_outputs).sum().item()
+            elif dataset_type == 'binarized':
+                ids = data["text_ids"].to(device, dtype=torch.long)
+                mask = data['text_mask'].to(device, dtype=torch.long)
+                targets = data['target'].to(device, dtype=torch.long)
+                preprocessing_metrics = data['text_metric'].to(
+                    device, dtype=torch.float32)
+                batch_size = ids.size(0)
+
+                scores = model(ids, mask, preprocessing_metrics)
+                scores = scores.to(torch.float32)
+                binarization_scores += scores.tolist()
+                targets = targets.to(torch.bool)
+                binarization_targets += targets.tolist()
+                loss = loss_fn(scores, targets)
+                
 
             total_loss += (loss.item() * batch_size)
             running_loss += loss.item()
@@ -148,6 +165,9 @@ def test_loop(dataloader, model, loss_fn, device, log_interval, dataset_type, us
     total_metrics["valid_loss"] = total_loss / dataset_size
     if total_accuracy > 0:
         total_metrics["valid_accuracy"] = total_accuracy / dataset_size
+    if len(binarization_targets) > 0:
+        total_metrics["binarization_scores"] = binarization_scores
+        total_metrics["binarization_targets"] = binarization_targets
 
     return total_metrics
 
