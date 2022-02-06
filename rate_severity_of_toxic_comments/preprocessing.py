@@ -47,7 +47,7 @@ def _apply_punctuation_pipeline(text):
 
 
 def _apply_whitespaces_pipeline(text):
-    additional_metric = len(re.findall('  +', text)) / len(re.findall(' +', text))
+    additional_metric = len(re.findall('  +', text)) / max(len(re.findall(' +', text)),1)
     text = re.sub('  +', ' ', text)
     return text, additional_metric
 
