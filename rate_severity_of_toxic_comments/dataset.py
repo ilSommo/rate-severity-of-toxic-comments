@@ -8,7 +8,7 @@ from rate_severity_of_toxic_comments.preprocessing import apply_preprocessing_pi
 from sklearn.model_selection import train_test_split
 import os
 
-AVAILABLE_DATASET_TYPES = ["pairwise", "scored"]
+AVAILABLE_DATASET_TYPES = ["pairwise", "scored", "binarized"]
 
 class PairwiseDataset(Dataset):
     def __init__(self, df, tokenizer, max_length):
@@ -76,6 +76,50 @@ class PairwiseDataset(Dataset):
         }
 
 
+class BinarizedDataset(Dataset):
+    def __init__(self, df, tokenizer, max_length):
+        self.df = df
+        self.max_len = max_length
+        self.tokenizer = tokenizer
+        self.text = df['Sentence'].values
+        self.metric = df['Sentence_metric'].values
+        self.target = df['Percentage of toxicity binarized'].values
+
+    def __len__(self):
+        return len(self.df)
+
+    def __getitem__(self, index):
+        text = self.text[index]
+
+        if self.max_len:
+            inputs_text = self.tokenizer(
+                text,
+                truncation=True,
+                add_special_tokens=True,
+                max_length=self.max_len,
+                padding='max_length'
+            )
+        else:
+            inputs_text = self.tokenizer(
+                text,
+                truncation=True,
+                add_special_tokens=True,
+                padding='longest'
+            )
+        target = self.target[index]
+
+        text_ids = inputs_text['input_ids']
+        text_mask = inputs_text['attention_mask']
+        text_metric = self.metric[index]
+
+        return {
+            'text_ids': torch.tensor(text_ids, dtype=torch.long),
+            'text_mask': torch.tensor(text_mask, dtype=torch.long),
+            'text_metric': torch.tensor(text_metric, dtype=torch.float32),
+            'target': torch.tensor(target, dtype=torch.long)
+        }
+
+
 class ScoredDataset(Dataset):
     def __init__(self, df, tokenizer, max_length):
         self.df = df
@@ -125,7 +169,8 @@ def build_dataset(df, dataset_params, model_params, tokenizer):
         return PairwiseDataset(df, tokenizer=tokenizer, max_length=model_params["max_length"])
     elif dataset_params["type"] == "scored":
         return ScoredDataset(df, tokenizer=tokenizer, max_length=model_params["max_length"])
-
+    elif dataset_params["type"] == "binarized":
+        return BinarizedDataset(df, tokenizer=tokenizer, max_length=model_params["max_length"])
 
 def build_dataloaders(datasets, batch_sizes):
     return [DataLoader(ds, batch_size=batch_size, num_workers=2, shuffle=False, pin_memory=True)
