@@ -33,17 +33,9 @@ if __name__ == "__main__":
     models_file = open(BEST_MODELS_FILE_PATH)
     models = json.load(models_file)
 
-    run_mode = CONFIG["options"]["run_mode"]
     eval_dataset_params = CONFIG["evaluation"]["dataset"]
-    model_params = CONFIG[run_mode]
-    
-    df_test = load_dataframe(run_mode, eval_dataset_params, model_params=model_params)
-    support_bag = process_config(df_test, CONFIG)
-
-    test_data = build_dataset(df_test, CONFIG["evaluation"]["dataset"], model_params, support_bag["tokenizer"])
 
     batch_size = args["batch_size"]
-    test_dl, = build_dataloaders([test_data], [batch_size])
 
     if eval_dataset_params["type"] == "scored":
         loss_fn = nn.MSELoss()
@@ -56,8 +48,21 @@ if __name__ == "__main__":
                         and CONFIG["options"]["use_gpu"] else "cpu")
 
     for model_details in models:
-        #TODO: Use model_details["params"] instead of model_params
-        model = create_model(run_mode, CONFIG["training"], model_params, support_bag)
+        if not os.path.isfile(model_details["path"]):
+            continue
+
+        run_mode, training_params, model_params = model_details["params"]["run_mode"], model_details["params"]["training"], model_details["params"]["model"]
+        CONFIG["run_mode"] = run_mode
+        CONFIG["training"].update(training_params)
+        CONFIG[run_mode].update(model_params)
+
+        df_test = load_dataframe(run_mode, eval_dataset_params, model_params=model_params)
+        support_bag = process_config(df_test, CONFIG)
+
+        test_data = build_dataset(df_test, eval_dataset_params, model_params, support_bag["tokenizer"])
+        test_dl, = build_dataloaders([test_data], [batch_size])
+
+        model = create_model(run_mode, model_params, training_params, support_bag)
         model.load_state_dict(torch.load(model_details["path"]))
         model.to(device)
         
