@@ -6,7 +6,7 @@ import pandas as pd
 import torch
 
 from rate_severity_of_toxic_comments.model import create_model
-from rate_severity_of_toxic_comments.utilities import validate_config, process_config
+from rate_severity_of_toxic_comments.utilities import parse_config, validate_config, process_config
 
 DEFAULT_CONFIG_FILE_PATH = "config/default.json"
 LOCAL_CONFIG_FILE_PATH = "config/local.json"
@@ -18,14 +18,8 @@ if __name__ == "__main__":
     parser.add_argument('--model_file')
     args = parser.parse_args()
 
-    default = open(DEFAULT_CONFIG_FILE_PATH)
-    CONFIG = json.load(default)
-
-    if os.path.exists(LOCAL_CONFIG_FILE_PATH):
-        with open(LOCAL_CONFIG_FILE_PATH) as local:
-            CONFIG.update(json.load(local))
-
-    validate_config(CONFIG)
+    CONFIG = parse_config(DEFAULT_CONFIG_FILE_PATH, LOCAL_CONFIG_FILE_PATH)
+    
     support_bag = process_config(pd.DataFrame(), CONFIG)
 
     run_mode = CONFIG["options"]["run_mode"]

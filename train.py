@@ -7,20 +7,13 @@ import torch
 
 from rate_severity_of_toxic_comments.dataset import build_dataset, load_dataframe, split_dataset
 from rate_severity_of_toxic_comments.training import run_training
-from rate_severity_of_toxic_comments.utilities import process_config, validate_config
+from rate_severity_of_toxic_comments.utilities import parse_config, process_config, validate_config
 
 DEFAULT_CONFIG_FILE_PATH = "config/default.json"
 LOCAL_CONFIG_FILE_PATH = "config/local.json"
 
 if __name__ == "__main__":
-    default = open(DEFAULT_CONFIG_FILE_PATH)
-    CONFIG = json.load(default)
-
-    if os.path.exists(LOCAL_CONFIG_FILE_PATH):
-        with open(LOCAL_CONFIG_FILE_PATH) as local:
-            CONFIG.update(json.load(local))
-
-    validate_config(CONFIG)
+    CONFIG = parse_config(DEFAULT_CONFIG_FILE_PATH, LOCAL_CONFIG_FILE_PATH)
 
     run_mode = CONFIG["options"]["run_mode"]
     df = load_dataframe(run_mode, CONFIG["training"]["dataset"], CONFIG[run_mode])

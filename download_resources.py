@@ -4,6 +4,7 @@ import argparse
 from xml.dom import NotFoundErr
 import requests
 from interactive import BEST_MODELS_FILE_PATH
+from rate_severity_of_toxic_comments.utilities import parse_config
 
 from rate_severity_of_toxic_comments.vocabulary import get_preprocess_filenames
 
@@ -37,12 +38,7 @@ if __name__ == "__main__":
     if not (args["datasets"] or args["vocabs"] or args["models"]):
         raise argparse.ArgumentError("Choose at least one resource category to download")
 
-    default = open(DEFAULT_CONFIG_FILE_PATH)
-    CONFIG = json.load(default)
-
-    if os.path.exists(LOCAL_CONFIG_FILE_PATH):
-        with open(LOCAL_CONFIG_FILE_PATH) as local:
-            CONFIG.update(json.load(local))
+    CONFIG = parse_config(DEFAULT_CONFIG_FILE_PATH, LOCAL_CONFIG_FILE_PATH)
     
     vocabs_file = open(VOCAB_CONFIG_FILE_PATH)
     vocabs = json.load(vocabs_file)

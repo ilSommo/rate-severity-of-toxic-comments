@@ -125,7 +125,17 @@ def parse_config(default_filepath, local_filepath=None):
 
     if os.path.exists(local_filepath):
         with open(local_filepath) as local:
-            CONFIG.update(json.load(local))
+            import collections.abc
+
+            def deep_update(d, u):
+                for k, v in u.items():
+                    if isinstance(v, collections.abc.Mapping):
+                        d[k] = deep_update(d.get(k, {}), v)
+                    else:
+                        d[k] = v
+                return d
+
+            CONFIG = deep_update(CONFIG, json.load(local))
 
     validate_config(CONFIG)
     return CONFIG
