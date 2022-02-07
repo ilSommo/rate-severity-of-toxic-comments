@@ -12,7 +12,7 @@
   },
   "recurrent": {
     "architecture": "LSTM",
-    "preprocessing": ["LOWER", "NUMBERS"],
+    "preprocessing": ["LOWER"],
     "vocab_file": "res/vocab/naive.txt",
     "embedding_dimension": 300,
     "embedding_type": "glove",
@@ -24,11 +24,11 @@
     "epochs": 3,
     "train_batch_size": 32,
     "valid_batch_size": 64,
-    "optimizer": "adam",
-    "learning_rate": 1e-4,
-    "dropout": 0.2,
-    "L2_regularization": 0.01,
-    "gradient_clipping": 0.75,
+    "optimizer": "adamw",
+    "learning_rate": 0.00324,
+    "dropout": 0.1415,
+    "L2_regularization": 0.08384,
+    "gradient_clipping": 0.4547,
     "dataset": {
       "path": "res/data/train.csv",
       "cols": ["comment_text"],
@@ -38,9 +38,9 @@
   "debug": { "max_length": 128 },
   "evaluation": {
     "dataset": {
-      "path": "res/data/validation_data.csv",
-      "cols": ["more_toxic", "less_toxic"],
-      "type": "pairwise",
+      "path": "res/data/validation_binarized.csv",
+      "cols": ["Sentence"],
+      "type": "binarized",
       "loss_margin": 0.5
     }
   }
