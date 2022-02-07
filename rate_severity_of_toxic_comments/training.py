@@ -97,7 +97,7 @@ def test_loop(dataloader, model, loss_fn, device, log_interval, dataset_type, us
     running_loss = 0.0
     cumul_batches = 0
     dataset_size = 0
-    binarization_scores = []
+    total_scores = []
     binarization_targets = []
 
     with torch.no_grad():
@@ -133,6 +133,9 @@ def test_loop(dataloader, model, loss_fn, device, log_interval, dataset_type, us
                 more_toxic_outputs = model(more_toxic_ids, more_toxic_mask, more_toxic_metric)
                 less_toxic_outputs = model(less_toxic_ids, less_toxic_mask, less_toxic_metric)
                 loss = loss_fn(more_toxic_outputs, less_toxic_outputs, targets)
+                more_toxic_scores = more_toxic_outputs.to(torch.float32).tolist()
+                less_toxic_scores = less_toxic_outputs.to(torch.float32).tolist()
+                total_scores = more_toxic_scores + less_toxic_scores
 
                 total_accuracy += (more_toxic_outputs > less_toxic_outputs).sum().item()
             elif dataset_type == 'binarized':
@@ -145,7 +148,7 @@ def test_loop(dataloader, model, loss_fn, device, log_interval, dataset_type, us
 
                 scores = model(ids, mask, preprocessing_metrics)
                 scores = scores.to(torch.float32)
-                binarization_scores += scores.tolist()
+                total_scores += scores.tolist()
                 targets = targets.to(torch.bool)
                 binarization_targets += targets.tolist()
                 loss = loss_fn(scores, targets)
@@ -163,10 +166,10 @@ def test_loop(dataloader, model, loss_fn, device, log_interval, dataset_type, us
                 cumul_batches = 0
 
     total_metrics["valid_loss"] = total_loss / dataset_size
+    total_metrics["scores"] = total_scores
     if total_accuracy > 0:
         total_metrics["valid_accuracy"] = total_accuracy / dataset_size
     if len(binarization_targets) > 0:
-        total_metrics["binarization_scores"] = binarization_scores
         total_metrics["binarization_targets"] = binarization_targets
 
     return total_metrics
