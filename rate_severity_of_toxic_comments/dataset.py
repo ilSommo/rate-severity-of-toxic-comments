@@ -1,6 +1,6 @@
 from sqlalchemy import true
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, WeightedRandomSampler
 from torch.utils.data.dataloader import DataLoader
 import pandas as pd
 import numpy as np
@@ -126,6 +126,7 @@ class ScoredDataset(Dataset):
         self.text = df["comment_text"].values
         self.preprocessing_metric = df["comment_text_metric"].values
         self.target = df["target"].values
+        self.sample_weight = df["sample_weight"].values
         self.tokenizer = tokenizer
         self.max_len = max_length
 
@@ -173,8 +174,13 @@ def build_dataset(df, dataset_params, model_params, tokenizer):
         return BinarizedDataset(df, tokenizer=tokenizer, max_length=model_params["max_length"])
 
 def build_dataloaders(datasets, batch_sizes):
-    return [DataLoader(ds, batch_size=batch_size, num_workers=2, shuffle=False, pin_memory=True)
-            for ds, batch_size in zip(datasets, batch_sizes)]
+    data_loaders = []
+    for ds, batch_size in zip(datasets, batch_sizes):
+        if ds.sample_weight:
+            data_loaders.append(DataLoader(ds, batch_size=batch_size, num_workers=2, sampler=WeightedRandomSampler(ds.sample_weight, batch_size)))
+        else:
+            data_loaders.append(DataLoader(ds, batch_size=batch_size, num_workers=2, shuffle=False, pin_memory=True))
+    return data_loaders
 
 
 def split_dataset(dataframe: pd.DataFrame, seed):
@@ -186,6 +192,9 @@ def split_dataset(dataframe: pd.DataFrame, seed):
     print(dict(zip(unique, counts)))
     return train_test_split(dataframe, stratify=np.floor(dataframe["label"]), random_state=seed)
 
+def add_sample_weight(df):
+    binned_targets = pd.cut(df["target"], 100)
+    df["sample_weight"] = binned_targets.map(1 / binned_targets.value_counts())
 
 def load_dataframe(run_mode, dataset_params, model_params):
     base_train_file_path = dataset_params["path"]
@@ -203,6 +212,7 @@ def load_dataframe(run_mode, dataset_params, model_params):
             df = pd.read_csv(base_train_file_path)
             for col in cols:
                 df[col+'_metric'] = 0
+            add_sample_weight(df)
             return df
 
         data_frame_to_load = base_train_file_path[:-4]
@@ -221,6 +231,7 @@ def load_dataframe(run_mode, dataset_params, model_params):
     if os.path.exists(data_frame_to_load):
         print(f'Loading preprocessed dataframe from {data_frame_to_load}\n')
         df = pd.read_csv(data_frame_to_load)
+        add_sample_weight(df)
         return df
     else:
         df = pd.read_csv(base_train_file_path)
@@ -242,4 +253,5 @@ def load_dataframe(run_mode, dataset_params, model_params):
 
     print(f"Dataframe preprocessed\n")
     df.to_csv(data_frame_to_load)
+    add_sample_weight(df)
     return df
