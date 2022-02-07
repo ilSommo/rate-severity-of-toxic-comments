@@ -1,4 +1,5 @@
 import argparse
+import glob
 import json
 import os
 from lightgbm import train
@@ -12,30 +13,40 @@ from torch import nn
 from rate_severity_of_toxic_comments.dataset import build_dataloaders, build_dataset, load_dataframe
 from rate_severity_of_toxic_comments.model import create_model
 from rate_severity_of_toxic_comments.training import test_loop
-from rate_severity_of_toxic_comments.utilities import process_config, validate_config
+from rate_severity_of_toxic_comments.utilities import parse_config, process_config, validate_config
 
 DEFAULT_CONFIG_FILE_PATH = "config/default.json"
 LOCAL_CONFIG_FILE_PATH = "config/local.json"
 BEST_MODELS_FILE_PATH = "config/best_models.json"
 
 if __name__ == "__main__":
-    args = {"batch_size": 32}
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--batch_size', default=32)
+    parser.add_argument('--mode', default="best", choices=["best", "last"])
+    parser.add_argument('--folder', default="res/models/")
+    parser.add_argument('--headless', action="store_true")
+    args = parser.parse_args()
 
-    default = open(DEFAULT_CONFIG_FILE_PATH)
-    CONFIG = json.load(default)
 
-    if os.path.exists(LOCAL_CONFIG_FILE_PATH):
-        with open(LOCAL_CONFIG_FILE_PATH) as local:
-            CONFIG.update(json.load(local))
+    CONFIG = parse_config(DEFAULT_CONFIG_FILE_PATH, LOCAL_CONFIG_FILE_PATH)
 
-    validate_config(CONFIG)
+    if args.mode == "last":
+        model_files = glob.glob(args.folder + "*.pth")
+        latest_file = max(model_files, key=os.path.getctime)
 
-    models_file = open(BEST_MODELS_FILE_PATH)
-    models = json.load(models_file)
+        models = [{
+            "description": "Last Model Found",
+            "path": latest_file
+        }]
+    elif args.mode == "best":
+        models_file = open(BEST_MODELS_FILE_PATH)
+        models = json.load(models_file)
+    else:
+        raise argparse.ArgumentError("Invalid mode")
 
     eval_dataset_params = CONFIG["evaluation"]["dataset"]
 
-    batch_size = args["batch_size"]
+    batch_size = args.batch_size
 
     if eval_dataset_params["type"] == "scored":
         loss_fn = nn.MSELoss()
@@ -49,12 +60,18 @@ if __name__ == "__main__":
 
     for model_details in models:
         if not os.path.isfile(model_details["path"]):
+            print(model_details["Description"] + " skipped since it was not found")
             continue
 
-        run_mode, training_params, model_params = model_details["params"]["run_mode"], model_details["params"]["training"], model_details["params"]["model"]
-        CONFIG["run_mode"] = run_mode
-        CONFIG["training"].update(training_params)
-        CONFIG[run_mode].update(model_params)
+        if args.mode == "best":
+            run_mode, training_params, model_params = model_details["params"]["run_mode"], model_details["params"]["training"], model_details["params"]["model"]
+            CONFIG["options"]["run_mode"] = run_mode
+            CONFIG["training"].update(training_params)
+            CONFIG[run_mode].update(model_params)
+        else:
+            run_mode = CONFIG["options"]["run_mode"]
+            training_params = CONFIG["training"]
+            model_params = CONFIG[run_mode]
 
         df_test = load_dataframe(run_mode, eval_dataset_params, model_params=model_params)
         support_bag = process_config(df_test, CONFIG)
@@ -62,15 +79,17 @@ if __name__ == "__main__":
         test_data = build_dataset(df_test, eval_dataset_params, model_params, support_bag["tokenizer"])
         test_dl, = build_dataloaders([test_data], [batch_size])
 
-        model = create_model(run_mode, model_params, training_params, support_bag)
+        model = create_model(run_mode, training_params, model_params, support_bag)
         model.load_state_dict(torch.load(model_details["path"]))
         model.to(device)
         
         metrics = test_loop(test_dl, model, loss_fn, device, log_interval=1000, dataset_type=eval_dataset_params["type"], use_wandb=False)
         y_score = metrics['scores']
         hist = pd.DataFrame({'score':y_score})
-        plt.hist(hist,100)
-        plt.show()
+
+        if not args.headless:
+            plt.hist(hist,100)
+            plt.show()
         hist.to_csv('res/hist/'+model_details["path"].split('/')[-1][11:-4]+'.csv')
         if eval_dataset_params["type"] == "binarized":
             y_test = metrics['binarization_targets']
@@ -83,12 +102,13 @@ if __name__ == "__main__":
             print('Trained: ROC AUC=%.3f' % (lr_auc))
             ns_fpr, ns_tpr, _ = roc_curve(y_test, ns_probs)
             lr_fpr, lr_tpr, _ = roc_curve(y_test, y_score)
-            plt.plot(ns_fpr, ns_tpr, linestyle='--', label='Random')
-            plt.plot(lr_fpr, lr_tpr, marker='.', label='Trained')
-            plt.xlabel('False Positive Rate')
-            plt.ylabel('True Positive Rate')
-            plt.legend()
-            plt.show()
+            if not args.headless:
+                plt.plot(ns_fpr, ns_tpr, linestyle='--', label='Random')
+                plt.plot(lr_fpr, lr_tpr, marker='.', label='Trained')
+                plt.xlabel('False Positive Rate')
+                plt.ylabel('True Positive Rate')
+                plt.legend()
+                plt.show()
             points = pd.DataFrame({'lr_fpr':lr_fpr,'lr_tpr':lr_tpr})
             points.to_csv('res/roc/'+model_details["path"].split('/')[-1][11:-4]+'.csv')
         else:
