@@ -116,7 +116,7 @@ class BinarizedDataset(Dataset):
             'text_ids': torch.tensor(text_ids, dtype=torch.long),
             'text_mask': torch.tensor(text_mask, dtype=torch.long),
             'text_metric': torch.tensor(text_metric, dtype=torch.float32),
-            'target': torch.tensor(target, dtype=torch.long)
+            'target': torch.tensor(target, dtype=torch.bool)
         }
 
 
