@@ -177,7 +177,7 @@ def build_dataloaders(datasets, batch_sizes):
     data_loaders = []
     for ds, batch_size in zip(datasets, batch_sizes):
         try:
-            data_loaders.append(DataLoader(ds, batch_size=batch_size, num_workers=2, sampler=WeightedRandomSampler(ds.sample_weight, batch_size)))
+            data_loaders.append(DataLoader(ds, batch_size=batch_size, num_workers=2, sampler=WeightedRandomSampler(ds.sample_weight, len(ds))))
         except:
             data_loaders.append(DataLoader(ds, batch_size=batch_size, num_workers=2, shuffle=False, pin_memory=True))
     return data_loaders
