@@ -176,9 +176,9 @@ def build_dataset(df, dataset_params, model_params, tokenizer):
 def build_dataloaders(datasets, batch_sizes):
     data_loaders = []
     for ds, batch_size in zip(datasets, batch_sizes):
-        if ds.sample_weight:
+        try:
             data_loaders.append(DataLoader(ds, batch_size=batch_size, num_workers=2, sampler=WeightedRandomSampler(ds.sample_weight, batch_size)))
-        else:
+        except:
             data_loaders.append(DataLoader(ds, batch_size=batch_size, num_workers=2, shuffle=False, pin_memory=True))
     return data_loaders
 
