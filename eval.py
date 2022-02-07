@@ -62,9 +62,13 @@ if __name__ == "__main__":
         model.to(device)
         
         metrics = test_loop(test_dl, model, loss_fn, device, log_interval=1000, dataset_type=eval_dataset_params["type"], use_wandb=False)
+        y_score = metrics['scores']
+        hist = pd.DataFrame({'score':y_score})
+        plt.hist(hist,100)
+        plt.show()
+        hist.to_csv('res/hist/'+model_details["path"].split('/')[-1][11:-4]+'.csv')
         if eval_dataset_params["type"] == "binarized":
             y_test = metrics['binarization_targets']
-            y_score = metrics['binarization_scores']
             fpr, tpr, thresholds = roc_curve(y_test, y_score)
             roc_auc = auc(y_test, y_score)
             ns_probs = ns_probs = [0 for _ in range(len(y_test))]    
@@ -84,3 +88,4 @@ if __name__ == "__main__":
             points.to_csv('res/roc/'+model_details["path"].split('/')[-1][11:-4]+'.csv')
         else:
             print(model_details["description"], metrics)
+
