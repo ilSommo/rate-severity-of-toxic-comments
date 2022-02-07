@@ -2,6 +2,8 @@ __version__ = '0.1.0'
 __author__ = 'Lorenzo Menghini, Martino Pulici, Alessandro Stockman, Luca Zucchini'
 
 import random
+import json
+import os
 
 import numpy as np
 import torch
@@ -124,3 +126,24 @@ def process_config(df, config):
         fix_random_seed(config["options"]["seed"])
 
     return support_bag
+
+def parse_config(default_filepath, local_filepath=None):
+    default = open(default_filepath)
+    CONFIG = json.load(default)
+
+    if os.path.exists(local_filepath):
+        with open(local_filepath) as local:
+            import collections.abc
+
+            def deep_update(d, u):
+                for k, v in u.items():
+                    if isinstance(v, collections.abc.Mapping):
+                        d[k] = deep_update(d.get(k, {}), v)
+                    else:
+                        d[k] = v
+                return d
+
+            CONFIG = deep_update(CONFIG, json.load(local))
+
+    validate_config(CONFIG)
+    return CONFIG

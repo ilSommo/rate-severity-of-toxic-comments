@@ -73,7 +73,6 @@ def build_embedding_matrix(embedding_model: gensim.models.keyedvectors.KeyedVect
             embedding_vector = np.zeros(embedding_dim)
         else:
             try:
-                # TODO: Why 2 vectors?
                 embedding_vector = embedding_model[word]
             except (KeyError, TypeError):
                 embedding_vector = np.random.uniform(

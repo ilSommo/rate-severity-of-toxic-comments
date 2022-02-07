@@ -32,7 +32,9 @@
     "dataset": {
       "path": "res/data/train.csv",
       "cols": ["comment_text"],
-      "type": "scored"
+      "type": "scored",
+      "weighted_sampling": true,
+      "target_col": "target"
     }
   },
   "debug": { "max_length": 128 },
@@ -41,7 +43,8 @@
       "path": "res/data/validation_binarized.csv",
       "cols": ["Sentence"],
       "type": "binarized",
-      "loss_margin": 0.5
+      "loss_margin": 0.5,
+      "weighted_sampling": false
     }
   }
 }
