@@ -183,18 +183,18 @@ def build_dataloaders(datasets, batch_sizes):
     return data_loaders
 
 
-def split_dataset(dataframe: pd.DataFrame, seed):
+def split_dataset(dataframe: pd.DataFrame, target_col_name, seed):
 
-    dataframe["label"] = dataframe["target"] * 10
+    dataframe["label"] = dataframe[target_col_name] * 10
 
     unique, counts = np.unique(
         np.floor(dataframe["label"]), return_counts=True)
     print(dict(zip(unique, counts)))
     return train_test_split(dataframe, stratify=np.floor(dataframe["label"]), random_state=seed)
 
-def add_sample_weight(df):
-    binned_targets = pd.cut(df["target"], 100)
-    df["sample_weight"] = binned_targets.map(1 / binned_targets.value_counts())
+def get_sample_weights(df, target_col_name, bins=100):
+    binned_targets = pd.cut(df[target_col_name], bins)
+    return binned_targets.map(1 / binned_targets.value_counts())
 
 def load_dataframe(run_mode, dataset_params, model_params):
     base_train_file_path = dataset_params["path"]
@@ -212,7 +212,9 @@ def load_dataframe(run_mode, dataset_params, model_params):
             df = pd.read_csv(base_train_file_path)
             for col in cols:
                 df[col+'_metric'] = 0
-            add_sample_weight(df)
+
+            if dataset_params["weighted_sampling"]:
+                df["sample_weight"] = get_sample_weights(df, dataset_params["target_col"])
             return df
 
         data_frame_to_load = base_train_file_path[:-4]
@@ -231,7 +233,8 @@ def load_dataframe(run_mode, dataset_params, model_params):
     if os.path.exists(data_frame_to_load):
         print(f'Loading preprocessed dataframe from {data_frame_to_load}\n')
         df = pd.read_csv(data_frame_to_load)
-        add_sample_weight(df)
+        if dataset_params["weighted_sampling"]:
+            df["sample_weight"] = get_sample_weights(df, dataset_params["target_col"])
         return df
     else:
         df = pd.read_csv(base_train_file_path)
@@ -253,5 +256,6 @@ def load_dataframe(run_mode, dataset_params, model_params):
 
     print(f"Dataframe preprocessed\n")
     df.to_csv(data_frame_to_load)
-    add_sample_weight(df)
+    if dataset_params["weighted_sampling"]:
+        df["sample_weight"] = get_sample_weights(df, dataset_params["target_col"])
     return df

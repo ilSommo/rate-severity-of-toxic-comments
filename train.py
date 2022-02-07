@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
     support_bag = process_config(df, CONFIG)
 
-    df_train, df_valid = split_dataset(df, CONFIG['options']['seed'])
+    df_train, df_valid = split_dataset(df, CONFIG["training"]["dataset"]["target_col"], CONFIG['options']['seed'])
 
     training_data = build_dataset(df_train, CONFIG["training"]["dataset"], 
             CONFIG[run_mode], support_bag["tokenizer"])
