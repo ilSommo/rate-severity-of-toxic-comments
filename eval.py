@@ -59,6 +59,8 @@ if __name__ == "__main__":
         #TODO: Use model_details["params"] instead of model_params
         model = create_model(run_mode, CONFIG["training"], model_params, support_bag)
         model.load_state_dict(torch.load(model_details["path"]))
+        model.to(device)
+        
         metrics = test_loop(test_dl, model, loss_fn, device, log_interval=1000, dataset_type=eval_dataset_params["type"], use_wandb=False)
         if eval_dataset_params["type"] == "binarized":
             y_test = metrics['binarization_targets']
