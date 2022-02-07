@@ -43,6 +43,7 @@ class RecurrentModel(Module):
         elif architecture == 'BiDi':
             self.recurrent = LSTM(embedding_dim, hidden_dim,
                                   batch_first=True, bidirectional=True)
+            hidden_dim = hidden_dim * 2
 
         self.drop = Dropout(p=dropout)
         self.relu = ReLU()
