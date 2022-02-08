@@ -124,7 +124,8 @@ class ScoredDataset(Dataset):
     def __init__(self, df, tokenizer, max_length):
         self.df = df
         self.text = df["comment_text"].values
-        self.preprocessing_metric = df["comment_text_metric"].values
+        if "comment_text_metric" in df.columns:
+            self.preprocessing_metric = df["comment_text_metric"].values
         self.target = df["target"].values
         self.sample_weight = df["sample_weight"].values
         self.tokenizer = tokenizer
