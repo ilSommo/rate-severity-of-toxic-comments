@@ -34,7 +34,7 @@ class PretrainedModel(Module):
 
     """
 
-    def __init__(self, model_name, dropout, output_features):
+    def __init__(self, model_name, _, output_features):
         """
         Initializes the model.
 
@@ -42,16 +42,12 @@ class PretrainedModel(Module):
         ----------
         model_name : str
             Name of the model.
-        dropout : float
-            Dropout parameter.
         output_features : int
             Number of ouput features.
 
         """
         super().__init__()
         self.model = AutoModel.from_pretrained(model_name)
-        if dropout is not None:
-            self.drop = Dropout(p=dropout)
         self.sig = Sigmoid()
         self.fc = Linear(output_features, OUTPUT_CLASSES)
 
