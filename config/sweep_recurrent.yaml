@@ -18,7 +18,7 @@ parameters:
     min: 0.01
     max: 0.1
   training.gradient_clipping:
-    min: -1
+    min: 0.0001
     max: 1
   model.architecture:
     values: ["LSTM", "GRU", "BiDi"]
