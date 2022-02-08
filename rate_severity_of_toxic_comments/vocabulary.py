@@ -4,7 +4,10 @@ import os
 
 from tqdm import tqdm
 
-def get_preprocess_filenames(pipelines, vocab_file, dataset_file=None): 
+
+def get_preprocess_filenames(pipelines, vocab_file, dataset_file=None) -> str:
+    """Gets the appropriate vocabulary file path to load based on the preprocessing pipeline to apply"""
+
     pipelines.sort()
     if pipelines is None or len(pipelines) == 0:
         return None
@@ -15,7 +18,7 @@ def get_preprocess_filenames(pipelines, vocab_file, dataset_file=None):
     for pipeline in pipelines:
         dataset_to_load += '_' + pipeline
         vocab_to_load += '_' + pipeline
-    
+
     dataset_to_load += '.csv'
     vocab_to_load += '.txt'
 
@@ -23,6 +26,7 @@ def get_preprocess_filenames(pipelines, vocab_file, dataset_file=None):
         return vocab_to_load, dataset_to_load
     else:
         return vocab_to_load
+
 
 def load_vocabulary(vocab_file):
     """Loads a vocabulary file into a dictionary."""
@@ -41,7 +45,7 @@ def load_vocabulary(vocab_file):
 
     vocab = torchtext.vocab.vocab(vocab_dict, min_freq=1).get_stoi()
     print(f"Loaded vocabulary")
-    
+
     return vocab
 
 
@@ -85,6 +89,9 @@ def build_vocabulary(df, cols, tokenizer, min_freq=1, save_path=None):
 
 
 def save_vocabulary(save_path, vocab):
+    """
+    Save the [vocab] to the given file path 
+    """
     index = 0
     print(f"Saving vocabulary to path: {save_path}")
     with open(save_path, "w", encoding="utf-8") as writer:

@@ -37,20 +37,22 @@ def obfuscator(text):
 
 
 def fix_random_seed(seed):
+    """Initialize seed value"""
     torch.manual_seed(seed)
     np.random.seed(seed)
     random.seed(seed)
 
     if torch.cuda.is_available():
         torch.cuda.manual_seed(seed)
-        # torch.cuda.manual_seed_all(seed)
-        #torch.backends.cudnn.enabled = False
-        #torch.backends.cudnn.deterministic = True
-        #torch.backends.cudnn.benchmark = False
-        # torch.use_deterministic_algorithms(True)
 
 
 def validate_config(config):
+    """
+    Validates the config file and raise a ValueError if some value is missing or not supported\n
+    - Checks for the available preprocessing pipeline to apply\n
+    - Checks for run mode\n
+    - Checks for dataset type\n
+    """
     # Check for value correctness
     if config["options"]["run_mode"] not in AVAILABLE_MODES:
         raise ValueError("Invalid configuration! Run Mode not supported")
@@ -98,6 +100,12 @@ def validate_config(config):
 
 
 def process_config(df, config):
+    """
+    Given the config file depending on the config["options"]["run_mode"] add entries to the config dictionary, in particular\n
+    - "pretrained" -> Loads the AutoTokenizer depending on the pretrained model name\n
+    - "recurrent" -> Loads the NaiveTokenizer and the embedding matrix generated using pretrained embeddings\n
+    - "debug" -> For debug purposes\n
+    """
     support_bag = {}
     if config["options"]["run_mode"] == "pretrained":
         support_bag["tokenizer"] = AutoTokenizer.from_pretrained(
