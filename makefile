@@ -21,7 +21,6 @@ endif
 
 bump: $(shell find . -name "*.py")
 	sed -i '' 's/__version__ = .*/__version__ = '\'$(VERSION)\''/' $^
-	sed -i '' 's/__version__ = .*/__version__ = '\'$(VERSION)\''\\n",/' rate-severity-of-toxic-comments.ipynb
 	autopep8 -i -a -a $^
 	pdoc -o ./docs --docformat numpy rate_severity_of_toxic_comments
 	pipenv lock

@@ -1,0 +1,50 @@
+{
+  "options": {
+    "run_mode": "recurrent",
+    "use_gpu": true,
+    "wandb": true,
+    "seed": 42
+  },
+  "pretrained": {
+    "model_name": "roberta-base",
+    "output_features": 768,
+    "max_length": 128
+  },
+  "recurrent": {
+    "architecture": "BiDi",
+    "preprocessing": ["LOWER", "NUMBERS", "TRIPLE"],
+    "vocab_file": "res/vocab/naive.txt",
+    "embedding_dimension": 300,
+    "embedding_type": "glove",
+    "hidden_dim": 128,
+    "max_length": 128,
+    "preprocessing_metric": true
+  },
+  "training": {
+    "epochs": 3,
+    "train_batch_size": 32,
+    "valid_batch_size": 64,
+    "optimizer": "adamw",
+    "learning_rate": 1e-2,
+    "dropout": 0.15,
+    "L2_regularization": 8e-2,
+    "gradient_clipping": 0.5,
+    "dataset": {
+      "path": "res/data/train.csv",
+      "cols": ["comment_text"],
+      "type": "scored",
+      "weighted_sampling": true,
+      "target_col": "target"
+    }
+  },
+  "debug": { "max_length": 128 },
+  "evaluation": {
+    "dataset": {
+      "path": "res/data/validation_binarized.csv",
+      "cols": ["Sentence"],
+      "type": "binarized",
+      "loss_margin": 0.5,
+      "weighted_sampling": false
+    }
+  }
+}
