@@ -32,14 +32,13 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, gradient_clipping,
         if dataset_type == "scored":
             ids = data["ids"].to(device, dtype=torch.long)
             mask = data['mask'].to(device, dtype=torch.long)
-            targets = data['target'].to(device, dtype=torch.long)
+            targets = data['target'].to(device, dtype=torch.float32)
             preprocessing_metric = data['preprocessing_metric'].to(
                 device, dtype=torch.float32)
             batch_size = ids.size(0)
 
             scores = model(ids, mask, preprocessing_metric)
             scores = scores.to(torch.float32)
-            targets = targets.to(torch.float32)
             loss = loss_fn(scores, targets)
         elif dataset_type == "pairwise":
             more_toxic_ids = data['more_toxic_ids'].to(
@@ -105,15 +104,15 @@ def test_loop(dataloader, model, loss_fn, device, log_interval, dataset_type, us
             if dataset_type == "scored":
                 ids = data["ids"].to(device, dtype=torch.long)
                 mask = data['mask'].to(device, dtype=torch.long)
-                targets = data['target'].to(device, dtype=torch.long)
+                targets = data['target'].to(device, dtype=torch.float32)
                 preprocessing_metrics = data['preprocessing_metric'].to(
                     device, dtype=torch.float32)
                 batch_size = ids.size(0)
 
                 scores = model(ids, mask, preprocessing_metrics)
                 scores = scores.to(torch.float32)
-                targets = targets.to(torch.float32)
                 loss = loss_fn(scores, targets)
+
             elif dataset_type == "pairwise":
                 more_toxic_ids = data['more_toxic_ids'].to(
                     device, dtype=torch.long)
