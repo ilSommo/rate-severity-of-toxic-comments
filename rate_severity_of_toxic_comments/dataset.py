@@ -1,4 +1,4 @@
-__version__ = '1.0.0-rc'
+__version__ = '1.0.0-rc.1'
 __author__ = 'Lorenzo Menghini, Martino Pulici, Alessandro Stockman, Luca Zucchini'
 
 
@@ -207,7 +207,8 @@ class PairwiseDataset(Dataset):
         more_toxic = self.more_toxic[index]
         less_toxic = self.less_toxic[index]
         # Application of tokenization using the predefined tokenizer
-        # If a max length is specified the data is truncated, otherwise the length longest sentence is used
+        # If a max length is specified the data is truncated, otherwise the
+        # length longest sentence is used
         if self.max_len:
             inputs_more_toxic = self.tokenizer(
                 more_toxic,
@@ -510,7 +511,8 @@ def load_dataframe(run_mode, dataset_params, model_params):
         print(f'New vocab file path {vocab_to_load}')
         model_params['vocab_file'] = vocab_to_load
     else:
-        # If the run type is not recurrent, preprocessing shouldn't be performed, returns the plain dataframe
+        # If the run type is not recurrent, preprocessing shouldn't be
+        # performed, returns the plain dataframe
         df = pd.read_csv(data_frame_to_load)
         if dataset_params['weighted_sampling']:
             df['sample_weight'] = get_sample_weights(
@@ -519,7 +521,8 @@ def load_dataframe(run_mode, dataset_params, model_params):
                 df[col + '_metric'] = 0
         return df
     if os.path.exists(data_frame_to_load):
-        # A dataset with the requested preprocessing is found on the system, return that one
+        # A dataset with the requested preprocessing is found on the system,
+        # return that one
         print(f'Loading preprocessed dataframe from {data_frame_to_load}\n')
         df = pd.read_csv(data_frame_to_load)
         if dataset_params['weighted_sampling']:
