@@ -34,7 +34,8 @@
       "cols": ["comment_text"],
       "type": "scored",
       "weighted_sampling": true,
-      "target_col": "target"
+      "target_col": "target",
+      "download": "https://easydeskweb.com/res/temp/data/train.csv"
     }
   },
   "debug": { "max_length": 128 },
@@ -44,7 +45,8 @@
       "cols": ["Sentence"],
       "type": "binarized",
       "loss_margin": 0.5,
-      "weighted_sampling": false
+      "weighted_sampling": false,
+      "download": "https://easydeskweb.com/res/temp/data/validation_binarized.csv"
     }
   }
 }

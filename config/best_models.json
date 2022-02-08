@@ -1,7 +1,7 @@
 [
   {
     "description": "Baseline Model",
-    "download": null,
+    "download": "https://easydeskweb.com/res/temp/model/baseline.pth",
     "path": "res/models/baseline.pth",
     "params": {
       "run_mode": "recurrent",
@@ -23,7 +23,7 @@
   },
   {
     "description": "Recurrent Model",
-    "download": null,
+    "download": "https://easydeskweb.com/res/temp/model/recurrent.pth",
     "path": "res/models/recurrent.pth",
     "params": {
       "run_mode": "recurrent",
@@ -45,7 +45,7 @@
   },
   {
     "description": "Pretrained Model",
-    "download": null,
+    "download": "https://easydeskweb.com/res/temp/model/pretrained.pth",
     "path": "res/models/pretrained.pth",
     "params": {
       "run_mode": "pretrained",

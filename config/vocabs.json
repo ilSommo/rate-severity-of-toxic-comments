@@ -1,4 +1,5 @@
 {
-    "res/vocab/naive.txt": "",
-    "res/vocab/naive_LOWER.txt": ""
+    "res/vocab/naive.txt": "https://easydeskweb.com/res/temp/vocab/naive.txt",
+    "res/vocab/naive_LOWER.txt": "https://easydeskweb.com/res/temp/vocab/naive_LOWER.txt",
+    "res/vocab/naive_LOWER_NUMBERS_TRIPLE.txt": "https://easydeskweb.com/res/temp/vocab/naive_LOWER_NUMBERS_TRIPLE.txt"
 }
