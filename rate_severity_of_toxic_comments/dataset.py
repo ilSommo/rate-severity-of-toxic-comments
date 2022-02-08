@@ -220,7 +220,7 @@ class PairwiseDataset(Dataset):
             'target': torch.tensor(target, dtype=torch.long)
         }
         return item
-
+    
 
 class ScoredDataset(Dataset):
     """
@@ -459,6 +459,14 @@ def load_dataframe(run_mode, dataset_params, model_params):
         print(f'Trying to load dataframe from {data_frame_to_load}')
         print(f'New vocab file path {vocab_to_load}')
         model_params['vocab_file'] = vocab_to_load
+    else:
+        df = pd.read_csv(data_frame_to_load)
+        if dataset_params['weighted_sampling']:
+            df['sample_weight'] = get_sample_weights(df, dataset_params['target_col'])
+            for col in cols:
+                df[col+'_metric'] = 0
+        return df
+
     if os.path.exists(data_frame_to_load):
         print(f'Loading preprocessed dataframe from {data_frame_to_load}\n')
         df = pd.read_csv(data_frame_to_load)

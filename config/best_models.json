@@ -1,63 +1,63 @@
 [
-    {
-        "description": "Baseline Model",
-        "download": null,
-        "path": "res/models/baseline.pth",
-        "params": {
-            "run_mode": "recurrent",
-            "model": {
-                "architecture": "LSTM",
-                "preprocessing": ["LOWER"],
-                "vocab_file": "res/vocab/naive.txt",
-                "embedding_dimension": 300,
-                "embedding_type": "glove",
-                "hidden_dim": 128,
-                "max_length": 128,
-                "preprocessing_metric": false
-            },
-            "training": {
-                "dropout": 0,
-                "grad_clipping": 1
-            }
-        }
-    },
-    {
-        "description": "Recurrent Model",
-        "download": null,
-        "path": "res/models/recurrent.pth",
-        "params": {
-            "run_mode": "recurrent",
-            "model": {
-                "architecture": "BiDi",
-                "preprocessing": ["LOWER", "NUMBERS"],
-                "vocab_file": "res/vocab/naive.txt",
-                "embedding_dimension": 300,
-                "embedding_type": "glove",
-                "hidden_dim": 128,
-                "max_length": 128,
-                "preprocessing_metric": true
-            },
-            "training": {
-                "dropout": 0,
-                "grad_clipping": 1
-            }
-        }
-    },
-    {
-        "description": "Pretrained Model",
-        "download": null,
-        "path": "res/models/pretrained.pth",
-        "params": {
-            "run_mode": "pretrained",
-            "model": {
-                "model_name": "distilbert-base-uncased",
-                "output_features": 768,
-                "max_length": 128
-            },
-            "training": {
-                "dropout": 0,
-                "grad_clipping": 1
-            }
-        }
+  {
+    "description": "Baseline Model",
+    "download": null,
+    "path": "res/models/baseline.pth",
+    "params": {
+      "run_mode": "recurrent",
+      "model": {
+        "architecture": "LSTM",
+        "preprocessing": ["LOWER"],
+        "vocab_file": "res/vocab/naive.txt",
+        "embedding_dimension": 300,
+        "embedding_type": "glove",
+        "hidden_dim": 128,
+        "max_length": 128,
+        "preprocessing_metric": false
+      },
+      "training": {
+        "dropout": 0,
+        "grad_clipping": 1
+      }
     }
+  },
+  {
+    "description": "Recurrent Model",
+    "download": null,
+    "path": "res/models/recurrent.pth",
+    "params": {
+      "run_mode": "recurrent",
+      "model": {
+        "architecture": "BiDi",
+        "preprocessing": ["LOWER", "NUMBERS", "TRIPLE"],
+        "vocab_file": "res/vocab/naive.txt",
+        "embedding_dimension": 300,
+        "embedding_type": "glove",
+        "hidden_dim": 128,
+        "max_length": 128,
+        "preprocessing_metric": true
+      },
+      "training": {
+        "dropout": 0.15,
+        "grad_clipping": 0.5
+      }
+    }
+  },
+  {
+    "description": "Pretrained Model",
+    "download": null,
+    "path": "res/models/pretrained.pth",
+    "params": {
+      "run_mode": "pretrained",
+      "model": {
+        "model_name": "distilbert-base-uncased",
+        "output_features": 768,
+        "max_length": 128
+      },
+      "training": {
+        "dropout": 0,
+        "grad_clipping": 1
+      }
+    }
+  }
 ]

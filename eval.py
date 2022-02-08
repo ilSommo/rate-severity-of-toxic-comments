@@ -76,7 +76,10 @@ if __name__ == '__main__':
             training_params = CONFIG['training']
             model_params = CONFIG[run_mode]
 
-        df_test = load_dataframe(run_mode, eval_dataset_params, model_params=model_params)
+        df_test = load_dataframe(
+            run_mode, eval_dataset_params, model_params=model_params)
+
+        CONFIG["recurrent"]["vocab_file"] = model_params["vocab_file"]
         support_bag = process_config(df_test, CONFIG)
 
         test_data = build_dataset(df_test, eval_dataset_params, model_params, support_bag['tokenizer'])
@@ -88,10 +91,10 @@ if __name__ == '__main__':
         
         metrics = test_loop(test_dl, model, loss_fn, device, log_interval=1000, dataset_type=eval_dataset_params['type'], use_wandb=False)
         y_score = metrics['scores']
-        hist = pd.DataFrame({'score':y_score})
+        hist = pd.DataFrame({'score': y_score})
 
         if not args.headless:
-            plt.hist(hist,100)
+            plt.hist(hist, 100)
             plt.show()
 
         hist.to_csv('res/hist/'+model_details['path'].split('/')[-1][11:-4]+'.csv')
@@ -100,7 +103,7 @@ if __name__ == '__main__':
             y_test = metrics['binarization_targets']
             fpr, tpr, thresholds = roc_curve(y_test, y_score)
             roc_auc = auc(y_test, y_score)
-            ns_probs = ns_probs = [0 for _ in range(len(y_test))]    
+            ns_probs = ns_probs = [0 for _ in range(len(y_test))]
             ns_auc = roc_auc_score(y_test, ns_probs)
             lr_auc = roc_auc_score(y_test, y_score)
             print('Random: ROC AUC=%.3f' % (ns_auc))
