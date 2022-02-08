@@ -17,7 +17,7 @@ from rate_severity_of_toxic_comments.dataset import build_dataloaders, build_dat
 from rate_severity_of_toxic_comments.model import create_model
 from rate_severity_of_toxic_comments.training import test_loop
 from rate_severity_of_toxic_comments.utilities import parse_config, process_config
-
+from rate_severity_of_toxic_comments.metrics import compute_metrics, plot_metrics
 
 DEFAULT_CONFIG_FILE_PATH = 'config/default.json'
 LOCAL_CONFIG_FILE_PATH = 'config/local.json'
@@ -65,7 +65,7 @@ if __name__ == '__main__':
     for model_details in models:
         if not os.path.isfile(model_details['path']):
             print(
-                model_details['Description'] +
+                model_details['description'] +
                 ' skipped since it was not found')
             continue
 
@@ -121,6 +121,9 @@ if __name__ == '__main__':
 
         if eval_dataset_params['type'] == 'binarized':
             y_test = metrics['binarization_targets']
+            eval_metrics = compute_metrics(
+                torch.tensor(y_score), torch.tensor(y_test))
+            plot_metrics(eval_metrics)
             fpr, tpr, thresholds = roc_curve(y_test, y_score)
             roc_auc = auc(y_test, y_score)
             ns_probs = ns_probs = [0 for _ in range(len(y_test))]

@@ -3,8 +3,9 @@ __author__ = 'Lorenzo Menghini, Martino Pulici, Alessandro Stockman, Luca Zucchi
 
 
 import copy
-
+import torch
 import wandb
+import matplotlib.pyplot as plt
 
 
 class TrainLoopStatisticsManager:
@@ -168,3 +169,43 @@ class TrainLoopStatisticsManager:
                 self.early_stop = True
         else:
             self.counter = 0
+
+
+def f1_score(precision: torch.Tensor, recall: torch.Tensor) -> torch.Tensor:
+    """
+    Computes the F1 score given the tensor representing the `precision` and `recall` 
+    """
+    return 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else torch.tensor(0)
+
+
+def compute_metrics(predicted_label, label):
+    """
+    Returns a dictionary containing accuracy, precision and recall metrics.
+    """
+    predicted_label = torch.tensor(
+        map(lambda v: 1 if v > 0.5 else 0, predicted_label))
+    positive = torch.sum(label).float()
+    predicted_positive = torch.sum(predicted_label).float()
+    true_positive = torch.sum(
+        (predicted_label == label) * predicted_label).float()
+
+    accuracy = torch.sum(predicted_label == label).float() / label.size(0)
+    precision = true_positive / \
+        predicted_positive if predicted_positive > 0 else torch.tensor(0)
+    recall = true_positive / positive if positive > 0 else torch.tensor(0)
+    return {
+        "accuracy": accuracy.item(),
+        "precision": precision.item(),
+        "recall": recall.item(),
+        "f1": f1_score(precision, recall).item()
+    }
+
+
+def plot_metrics(metrics):
+
+    plt.bar(range(len(metrics)), list(metrics.values()), align='center')
+    plt.xticks(range(len(metrics)), list(metrics.keys()))
+    # # for python 2.x:
+    # plt.bar(range(len(D)), D.values(), align='center')  # python 2.x
+    # plt.xticks(range(len(D)), D.keys())  # in python 2.x
+    plt.show()
