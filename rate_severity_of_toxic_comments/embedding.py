@@ -1,75 +1,45 @@
-from collections import Counter
-import collections
-from tqdm import tqdm
+__version__ = '1.0.0-rc'
+__author__ = 'Lorenzo Menghini, Martino Pulici, Alessandro Stockman, Luca Zucchini'
 
-import numpy as np
+
 import gensim
 import gensim.downloader as gloader
+import numpy as np
+from tqdm import tqdm
 
-AVAILABLE_EMBEDDINGS = [
-    ("word2vec", 300), ("glove", 50), ("glove", 100), ("glove", 200), ("glove", 300), ("fasttext", 300)
-]
 
-def load_embedding_model(model_params) -> gensim.models.keyedvectors.KeyedVectors:
+AVAILABLE_EMBEDDINGS = [('word2vec', 300), ('glove', 50), ('glove', 100),
+                        ('glove', 200), ('glove', 300), ('fasttext', 300)]
+
+
+def build_embedding_matrix(
+        embedding_model: gensim.models.keyedvectors.KeyedVectors,
+        embedding_dim,
+        vocab) -> np.ndarray:
     """
-    Loads a pre-trained word embedding model via gensim library.
+    Builds the embedding matrix.
 
-    :param model_type: name of the word embedding model to load.
-    :param embedding_dimension: size of the embedding space to consider
+    Parameters
+    ----------
+    embedding_model : gensim.models.keyedvectors.KeyedVectors
+        Embedding model.
+    embedding_dim : int
+        Embedding dimension.
+    vocab : dict
+        Vocabulary.
 
-    :return
-        - pre-trained word embedding model (gensim KeyedVectors object)
+    Returns
+    -------
+    embedding_matrix : numpy.ndarray
+        Embedding matrix.
+
     """
-    model_type, embedding_dimension = model_params["embedding_type"], model_params["embedding_dimension"]
-
-    download_path = ""
-
-    # Find the correct embedding model name
-    if model_type.strip().lower() == 'word2vec':
-        download_path = "word2vec-google-news-300"
-    elif model_type.strip().lower() == 'glove':
-        download_path = "glove-wiki-gigaword-{}".format(embedding_dimension)
-    elif model_type.strip().lower() == 'fasttext':
-        download_path = "fasttext-wiki-news-subwords-300"
-    else:
-        raise AttributeError(
-            "Unsupported embedding model type! Available ones: word2vec, glove, fasttext")
-
-    # Check download
-    try:
-        print("Loading embedding model")
-        emb_model = gloader.load(download_path)
-        print("Embedding model loaded")
-    except ValueError as e:
-        print("Invalid embedding model name! Check the embedding dimension:")
-        print("Word2Vec: 300")
-        print("Glove: 50, 100, 200, 300")
-        raise e
-
-    return emb_model
-
-
-def build_embedding_matrix(embedding_model: gensim.models.keyedvectors.KeyedVectors, embedding_dim, vocab) -> np.ndarray:
-    """
-    Builds the embedding matrix of a specific dataset given a pre-trained word embedding model
-
-    :param embedding_model: pre-trained word embedding model (gensim wrapper)
-    :param word_to_idx: vocabulary map (word -> index) (dict)
-    :param vocab_size: size of the vocabulary
-    :param oov_terms: list of OOV terms (list)
-
-    :return
-        - embedding matrix that assigns a high dimensional vector to each word in the dataset specific vocabulary (shape |V| x d)
-    """
-
     embedding_matrix = np.zeros(
         (len(vocab), embedding_dim), dtype=np.float32)
-
-    print(f"Building embedding matrix")
-
-    for idx, (word, word_idx) in tqdm(enumerate(vocab.items()), total=len(vocab)):
+    print(f'Building embedding matrix')
+    for idx, (word, word_idx) in tqdm(
+            enumerate(vocab.items()), total=len(vocab)):
         if idx == 0:
-            # Zeros vector for padding token
             embedding_vector = np.zeros(embedding_dim)
         else:
             try:
@@ -77,24 +47,29 @@ def build_embedding_matrix(embedding_model: gensim.models.keyedvectors.KeyedVect
             except (KeyError, TypeError):
                 embedding_vector = np.random.uniform(
                     low=-0.05, high=0.05, size=embedding_dim)
-
         embedding_matrix[idx] = embedding_vector
-
     return embedding_matrix
 
 
-def check_OOV_terms(embedding_model: gensim.models.keyedvectors.KeyedVectors, vocab):
+def check_OOV_terms(
+        embedding_model: gensim.models.keyedvectors.KeyedVectors,
+        vocab):
     """
-    Checks differences between pre-trained embedding model vocabulary
-    and dataset specific vocabulary in order to highlight out-of-vocabulary terms.
+    Highlights out-of-vocabulary terms.
 
-    :param embedding_model: pre-trained word embedding model (gensim wrapper)
-    :param word_listing: dataset specific vocabulary (list)
+    Parameters
+    ----------
+    embedding_model : gensim.models.keyedvectors.KeyedVectors
+        Embedding model.
+    vocab : dict
+        Vocabulary.
 
-    :return
-        - list of OOV terms
+    Returns
+    -------
+    oov : list
+        List of out-of-vocabulary terms.
+
     """
-
     embedding_vocabulary = set(embedding_model.index_to_key)
     vocab_set = set(vocab.keys())
     oov = vocab_set.difference(embedding_vocabulary)
@@ -109,6 +84,66 @@ def check_OOV_terms(embedding_model: gensim.models.keyedvectors.KeyedVectors, vo
 
 
 def count_OOV_frequency(df, cols, oov):
-    counts = {word: df[col].str.count(word).sum() for word in oov for col in cols}
-    sorted_counts = {k: v for idx, (k, v) in enumerate(sorted(counts.items(), key=lambda item: item[1], reverse=True)) if idx < 10}
-    print(f"Top 10 OOV occurrencies\n{sorted_counts}")
+    """
+    Counts out-of-vocabulary frequency.
+
+    Parameters
+    ----------
+    df : pandas.core.frame.DataFrame
+        Dataset.
+    cols : list
+        List of column names.
+    oov : list
+        List of out-of-vocabulary terms.
+
+    """
+    counts = {word: df[col].str.count(word).sum()
+              for word in oov for col in cols}
+    sorted_counts = {
+        k: v for idx,
+        (k,
+         v) in enumerate(
+            sorted(
+                counts.items(),
+                key=lambda item: item[1],
+                reverse=True)) if idx < 10}
+    print(f'Top 10 OOV occurrencies\n{sorted_counts}')
+
+
+def load_embedding_model(
+        model_params) -> gensim.models.keyedvectors.KeyedVectors:
+    """
+    Loads a pre-trained word embedding model.
+
+    Parameters
+    ----------
+    model_params : dict
+        Model parameters.
+
+    Returns
+    -------
+    emb_model : gensim.models.keyedvectors.KeyedVectors
+        Embedding model.
+
+    """
+    model_type, embedding_dimension = model_params['embedding_type'], model_params['embedding_dimension']
+    download_path = ''
+    if model_type.strip().lower() == 'word2vec':
+        download_path = 'word2vec-google-news-300'
+    elif model_type.strip().lower() == 'glove':
+        download_path = 'glove-wiki-gigaword-{}'.format(embedding_dimension)
+    elif model_type.strip().lower() == 'fasttext':
+        download_path = 'fasttext-wiki-news-subwords-300'
+    else:
+        raise AttributeError(
+            'Unsupported embedding model type! Available ones: word2vec, glove, fasttext')
+    try:
+        print('Loading embedding model')
+        emb_model = gloader.load(download_path)
+        print('Embedding model loaded')
+    except ValueError as e:
+        print('Invalid embedding model name! Check the embedding dimension:')
+        print('Word2Vec: 300')
+        print('Glove: 50, 100, 200, 300')
+        raise e
+    return emb_model

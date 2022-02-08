@@ -136,6 +136,3 @@ dmypy.json
 
 # Logs
 wandb/*
-
-# User defined config
-config/local.json
