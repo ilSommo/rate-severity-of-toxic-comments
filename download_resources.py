@@ -68,6 +68,7 @@ if __name__ == '__main__':
                  CONFIG['evaluation']['dataset']['download'])
 
     if args['vocabs']:
+        download(CONFIG['recurrent']['vocab_file'], vocabs[CONFIG['recurrent']['vocab_file']])
         print('Downloading vocab file')
         preprocess_vocab = get_preprocess_filenames(
             CONFIG['recurrent']['preprocessing'],
