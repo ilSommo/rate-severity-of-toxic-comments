@@ -1,4 +1,4 @@
-__version__ = '1.0.0-rc'
+__version__ = '1.0.0-rc.1'
 __author__ = 'Lorenzo Menghini, Martino Pulici, Alessandro Stockman, Luca Zucchini'
 
 
@@ -124,7 +124,7 @@ class BinarizedDataset(Dataset):
 
 class PairwiseDataset(Dataset):
     """
-    Class containing a pairwise dataset.
+    Dataset class for representing the "pairwise" type dataset samples, consisting of a pair of texts with the first being classified more toxic then the second.
 
     Attributes
     ----------
@@ -206,6 +206,9 @@ class PairwiseDataset(Dataset):
         """
         more_toxic = self.more_toxic[index]
         less_toxic = self.less_toxic[index]
+        # Application of tokenization using the predefined tokenizer
+        # If a max length is specified the data is truncated, otherwise the
+        # length longest sentence is used
         if self.max_len:
             inputs_more_toxic = self.tokenizer(
                 more_toxic,
@@ -251,7 +254,7 @@ class PairwiseDataset(Dataset):
 
 class ScoredDataset(Dataset):
     """
-    Class containing a binarized dataset.
+    Dataset class for representing the "binarized" type dataset samples.
 
     Attributes
     ----------
@@ -440,7 +443,7 @@ def build_dataset(df, dataset_params, model_params, tokenizer):
 
 def get_sample_weights(df, target_col_name, bins=100):
     """
-    Returns the sample weights.
+    Returns the inverse frequency distribution of the binned column.
 
     Parameters
     ----------
@@ -464,7 +467,7 @@ def get_sample_weights(df, target_col_name, bins=100):
 
 def load_dataframe(run_mode, dataset_params, model_params):
     """
-    Loads the dataframe.
+    Searches for an already preprocessed dataset in the filesystem according to the given configuration, if not found performs the processing and stores the result.
 
     Parameters
     ----------
@@ -493,7 +496,6 @@ def load_dataframe(run_mode, dataset_params, model_params):
             df = pd.read_csv(base_train_file_path)
             for col in cols:
                 df[col + '_metric'] = 0
-
             if dataset_params['weighted_sampling']:
                 df['sample_weight'] = get_sample_weights(
                     df, dataset_params['target_col'])
@@ -509,6 +511,8 @@ def load_dataframe(run_mode, dataset_params, model_params):
         print(f'New vocab file path {vocab_to_load}')
         model_params['vocab_file'] = vocab_to_load
     else:
+        # If the run type is not recurrent, preprocessing shouldn't be
+        # performed, returns the plain dataframe
         df = pd.read_csv(data_frame_to_load)
         if dataset_params['weighted_sampling']:
             df['sample_weight'] = get_sample_weights(
@@ -516,8 +520,9 @@ def load_dataframe(run_mode, dataset_params, model_params):
             for col in cols:
                 df[col + '_metric'] = 0
         return df
-
     if os.path.exists(data_frame_to_load):
+        # A dataset with the requested preprocessing is found on the system,
+        # return that one
         print(f'Loading preprocessed dataframe from {data_frame_to_load}\n')
         df = pd.read_csv(data_frame_to_load)
         if dataset_params['weighted_sampling']:
