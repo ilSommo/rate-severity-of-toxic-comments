@@ -123,6 +123,7 @@ if __name__ == '__main__':
             y_test = metrics['binarization_targets']
             eval_metrics = compute_metrics(
                 torch.tensor(y_score), torch.tensor(y_test))
+            print(eval_metrics)
             plot_metrics(eval_metrics)
             fpr, tpr, thresholds = roc_curve(y_test, y_score)
             roc_auc = auc(y_test, y_score)
