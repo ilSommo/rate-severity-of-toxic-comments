@@ -76,7 +76,7 @@
                 
                         <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span><span class="n">__version__</span> <span class="o">=</span> <span class="s1">&#39;1.0.0-rc&#39;</span>
+            <div class="codehilite"><pre><span></span><span class="n">__version__</span> <span class="o">=</span> <span class="s1">&#39;1.0.0-rc.1&#39;</span>
 <span class="n">__author__</span> <span class="o">=</span> <span class="s1">&#39;Lorenzo Menghini, Martino Pulici, Alessandro Stockman, Luca Zucchini&#39;</span>
 
 
@@ -112,7 +112,7 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">dropout</span><span class="p">,</span> <span class="n">output_features</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">output_features</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initializes the model.</span>
 
@@ -120,16 +120,12 @@
 <span class="sd">        ----------</span>
 <span class="sd">        model_name : str</span>
 <span class="sd">            Name of the model.</span>
-<span class="sd">        dropout : float</span>
-<span class="sd">            Dropout parameter.</span>
 <span class="sd">        output_features : int</span>
 <span class="sd">            Number of ouput features.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">dropout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">drop</span> <span class="o">=</span> <span class="n">Dropout</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">dropout</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sig</span> <span class="o">=</span> <span class="n">Sigmoid</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fc</span> <span class="o">=</span> <span class="n">Linear</span><span class="p">(</span><span class="n">output_features</span><span class="p">,</span> <span class="n">OUTPUT_CLASSES</span><span class="p">)</span>
 
@@ -347,7 +343,7 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">dropout</span><span class="p">,</span> <span class="n">output_features</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">output_features</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initializes the model.</span>
 
@@ -355,16 +351,12 @@
 <span class="sd">        ----------</span>
 <span class="sd">        model_name : str</span>
 <span class="sd">            Name of the model.</span>
-<span class="sd">        dropout : float</span>
-<span class="sd">            Dropout parameter.</span>
 <span class="sd">        output_features : int</span>
 <span class="sd">            Number of ouput features.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">dropout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">drop</span> <span class="o">=</span> <span class="n">Dropout</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">dropout</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sig</span> <span class="o">=</span> <span class="n">Sigmoid</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fc</span> <span class="o">=</span> <span class="n">Linear</span><span class="p">(</span><span class="n">output_features</span><span class="p">,</span> <span class="n">OUTPUT_CLASSES</span><span class="p">)</span>
 
@@ -423,12 +415,12 @@ forward(self, ids, mask, _)
                                         <div class="attr function"><a class="headerlink" href="#PretrainedModel.__init__">#&nbsp;&nbsp</a>
 
         
-            <span class="name">PretrainedModel</span><span class="signature">(model_name, dropout, output_features)</span>
+            <span class="name">PretrainedModel</span><span class="signature">(model_name, _, output_features)</span>
     </div>
 
                 <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">dropout</span><span class="p">,</span> <span class="n">output_features</span><span class="p">):</span>
+            <div class="codehilite"><pre><span></span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">output_features</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initializes the model.</span>
 
@@ -436,16 +428,12 @@ forward(self, ids, mask, _)
 <span class="sd">        ----------</span>
 <span class="sd">        model_name : str</span>
 <span class="sd">            Name of the model.</span>
-<span class="sd">        dropout : float</span>
-<span class="sd">            Dropout parameter.</span>
 <span class="sd">        output_features : int</span>
 <span class="sd">            Number of ouput features.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">dropout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">drop</span> <span class="o">=</span> <span class="n">Dropout</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">dropout</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sig</span> <span class="o">=</span> <span class="n">Sigmoid</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fc</span> <span class="o">=</span> <span class="n">Linear</span><span class="p">(</span><span class="n">output_features</span><span class="p">,</span> <span class="n">OUTPUT_CLASSES</span><span class="p">)</span>
 </pre></div>
@@ -459,8 +447,6 @@ forward(self, ids, mask, _)
 <ul>
 <li><strong>model_name</strong> (str):
 Name of the model.</li>
-<li><strong>dropout</strong> (float):
-Dropout parameter.</li>
 <li><strong>output_features</strong> (int):
 Number of ouput features.</li>
 </ul>

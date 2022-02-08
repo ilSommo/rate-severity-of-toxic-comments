@@ -91,7 +91,7 @@
                 
                         <details>
             <summary>View Source</summary>
-            <div class="codehilite"><pre><span></span><span class="n">__version__</span> <span class="o">=</span> <span class="s1">&#39;1.0.0-rc&#39;</span>
+            <div class="codehilite"><pre><span></span><span class="n">__version__</span> <span class="o">=</span> <span class="s1">&#39;1.0.0-rc.1&#39;</span>
 <span class="n">__author__</span> <span class="o">=</span> <span class="s1">&#39;Lorenzo Menghini, Martino Pulici, Alessandro Stockman, Luca Zucchini&#39;</span>
 
 
@@ -217,7 +217,7 @@
 
 <span class="k">class</span> <span class="nc">PairwiseDataset</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Class containing a pairwise dataset.</span>
+<span class="sd">    Dataset class for representing the &quot;pairwise&quot; type dataset samples, consisting of a pair of texts with the first being classified more toxic then the second.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
@@ -299,6 +299,9 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">more_toxic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">more_toxic</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
         <span class="n">less_toxic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">less_toxic</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+        <span class="c1"># Application of tokenization using the predefined tokenizer</span>
+        <span class="c1"># If a max length is specified the data is truncated, otherwise the</span>
+        <span class="c1"># length longest sentence is used</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_len</span><span class="p">:</span>
             <span class="n">inputs_more_toxic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="p">(</span>
                 <span class="n">more_toxic</span><span class="p">,</span>
@@ -344,7 +347,7 @@
 
 <span class="k">class</span> <span class="nc">ScoredDataset</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Class containing a binarized dataset.</span>
+<span class="sd">    Dataset class for representing the &quot;binarized&quot; type dataset samples.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
@@ -533,7 +536,7 @@
 
 <span class="k">def</span> <span class="nf">get_sample_weights</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">target_col_name</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Returns the sample weights.</span>
+<span class="sd">    Returns the inverse frequency distribution of the binned column.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -557,7 +560,7 @@
 
 <span class="k">def</span> <span class="nf">load_dataframe</span><span class="p">(</span><span class="n">run_mode</span><span class="p">,</span> <span class="n">dataset_params</span><span class="p">,</span> <span class="n">model_params</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Loads the dataframe.</span>
+<span class="sd">    Searches for an already preprocessed dataset in the filesystem according to the given configuration, if not found performs the processing and stores the result.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -586,7 +589,6 @@
             <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">base_train_file_path</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">:</span>
                 <span class="n">df</span><span class="p">[</span><span class="n">col</span> <span class="o">+</span> <span class="s1">&#39;_metric&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
-
             <span class="k">if</span> <span class="n">dataset_params</span><span class="p">[</span><span class="s1">&#39;weighted_sampling&#39;</span><span class="p">]:</span>
                 <span class="n">df</span><span class="p">[</span><span class="s1">&#39;sample_weight&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_sample_weights</span><span class="p">(</span>
                     <span class="n">df</span><span class="p">,</span> <span class="n">dataset_params</span><span class="p">[</span><span class="s1">&#39;target_col&#39;</span><span class="p">])</span>
@@ -602,6 +604,8 @@
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;New vocab file path </span><span class="si">{</span><span class="n">vocab_to_load</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
         <span class="n">model_params</span><span class="p">[</span><span class="s1">&#39;vocab_file&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">vocab_to_load</span>
     <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># If the run type is not recurrent, preprocessing shouldn&#39;t be</span>
+        <span class="c1"># performed, returns the plain dataframe</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">data_frame_to_load</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">dataset_params</span><span class="p">[</span><span class="s1">&#39;weighted_sampling&#39;</span><span class="p">]:</span>
             <span class="n">df</span><span class="p">[</span><span class="s1">&#39;sample_weight&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_sample_weights</span><span class="p">(</span>
@@ -609,8 +613,9 @@
             <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">:</span>
                 <span class="n">df</span><span class="p">[</span><span class="n">col</span> <span class="o">+</span> <span class="s1">&#39;_metric&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">return</span> <span class="n">df</span>
-
     <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">data_frame_to_load</span><span class="p">):</span>
+        <span class="c1"># A dataset with the requested preprocessing is found on the system,</span>
+        <span class="c1"># return that one</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Loading preprocessed dataframe from </span><span class="si">{</span><span class="n">data_frame_to_load</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">data_frame_to_load</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">dataset_params</span><span class="p">[</span><span class="s1">&#39;weighted_sampling&#39;</span><span class="p">]:</span>
@@ -895,7 +900,7 @@ Maximum length of the dataset.</li>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">PairwiseDataset</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Class containing a pairwise dataset.</span>
+<span class="sd">    Dataset class for representing the &quot;pairwise&quot; type dataset samples, consisting of a pair of texts with the first being classified more toxic then the second.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
@@ -977,6 +982,9 @@ Maximum length of the dataset.</li>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">more_toxic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">more_toxic</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
         <span class="n">less_toxic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">less_toxic</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+        <span class="c1"># Application of tokenization using the predefined tokenizer</span>
+        <span class="c1"># If a max length is specified the data is truncated, otherwise the</span>
+        <span class="c1"># length longest sentence is used</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_len</span><span class="p">:</span>
             <span class="n">inputs_more_toxic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="p">(</span>
                 <span class="n">more_toxic</span><span class="p">,</span>
@@ -1022,7 +1030,7 @@ Maximum length of the dataset.</li>
 
         </details>
 
-            <div class="docstring"><p>Class containing a pairwise dataset.</p>
+            <div class="docstring"><p>Dataset class for representing the "pairwise" type dataset samples, consisting of a pair of texts with the first being classified more toxic then the second.</p>
 
 <h6 id="attributes">Attributes</h6>
 
@@ -1129,7 +1137,7 @@ Maximum length of the dataset.</li>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">ScoredDataset</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Class containing a binarized dataset.</span>
+<span class="sd">    Dataset class for representing the &quot;binarized&quot; type dataset samples.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
@@ -1240,7 +1248,7 @@ Maximum length of the dataset.</li>
 
         </details>
 
-            <div class="docstring"><p>Class containing a binarized dataset.</p>
+            <div class="docstring"><p>Dataset class for representing the "binarized" type dataset samples.</p>
 
 <h6 id="attributes">Attributes</h6>
 
@@ -1494,7 +1502,7 @@ Dataset to return.</li>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">get_sample_weights</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">target_col_name</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Returns the sample weights.</span>
+<span class="sd">    Returns the inverse frequency distribution of the binned column.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1518,7 +1526,7 @@ Dataset to return.</li>
 
         </details>
 
-            <div class="docstring"><p>Returns the sample weights.</p>
+            <div class="docstring"><p>Returns the inverse frequency distribution of the binned column.</p>
 
 <h6 id="parameters">Parameters</h6>
 
@@ -1553,7 +1561,7 @@ Sample weights.</li>
             <summary>View Source</summary>
             <div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">load_dataframe</span><span class="p">(</span><span class="n">run_mode</span><span class="p">,</span> <span class="n">dataset_params</span><span class="p">,</span> <span class="n">model_params</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Loads the dataframe.</span>
+<span class="sd">    Searches for an already preprocessed dataset in the filesystem according to the given configuration, if not found performs the processing and stores the result.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1582,7 +1590,6 @@ Sample weights.</li>
             <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">base_train_file_path</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">:</span>
                 <span class="n">df</span><span class="p">[</span><span class="n">col</span> <span class="o">+</span> <span class="s1">&#39;_metric&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
-
             <span class="k">if</span> <span class="n">dataset_params</span><span class="p">[</span><span class="s1">&#39;weighted_sampling&#39;</span><span class="p">]:</span>
                 <span class="n">df</span><span class="p">[</span><span class="s1">&#39;sample_weight&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_sample_weights</span><span class="p">(</span>
                     <span class="n">df</span><span class="p">,</span> <span class="n">dataset_params</span><span class="p">[</span><span class="s1">&#39;target_col&#39;</span><span class="p">])</span>
@@ -1598,6 +1605,8 @@ Sample weights.</li>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;New vocab file path </span><span class="si">{</span><span class="n">vocab_to_load</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
         <span class="n">model_params</span><span class="p">[</span><span class="s1">&#39;vocab_file&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">vocab_to_load</span>
     <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># If the run type is not recurrent, preprocessing shouldn&#39;t be</span>
+        <span class="c1"># performed, returns the plain dataframe</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">data_frame_to_load</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">dataset_params</span><span class="p">[</span><span class="s1">&#39;weighted_sampling&#39;</span><span class="p">]:</span>
             <span class="n">df</span><span class="p">[</span><span class="s1">&#39;sample_weight&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_sample_weights</span><span class="p">(</span>
@@ -1605,8 +1614,9 @@ Sample weights.</li>
             <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">:</span>
                 <span class="n">df</span><span class="p">[</span><span class="n">col</span> <span class="o">+</span> <span class="s1">&#39;_metric&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">return</span> <span class="n">df</span>
-
     <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">data_frame_to_load</span><span class="p">):</span>
+        <span class="c1"># A dataset with the requested preprocessing is found on the system,</span>
+        <span class="c1"># return that one</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Loading preprocessed dataframe from </span><span class="si">{</span><span class="n">data_frame_to_load</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">data_frame_to_load</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">dataset_params</span><span class="p">[</span><span class="s1">&#39;weighted_sampling&#39;</span><span class="p">]:</span>
@@ -1639,7 +1649,7 @@ Sample weights.</li>
 
         </details>
 
-            <div class="docstring"><p>Loads the dataframe.</p>
+            <div class="docstring"><p>Searches for an already preprocessed dataset in the filesystem according to the given configuration, if not found performs the processing and stores the result.</p>
 
 <h6 id="parameters">Parameters</h6>
 
