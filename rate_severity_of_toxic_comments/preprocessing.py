@@ -1,4 +1,4 @@
-__version__ = '0.1.0'
+__version__ = '1.0.0-rc'
 __author__ = 'Lorenzo Menghini, Martino Pulici, Alessandro Stockman, Luca Zucchini'
 
 
@@ -96,7 +96,7 @@ def _apply_lower_pipeline(text):
         Preprocessing amount metric.
 
     """
-    additional_metric = len(re.findall('[A-Z]', text)) / max(len(text),1)
+    additional_metric = len(re.findall('[A-Z]', text)) / max(len(text), 1)
     text = text.lower()
     return text, additional_metric
 
@@ -118,7 +118,8 @@ def _apply_punctuation_pipeline(text):
         Preprocessing amount metric.
 
     """
-    additional_metric = len(re.findall('[%s]' % re.escape(string.punctuation), text)) / max(len(text),1)
+    additional_metric = len(re.findall('[%s]' % re.escape(
+        string.punctuation), text)) / max(len(text), 1)
     text = re.sub('[%s]' % re.escape(string.punctuation), '', text)
     return text, additional_metric
 
@@ -140,7 +141,8 @@ def _apply_whitespaces_pipeline(text):
         Preprocessing amount metric.
 
     """
-    additional_metric = len(re.findall('  +', text)) / max(len(re.findall(' +', text)),1)
+    additional_metric = len(re.findall('  +', text)) / \
+        max(len(re.findall(' +', text)), 1)
     text = re.sub('  +', ' ', text)
     return text, additional_metric
 
@@ -162,7 +164,7 @@ def _apply_numbers_pipeline(text):
         Preprocessing amount metric.
 
     """
-    additional_metric = len(re.findall('[0-9]', text)) / max(len(text),1)
+    additional_metric = len(re.findall('[0-9]', text)) / max(len(text), 1)
     text = re.sub('0', 'o', text)
     text = re.sub('1', 'i', text)
     text = re.sub('2', 'z', text)
@@ -191,9 +193,12 @@ def _apply_triple_pipeline(text):
         Preprocessing amount metric.
 
     """
-    additional_metric_0 = len(re.findall('(.)\\1{2,}', text)) / max(len(re.findall('[\w]+', text)),1)
-    additional_metric_1 = len(re.findall('s{2,}\\b', text)) / max(len(re.findall('[\w]+', text)),1)
+    additional_metric_0 = len(re.findall(
+        '(.)\\1{2,}', text)) / max(len(re.findall('[\\w]+', text)), 1)
+    additional_metric_1 = len(re.findall(
+        's{2,}\\b', text)) / max(len(re.findall('[\\w]+', text)), 1)
     text = re.sub('(.)\\1{2,}', '\\1\\1', text)
     text = re.sub('s{2,}\\b', 's', text)
-    additional_metric = min((additional_metric_0 + additional_metric_1) / 2, 1.0)
+    additional_metric = min(
+        (additional_metric_0 + additional_metric_1) / 2, 1.0)
     return text, additional_metric

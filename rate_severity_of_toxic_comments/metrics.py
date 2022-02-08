@@ -1,4 +1,4 @@
-__version__ = '0.1.0'
+__version__ = '1.0.0-rc'
 __author__ = 'Lorenzo Menghini, Martino Pulici, Alessandro Stockman, Luca Zucchini'
 
 
@@ -47,7 +47,12 @@ class TrainLoopStatisticsManager:
 
     """
 
-    def __init__(self, model, early_stopping_patience=7, verbose=True, use_wandb=False):
+    def __init__(
+            self,
+            model,
+            early_stopping_patience=7,
+            verbose=True,
+            use_wandb=False):
         """
         Initializes the manager.
 
@@ -74,7 +79,15 @@ class TrainLoopStatisticsManager:
         self.early_stop = False
         self.best_model_wts = copy.deepcopy(self.model.state_dict())
 
-    def registerEpoch(self, metrics_train: dict, metrics_val: dict, lr, epoch, time_start, time_end, early_stop_delta_sensibility=0.01):
+    def registerEpoch(
+            self,
+            metrics_train: dict,
+            metrics_val: dict,
+            lr,
+            epoch,
+            time_start,
+            time_end,
+            early_stop_delta_sensibility=0.01):
         """
         Registers an epoch.
 
@@ -112,7 +125,7 @@ class TrainLoopStatisticsManager:
                   f' Loss: [{train_loss:.4f}] '
                   f' \n Val   - '
                   f' Loss: [{valid_loss:.4f}] ')
-        if self.best_val_loss == None or valid_loss <= self.best_val_loss:
+        if self.best_val_loss is None or valid_loss <= self.best_val_loss:
             self.best_val_loss = valid_loss
             self.best_model_wts = copy.deepcopy(self.model.state_dict())
         else:

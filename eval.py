@@ -1,4 +1,4 @@
-__version__ = '0.1.0'
+__version__ = '1.0.0-rc'
 __author__ = 'Lorenzo Menghini, Martino Pulici, Alessandro Stockman, Luca Zucchini'
 
 
@@ -54,20 +54,24 @@ if __name__ == '__main__':
     if eval_dataset_params['type'] == 'scored':
         loss_fn = nn.MSELoss()
     elif eval_dataset_params['type'] == 'pairwise':
-        loss_fn = nn.MarginRankingLoss(margin=eval_dataset_params['loss_margin'])
+        loss_fn = nn.MarginRankingLoss(
+            margin=eval_dataset_params['loss_margin'])
     else:
         loss_fn = nn.MSELoss()
 
     device = torch.device('cuda' if torch.cuda.is_available()
-                        and CONFIG['options']['use_gpu'] else 'cpu')
+                          and CONFIG['options']['use_gpu'] else 'cpu')
 
     for model_details in models:
         if not os.path.isfile(model_details['path']):
-            print(model_details['Description'] + ' skipped since it was not found')
+            print(
+                model_details['Description'] +
+                ' skipped since it was not found')
             continue
 
         if args.mode == 'best':
-            run_mode, training_params, model_params = model_details['params']['run_mode'], model_details['params']['training'], model_details['params']['model']
+            run_mode, training_params, model_params = model_details['params'][
+                'run_mode'], model_details['params']['training'], model_details['params']['model']
             CONFIG['options']['run_mode'] = run_mode
             CONFIG['training'].update(training_params)
             CONFIG[run_mode].update(model_params)
@@ -82,14 +86,29 @@ if __name__ == '__main__':
         CONFIG['recurrent']['vocab_file'] = model_params['vocab_file']
         support_bag = process_config(df_test, CONFIG)
 
-        test_data = build_dataset(df_test, eval_dataset_params, model_params, support_bag['tokenizer'])
+        test_data = build_dataset(
+            df_test,
+            eval_dataset_params,
+            model_params,
+            support_bag['tokenizer'])
         test_dl, = build_dataloaders([test_data], [batch_size])
 
-        model = create_model(run_mode, training_params, model_params, support_bag)
+        model = create_model(
+            run_mode,
+            training_params,
+            model_params,
+            support_bag)
         model.load_state_dict(torch.load(model_details['path']))
         model.to(device)
-        
-        metrics = test_loop(test_dl, model, loss_fn, device, log_interval=1000, dataset_type=eval_dataset_params['type'], use_wandb=False)
+
+        metrics = test_loop(
+            test_dl,
+            model,
+            loss_fn,
+            device,
+            log_interval=1000,
+            dataset_type=eval_dataset_params['type'],
+            use_wandb=False)
         y_score = metrics['scores']
         hist = pd.DataFrame({'score': y_score})
 
@@ -97,7 +116,8 @@ if __name__ == '__main__':
             plt.hist(hist, 100)
             plt.show()
 
-        hist.to_csv('res/hist/'+model_details['path'].split('/')[-1][11:-4]+'.csv')
+        hist.to_csv(
+            'res/hist/' + model_details['path'].split('/')[-1][11:-4] + '.csv')
 
         if eval_dataset_params['type'] == 'binarized':
             y_test = metrics['binarization_targets']
@@ -118,9 +138,9 @@ if __name__ == '__main__':
                 plt.ylabel('True Positive Rate')
                 plt.legend()
                 plt.show()
-                
-            points = pd.DataFrame({'lr_fpr':lr_fpr,'lr_tpr':lr_tpr})
-            points.to_csv('res/roc/'+model_details['path'].split('/')[-1][11:-4]+'.csv')
+
+            points = pd.DataFrame({'lr_fpr': lr_fpr, 'lr_tpr': lr_tpr})
+            points.to_csv(
+                'res/roc/' + model_details['path'].split('/')[-1][11:-4] + '.csv')
         else:
             print(model_details['description'], metrics)
-

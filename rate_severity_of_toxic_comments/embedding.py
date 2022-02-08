@@ -1,4 +1,4 @@
-__version__ = '0.1.0'
+__version__ = '1.0.0-rc'
 __author__ = 'Lorenzo Menghini, Martino Pulici, Alessandro Stockman, Luca Zucchini'
 
 
@@ -8,12 +8,14 @@ import numpy as np
 from tqdm import tqdm
 
 
-AVAILABLE_EMBEDDINGS = [
-    ('word2vec', 300), ('glove', 50), ('glove', 100), ('glove', 200), ('glove', 300), ('fasttext', 300)
-]
+AVAILABLE_EMBEDDINGS = [('word2vec', 300), ('glove', 50), ('glove', 100),
+                        ('glove', 200), ('glove', 300), ('fasttext', 300)]
 
 
-def build_embedding_matrix(embedding_model: gensim.models.keyedvectors.KeyedVectors, embedding_dim, vocab) -> np.ndarray:
+def build_embedding_matrix(
+        embedding_model: gensim.models.keyedvectors.KeyedVectors,
+        embedding_dim,
+        vocab) -> np.ndarray:
     """
     Builds the embedding matrix.
 
@@ -35,7 +37,8 @@ def build_embedding_matrix(embedding_model: gensim.models.keyedvectors.KeyedVect
     embedding_matrix = np.zeros(
         (len(vocab), embedding_dim), dtype=np.float32)
     print(f'Building embedding matrix')
-    for idx, (word, word_idx) in tqdm(enumerate(vocab.items()), total=len(vocab)):
+    for idx, (word, word_idx) in tqdm(
+            enumerate(vocab.items()), total=len(vocab)):
         if idx == 0:
             embedding_vector = np.zeros(embedding_dim)
         else:
@@ -48,7 +51,9 @@ def build_embedding_matrix(embedding_model: gensim.models.keyedvectors.KeyedVect
     return embedding_matrix
 
 
-def check_OOV_terms(embedding_model: gensim.models.keyedvectors.KeyedVectors, vocab):
+def check_OOV_terms(
+        embedding_model: gensim.models.keyedvectors.KeyedVectors,
+        vocab):
     """
     Highlights out-of-vocabulary terms.
 
@@ -92,12 +97,21 @@ def count_OOV_frequency(df, cols, oov):
         List of out-of-vocabulary terms.
 
     """
-    counts = {word: df[col].str.count(word).sum() for word in oov for col in cols}
-    sorted_counts = {k: v for idx, (k, v) in enumerate(sorted(counts.items(), key=lambda item: item[1], reverse=True)) if idx < 10}
+    counts = {word: df[col].str.count(word).sum()
+              for word in oov for col in cols}
+    sorted_counts = {
+        k: v for idx,
+        (k,
+         v) in enumerate(
+            sorted(
+                counts.items(),
+                key=lambda item: item[1],
+                reverse=True)) if idx < 10}
     print(f'Top 10 OOV occurrencies\n{sorted_counts}')
 
 
-def load_embedding_model(model_params) -> gensim.models.keyedvectors.KeyedVectors:
+def load_embedding_model(
+        model_params) -> gensim.models.keyedvectors.KeyedVectors:
     """
     Loads a pre-trained word embedding model.
 

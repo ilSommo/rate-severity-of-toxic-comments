@@ -1,4 +1,4 @@
-__version__ = '0.1.0'
+__version__ = '1.0.0-rc'
 __author__ = 'Lorenzo Menghini, Martino Pulici, Alessandro Stockman, Luca Zucchini'
 
 
@@ -38,12 +38,14 @@ def store_vocab(df, cols, vocab_file, pipelines):
         print(f'Pipelines to apply: {pipelines}')
 
         for col in cols:
-            
+
             for i in tqdm(df.index, total=len(df)):
-                df.at[i, col], df.at[i, col+'_metric'] = apply_preprocessing_pipelines(df.at[i, col], pipelines)
+                df.at[i, col], df.at[i, col +
+                                     '_metric'] = apply_preprocessing_pipelines(df.at[i, col], pipelines)
 
     tokenizer = NaiveTokenizer()
-    vocab, tokenizer = build_vocabulary(df, cols, tokenizer, save_path=vocab_to_load)
+    vocab, tokenizer = build_vocabulary(
+        df, cols, tokenizer, save_path=vocab_to_load)
     return vocab
 
 
@@ -67,7 +69,7 @@ if __name__ == '__main__':
     vocab_file = args.vocab_file
     df = pd.read_csv(args.dataset_file)
     cols = args.cols.split(',')
-    
+
     combinations = [
         [],
         ['LOWER', 'PUNCTUATION', 'WHITESPACES'],

@@ -1,4 +1,4 @@
-__version__ = '0.1.0'
+__version__ = '1.0.0-rc'
 __author__ = 'Lorenzo Menghini, Martino Pulici, Alessandro Stockman, Luca Zucchini'
 
 
@@ -43,7 +43,13 @@ class NaiveTokenizer(PreTrainedTokenizer):
 
     """
 
-    def __init__(self, do_lower_case=True, never_split=None, unk_token='[UNK]', pad_token='[PAD]', **kwargs):
+    def __init__(
+            self,
+            do_lower_case=True,
+            never_split=None,
+            unk_token='[UNK]',
+            pad_token='[PAD]',
+            **kwargs):
         """
         Initializes the model.
 
@@ -149,7 +155,8 @@ class NaiveTokenizer(PreTrainedTokenizer):
             List of tokens.
 
         """
-        tokens = self.basic_tokenizer.tokenize(text, never_split=self.all_special_tokens)
+        tokens = self.basic_tokenizer.tokenize(
+            text, never_split=self.all_special_tokens)
         return tokens
 
     def _convert_token_to_id(self, token):
@@ -167,7 +174,10 @@ class NaiveTokenizer(PreTrainedTokenizer):
             Id tensor.
 
         """
-        id = torch.tensor(self.vocab.get(token, self.vocab.get(self.unk_token)))
+        id = torch.tensor(
+            self.vocab.get(
+                token, self.vocab.get(
+                    self.unk_token)))
         return id
 
     def _convert_id_to_token(self, index):
@@ -234,7 +244,8 @@ def create_recurrent_model_tokenizer(config, df, verbose=False):
     tokenizer = NaiveTokenizer()
     vocab = load_vocabulary(vocab_file_path)
     if len(vocab) == 0:
-        vocab, tokenizer = build_vocabulary(df, dataframe_cols, tokenizer, save_path=vocab_file_path)
+        vocab, tokenizer = build_vocabulary(
+            df, dataframe_cols, tokenizer, save_path=vocab_file_path)
     tokenizer.set_vocab(vocab)
     embedding_model = load_embedding_model(config['recurrent'])
     if verbose:

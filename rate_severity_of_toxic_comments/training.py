@@ -1,9 +1,9 @@
-__version__ = '0.1.0'
+__version__ = '1.0.0-rc'
 __author__ = 'Lorenzo Menghini, Martino Pulici, Alessandro Stockman, Luca Zucchini'
 
 
-import time
 import os
+import time
 
 import torch
 from torch import nn, optim
@@ -17,7 +17,18 @@ from rate_severity_of_toxic_comments.metrics import *
 from rate_severity_of_toxic_comments.model import create_model
 
 
-def run_training(run_mode, training_data: Dataset,val_data: Dataset,training_params, model_params, support_bag,seed, use_wandb, use_gpu,verbose: bool = True,log_interval=100):
+def run_training(
+        run_mode,
+        training_data: Dataset,
+        val_data: Dataset,
+        training_params,
+        model_params,
+        support_bag,
+        seed,
+        use_wandb,
+        use_gpu,
+        verbose: bool = True,
+        log_interval=100):
     """
     Executes the full train test loop with the given parameters.
 
@@ -86,14 +97,15 @@ def run_training(run_mode, training_data: Dataset,val_data: Dataset,training_par
     if train_dataset_params['type'] == 'scored':
         loss_fn = nn.MSELoss()
     elif train_dataset_params['type'] == 'pairwise':
-        loss_fn = nn.MarginRankingLoss(margin=train_dataset_params['loss_margin'])
+        loss_fn = nn.MarginRankingLoss(
+            margin=train_dataset_params['loss_margin'])
     train_batch_size = training_params['train_batch_size']
     valid_batch_size = training_params['valid_batch_size']
     lr = training_params['learning_rate']
     l2_reg = training_params['L2_regularization']
     grad_clipping = training_params['gradient_clipping']
-    train_dataloader, val_dataloader = build_dataloaders([training_data, val_data], batch_sizes=(
-        train_batch_size, valid_batch_size))
+    train_dataloader, val_dataloader = build_dataloaders(
+        [training_data, val_data], batch_sizes=(train_batch_size, valid_batch_size))
     model = create_model(run_mode, training_params, model_params, support_bag)
     model.to(device)
     train_loop_stats = TrainLoopStatisticsManager(
@@ -110,10 +122,24 @@ def run_training(run_mode, training_data: Dataset,val_data: Dataset,training_par
     num_epochs = training_params['epochs']
     for epoch in range(1, num_epochs + 1):
         time_start = time.time()
-        metrics_train = train_loop(train_dataloader, model, loss_fn, optimizer, device, grad_clipping,
-                                   log_interval=log_interval, dataset_type=train_dataset_params['type'], use_wandb=use_wandb)
-        metrics_val = test_loop(val_dataloader, model, loss_fn, device, log_interval=log_interval,
-                                dataset_type=train_dataset_params['type'], use_wandb=use_wandb)
+        metrics_train = train_loop(
+            train_dataloader,
+            model,
+            loss_fn,
+            optimizer,
+            device,
+            grad_clipping,
+            log_interval=log_interval,
+            dataset_type=train_dataset_params['type'],
+            use_wandb=use_wandb)
+        metrics_val = test_loop(
+            val_dataloader,
+            model,
+            loss_fn,
+            device,
+            log_interval=log_interval,
+            dataset_type=train_dataset_params['type'],
+            use_wandb=use_wandb)
         time_end = time.time()
         train_loop_stats.registerEpoch(
             metrics_train, metrics_val, lr, epoch, time_start, time_end)
@@ -126,7 +152,7 @@ def run_training(run_mode, training_data: Dataset,val_data: Dataset,training_par
         print(f'Time for {num_epochs} epochs (s): {(time_loop):.3f}')
     model.load_state_dict(train_loop_stats.best_model_wts)
     model_filename = run_mode + '-' + \
-        time.strftime('%Y%m%d-%H%M%S')+'.pth'
+        time.strftime('%Y%m%d-%H%M%S') + '.pth'
     torch.save(model.state_dict(), os.path.join(
         'res', 'models', model_filename))
     if use_wandb:
@@ -137,7 +163,14 @@ def run_training(run_mode, training_data: Dataset,val_data: Dataset,training_par
     return model, loss_history
 
 
-def test_loop(dataloader, model, loss_fn, device, log_interval, dataset_type, use_wandb=True):
+def test_loop(
+        dataloader,
+        model,
+        loss_fn,
+        device,
+        log_interval,
+        dataset_type,
+        use_wandb=True):
     """
     Executes the testing loop on the given parameters.
 
@@ -174,7 +207,8 @@ def test_loop(dataloader, model, loss_fn, device, log_interval, dataset_type, us
     total_scores = []
     binarization_targets = []
     with torch.no_grad():
-        for idx_batch, data in tqdm(enumerate(dataloader), total=len(dataloader)):
+        for idx_batch, data in tqdm(
+                enumerate(dataloader), total=len(dataloader)):
             if dataset_type == 'scored':
                 ids = data['ids'].to(device, dtype=torch.long)
                 mask = data['mask'].to(device, dtype=torch.long)
@@ -200,13 +234,18 @@ def test_loop(dataloader, model, loss_fn, device, log_interval, dataset_type, us
                     device, dtype=torch.long)
                 targets = data['target'].to(device, dtype=torch.long)
                 batch_size = more_toxic_ids.size(0)
-                more_toxic_outputs = model(more_toxic_ids, more_toxic_mask, more_toxic_metric)
-                less_toxic_outputs = model(less_toxic_ids, less_toxic_mask, less_toxic_metric)
+                more_toxic_outputs = model(
+                    more_toxic_ids, more_toxic_mask, more_toxic_metric)
+                less_toxic_outputs = model(
+                    less_toxic_ids, less_toxic_mask, less_toxic_metric)
                 loss = loss_fn(more_toxic_outputs, less_toxic_outputs, targets)
-                more_toxic_scores = more_toxic_outputs.to(torch.float32).tolist()
-                less_toxic_scores = less_toxic_outputs.to(torch.float32).tolist()
+                more_toxic_scores = more_toxic_outputs.to(
+                    torch.float32).tolist()
+                less_toxic_scores = less_toxic_outputs.to(
+                    torch.float32).tolist()
                 total_scores = more_toxic_scores + less_toxic_scores
-                total_accuracy += (more_toxic_outputs > less_toxic_outputs).sum().item()
+                total_accuracy += (more_toxic_outputs >
+                                   less_toxic_outputs).sum().item()
             elif dataset_type == 'binarized':
                 ids = data['text_ids'].to(device, dtype=torch.long)
                 mask = data['text_mask'].to(device, dtype=torch.long)
@@ -238,7 +277,16 @@ def test_loop(dataloader, model, loss_fn, device, log_interval, dataset_type, us
     return total_metrics
 
 
-def train_loop(dataloader, model, loss_fn, optimizer, device, gradient_clipping, log_interval, dataset_type, use_wandb=True):
+def train_loop(
+        dataloader,
+        model,
+        loss_fn,
+        optimizer,
+        device,
+        gradient_clipping,
+        log_interval,
+        dataset_type,
+        use_wandb=True):
     """
     Executes the training loop on the given parameters.
 
@@ -300,10 +348,13 @@ def train_loop(dataloader, model, loss_fn, optimizer, device, gradient_clipping,
                 device, dtype=torch.long)
             targets = data['target'].to(device, dtype=torch.long)
             batch_size = more_toxic_ids.size(0)
-            more_toxic_outputs = model(more_toxic_ids, more_toxic_mask, more_toxic_metric)
-            less_toxic_outputs = model(less_toxic_ids, less_toxic_mask, less_toxic_metric)
+            more_toxic_outputs = model(
+                more_toxic_ids, more_toxic_mask, more_toxic_metric)
+            less_toxic_outputs = model(
+                less_toxic_ids, less_toxic_mask, less_toxic_metric)
             loss = loss_fn(more_toxic_outputs, less_toxic_outputs, targets)
-            total_accuracy = (more_toxic_outputs > less_toxic_outputs).sum().item()
+            total_accuracy = (
+                more_toxic_outputs > less_toxic_outputs).sum().item()
         optimizer.zero_grad()
         loss.backward()
         clip_grad_norm_(model.parameters(), gradient_clipping)

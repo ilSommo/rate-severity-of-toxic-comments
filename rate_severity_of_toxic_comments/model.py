@@ -1,4 +1,4 @@
-__version__ = '0.1.0'
+__version__ = '1.0.0-rc'
 __author__ = 'Lorenzo Menghini, Martino Pulici, Alessandro Stockman, Luca Zucchini'
 
 
@@ -50,7 +50,7 @@ class PretrainedModel(Module):
         """
         super().__init__()
         self.model = AutoModel.from_pretrained(model_name)
-        if dropout != None:
+        if dropout is not None:
             self.drop = Dropout(p=dropout)
         self.sig = Sigmoid()
         self.fc = Linear(output_features, OUTPUT_CLASSES)
@@ -72,7 +72,10 @@ class PretrainedModel(Module):
             Tensor to return.
 
         """
-        out = self.model(input_ids=ids, attention_mask=mask,output_hidden_states=False)
+        out = self.model(
+            input_ids=ids,
+            attention_mask=mask,
+            output_hidden_states=False)
         cls_token = out.last_hidden_state[:, 0, :]
         outputs = self.fc(cls_token)
         x = self.sig(outputs).squeeze()
@@ -110,7 +113,13 @@ class RecurrentModel(Module):
 
     """
 
-    def __init__(self, embedding_matrix, dropout, hidden_dim, architecture, preprocessing_metric):
+    def __init__(
+            self,
+            embedding_matrix,
+            dropout,
+            hidden_dim,
+            architecture,
+            preprocessing_metric):
         """
         Initializes the model.
 
@@ -146,7 +155,10 @@ class RecurrentModel(Module):
         self.drop = Dropout(p=dropout)
         self.relu = ReLU()
         self.sig = Sigmoid()
-        self.fc = Linear(hidden_dim+int(preprocessing_metric), OUTPUT_CLASSES)
+        self.fc = Linear(
+            hidden_dim +
+            int(preprocessing_metric),
+            OUTPUT_CLASSES)
 
     def forward(self, ids, mask, preprocessing_metric):
         """
@@ -178,10 +190,10 @@ class RecurrentModel(Module):
         drop_out = self.drop(rec_out[0])
         x = torch.mean(drop_out, dim=-2)
         if self.preprocessing_metric:
-            x = torch.cat((x, preprocessing_metric[:,None]),dim=1)
+            x = torch.cat((x, preprocessing_metric[:, None]), dim=1)
         x = self.relu(x)
         x = self.fc(x)
-        x= self.sig(x).squeeze()
+        x = self.sig(x).squeeze()
         return x
 
 
@@ -207,7 +219,15 @@ def create_model(run_mode, train_params, model_params, support_bag):
 
     """
     if run_mode == 'recurrent':
-        model = RecurrentModel(support_bag['embedding_matrix'], train_params['dropout'], model_params['hidden_dim'], model_params['architecture'], model_params['preprocessing_metric'])
+        model = RecurrentModel(
+            support_bag['embedding_matrix'],
+            train_params['dropout'],
+            model_params['hidden_dim'],
+            model_params['architecture'],
+            model_params['preprocessing_metric'])
     elif run_mode == 'pretrained':
-        model = PretrainedModel(model_params['model_name'], train_params['dropout'], model_params['output_features'])
+        model = PretrainedModel(
+            model_params['model_name'],
+            train_params['dropout'],
+            model_params['output_features'])
     return model

@@ -1,4 +1,4 @@
-__version__ = '0.1.0'
+__version__ = '1.0.0-rc'
 __author__ = 'Lorenzo Menghini, Martino Pulici, Alessandro Stockman, Luca Zucchini'
 
 
@@ -77,7 +77,7 @@ def parse_config(default_filepath, local_filepath=None):
         Default configuration filepath.
     local_filepath : str, optional
         Local configuration filepath.
-    
+
     Returns
     -------
     config : dict
@@ -89,6 +89,7 @@ def parse_config(default_filepath, local_filepath=None):
     if os.path.exists(local_filepath):
         with open(local_filepath) as local:
             import collections.abc
+
             def deep_update(d, u):
                 for k, v in u.items():
                     if isinstance(v, collections.abc.Mapping):
@@ -111,7 +112,7 @@ def process_config(df, config):
         Dataset.
     config : dict
         Configuration dictionary.
-    
+
     Returns
     -------
     support_bag : dict
@@ -143,7 +144,7 @@ def validate_config(config):
     ----------
     config : dict
         Configuration dictionary.
-    
+
     """
     if config['options']['run_mode'] not in AVAILABLE_MODES:
         raise ValueError('Invalid configuration! Run Mode not supported')
@@ -180,9 +181,9 @@ def validate_config(config):
                  ['dataset']):
         raise ValueError(
             "Invalid configuration! Value missing under 'evaluation'")
-    elif config['training']['dataset']['type'] == 'pairwise' and not 'loss_margin' in config['training']['dataset']:
+    elif config['training']['dataset']['type'] == 'pairwise' and 'loss_margin' not in config['training']['dataset']:
         raise ValueError(
             'Pairwise dataset requires a margin attribute!')
-    elif config['evaluation']['dataset']['type'] == 'pairwise' and not 'loss_margin' in config['evaluation']['dataset']:
+    elif config['evaluation']['dataset']['type'] == 'pairwise' and 'loss_margin' not in config['evaluation']['dataset']:
         raise ValueError(
             'Pairwise dataset requires a margin attribute!')
