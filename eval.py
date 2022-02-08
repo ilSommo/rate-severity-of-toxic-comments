@@ -79,7 +79,7 @@ if __name__ == '__main__':
         df_test = load_dataframe(
             run_mode, eval_dataset_params, model_params=model_params)
 
-        CONFIG["recurrent"]["vocab_file"] = model_params["vocab_file"]
+        CONFIG['recurrent']['vocab_file'] = model_params['vocab_file']
         support_bag = process_config(df_test, CONFIG)
 
         test_data = build_dataset(df_test, eval_dataset_params, model_params, support_bag['tokenizer'])
