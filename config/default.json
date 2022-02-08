@@ -11,8 +11,8 @@
     "max_length": 128
   },
   "recurrent": {
-    "architecture": "LSTM",
-    "preprocessing": ["LOWER"],
+    "architecture": "BiDi",
+    "preprocessing": ["LOWER", "NUMBERS", "TRIPLE"],
     "vocab_file": "res/vocab/naive.txt",
     "embedding_dimension": 300,
     "embedding_type": "glove",
@@ -25,10 +25,10 @@
     "train_batch_size": 32,
     "valid_batch_size": 64,
     "optimizer": "adamw",
-    "learning_rate": 0.00324,
-    "dropout": 0.1415,
-    "L2_regularization": 0.08384,
-    "gradient_clipping": 0.4547,
+    "learning_rate": 1e-2,
+    "dropout": 0.15,
+    "L2_regularization": 8e-2,
+    "gradient_clipping": 0.5,
     "dataset": {
       "path": "res/data/train.csv",
       "cols": ["comment_text"],
