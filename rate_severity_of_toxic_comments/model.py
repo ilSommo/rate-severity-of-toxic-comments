@@ -10,8 +10,6 @@ class PretrainedModel(Module):
     def __init__(self, model_name, dropout, output_features):
         super().__init__()
         self.model = AutoModel.from_pretrained(model_name)
-        if dropout != None:
-            self.drop = Dropout(p=dropout)
         self.sig = Sigmoid()
         self.fc = Linear(output_features, OUTPUT_CLASSES)
 
@@ -21,9 +19,6 @@ class PretrainedModel(Module):
         cls_token = out.last_hidden_state[:, 0, :]
         outputs = self.fc(cls_token)
 
-        # out = self.drop(out.last_hidden_state)
-        # outputs = self.fc(out)
-        
         return self.sig(outputs).squeeze()
 
 

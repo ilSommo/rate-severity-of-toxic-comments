@@ -11,6 +11,9 @@ import os
 AVAILABLE_DATASET_TYPES = ["pairwise", "scored", "binarized"]
 
 class PairwiseDataset(Dataset):
+    """
+    Dataset class for representing the "pairwise" type dataset samples, consisting of a pair of texts (more_toxic, less_toxic) with the first being classified more toxic then the second
+    """
     def __init__(self, df, tokenizer, max_length):
         self.df = df
         self.max_len = max_length
@@ -27,6 +30,8 @@ class PairwiseDataset(Dataset):
         more_toxic = self.more_toxic[index]
         less_toxic = self.less_toxic[index]
 
+        # Application of tokenization using the predefined tokenizer
+        # If a max length is specified the data is truncated, otherwise the length longest sentence is used
         if self.max_len:
             inputs_more_toxic = self.tokenizer(
                 more_toxic,
@@ -77,6 +82,9 @@ class PairwiseDataset(Dataset):
 
 
 class BinarizedDataset(Dataset):
+    """
+    Dataset class for representing the "binarized" type dataset samples
+    """
     def __init__(self, df, tokenizer, max_length):
         self.df = df
         self.max_len = max_length
@@ -166,6 +174,9 @@ class ScoredDataset(Dataset):
 
 
 def build_dataset(df, dataset_params, model_params, tokenizer):
+    """
+    Creation of the Dataset class depending on the configured parameters
+    """
     if dataset_params["type"] == "pairwise":
         return PairwiseDataset(df, tokenizer=tokenizer, max_length=model_params["max_length"])
     elif dataset_params["type"] == "scored":
@@ -174,6 +185,9 @@ def build_dataset(df, dataset_params, model_params, tokenizer):
         return BinarizedDataset(df, tokenizer=tokenizer, max_length=model_params["max_length"])
 
 def build_dataloaders(datasets, batch_sizes):
+    """
+    Creation of the dataloaders for the given datasets, each dataloader is configured with a weighted sampler if the source dataset has a `sample_weight` attribute
+    """
     data_loaders = []
     for ds, batch_size in zip(datasets, batch_sizes):
         try:
@@ -184,7 +198,9 @@ def build_dataloaders(datasets, batch_sizes):
 
 
 def split_dataset(dataframe: pd.DataFrame, target_col_name, seed):
-
+    """
+    Performes stratified splitting on the given `dataframe` for the `target_col_name` column 
+    """
     dataframe["label"] = dataframe[target_col_name] * 10
 
     unique, counts = np.unique(
@@ -193,20 +209,27 @@ def split_dataset(dataframe: pd.DataFrame, target_col_name, seed):
     return train_test_split(dataframe, stratify=np.floor(dataframe["label"]), random_state=seed)
 
 def get_sample_weights(df, target_col_name, bins=100):
+    """
+    Returns the inverse frequency distribution of the binned `target_col_name` column
+    """
     binned_targets = pd.cut(df[target_col_name], bins)
     return binned_targets.map(1 / binned_targets.value_counts())
 
 def load_dataframe(run_mode, dataset_params, model_params):
+    """
+    Searches for an already preprocessed dataset in the filesystem according to the given configuration, if not found performs the processing and stores the result
+    """
     base_train_file_path = dataset_params["path"]
     cols = dataset_params["cols"]
     data_frame_to_load = base_train_file_path
     pipelines = []
 
-    #TODO: Use vocabulary.get_preprocess_filenames ?
     if run_mode == "recurrent":
         pipelines = model_params["preprocessing"]
         pipelines.sort()
         vocab_file = model_params["vocab_file"]
+
+        # There is no preprocessing requested, return the plain dataframe
         if pipelines is None or len(pipelines) == 0:
             print(f'Loaded base dataframe from {base_train_file_path}\n')
             df = pd.read_csv(base_train_file_path)
@@ -230,6 +253,7 @@ def load_dataframe(run_mode, dataset_params, model_params):
         print(f'New vocab file path {vocab_to_load}')
         model_params["vocab_file"] = vocab_to_load
     else:
+        # If the run type is not recurrent, preprocessing shouldn't be performed, returns the plain dataframe
         df = pd.read_csv(data_frame_to_load)
         if dataset_params["weighted_sampling"]:
             df["sample_weight"] = get_sample_weights(df, dataset_params["target_col"])
@@ -238,6 +262,7 @@ def load_dataframe(run_mode, dataset_params, model_params):
         return df
 
     if os.path.exists(data_frame_to_load):
+        # A dataset with the requested preprocessing is found on the system, return that one
         print(f'Loading preprocessed dataframe from {data_frame_to_load}\n')
         df = pd.read_csv(data_frame_to_load)
         if dataset_params["weighted_sampling"]:
