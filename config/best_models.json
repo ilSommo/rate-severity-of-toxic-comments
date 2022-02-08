@@ -38,8 +38,8 @@
         "preprocessing_metric": true
       },
       "training": {
-        "dropout": 0,
-        "grad_clipping": 1
+        "dropout": 0.15,
+        "grad_clipping": 0.5
       }
     }
   },
