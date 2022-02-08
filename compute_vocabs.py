@@ -1,5 +1,9 @@
-import os
+__version__ = '0.1.0'
+__author__ = 'Lorenzo Menghini, Martino Pulici, Alessandro Stockman, Luca Zucchini'
+
+
 import argparse
+import os
 
 import pandas as pd
 from tqdm import tqdm
@@ -23,16 +27,18 @@ def store_vocab(df, cols, vocab_file, pipelines):
 
     if len(pipelines) == 0 or os.path.isfile(vocab_to_load):
         vocab = load_vocabulary(vocab_to_load)
+
         if len(vocab) > 0:
             return vocab
 
     if len(pipelines) > 0:
         sentences_in_cols = [v for col in cols for v in df[col].values]
         num_sentences = len(sentences_in_cols)
-        print(f"Dataset comments to preprocess: {num_sentences}")
-        print(f"Pipelines to apply: {pipelines}")
+        print(f'Dataset comments to preprocess: {num_sentences}')
+        print(f'Pipelines to apply: {pipelines}')
 
         for col in cols:
+            
             for i in tqdm(df.index, total=len(df)):
                 df.at[i, col], df.at[i, col+'_metric'] = apply_preprocessing_pipelines(df.at[i, col], pipelines)
 
@@ -40,11 +46,13 @@ def store_vocab(df, cols, vocab_file, pipelines):
     vocab, tokenizer = build_vocabulary(df, cols, tokenizer, save_path=vocab_to_load)
     return vocab
 
+
 def print_oov_stats(vocab, df, cols, embedding_model):
     oov = check_OOV_terms(embedding_model, vocab)
-    # count_OOV_frequency(df, cols, oov)
+    count_OOV_frequency(df, cols, oov)
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--vocab_file')
     parser.add_argument('--dataset_file')
@@ -53,19 +61,19 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     embedding_model = load_embedding_model({
-        "embedding_type": "glove",
-        "embedding_dimension": args.embedding_size
+        'embedding_type': 'glove',
+        'embedding_dimension': args.embedding_size
     })
     vocab_file = args.vocab_file
     df = pd.read_csv(args.dataset_file)
-    cols = args.cols.split(",")
+    cols = args.cols.split(',')
     
     combinations = [
         [],
-        ["LOWER", "PUNCTUATION", "WHITESPACES"],
-        ["LOWER", "PUNCTUATION", "WHITESPACES", "NUMBERS"],
-        ["LOWER", "PUNCTUATION", "WHITESPACES", "TRIPLE"],
-        ["LOWER", "PUNCTUATION", "WHITESPACES", "TRIPLE", "NUMBERS"],
+        ['LOWER', 'PUNCTUATION', 'WHITESPACES'],
+        ['LOWER', 'PUNCTUATION', 'WHITESPACES', 'NUMBERS'],
+        ['LOWER', 'PUNCTUATION', 'WHITESPACES', 'TRIPLE'],
+        ['LOWER', 'PUNCTUATION', 'WHITESPACES', 'TRIPLE', 'NUMBERS'],
     ]
 
     for subset in combinations:
