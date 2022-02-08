@@ -124,8 +124,7 @@ class ScoredDataset(Dataset):
     def __init__(self, df, tokenizer, max_length):
         self.df = df
         self.text = df["comment_text"].values
-        if "comment_text_metric" in df.columns:
-            self.preprocessing_metric = df["comment_text_metric"].values
+        self.preprocessing_metric = df["comment_text_metric"].values
         self.target = df["target"].values
         self.sample_weight = df["sample_weight"].values
         self.tokenizer = tokenizer
@@ -230,6 +229,13 @@ def load_dataframe(run_mode, dataset_params, model_params):
         print(f'Trying to load dataframe from {data_frame_to_load}')
         print(f'New vocab file path {vocab_to_load}')
         model_params["vocab_file"] = vocab_to_load
+    else:
+        df = pd.read_csv(data_frame_to_load)
+        if dataset_params["weighted_sampling"]:
+            df["sample_weight"] = get_sample_weights(df, dataset_params["target_col"])
+            for col in cols:
+                df[col+'_metric'] = 0
+        return df
 
     if os.path.exists(data_frame_to_load):
         print(f'Loading preprocessed dataframe from {data_frame_to_load}\n')
