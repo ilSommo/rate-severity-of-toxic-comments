@@ -183,7 +183,7 @@ def compute_metrics(predicted_label, label):
     Returns a dictionary containing accuracy, precision and recall metrics.
     """
     predicted_label = torch.tensor(
-        map(lambda v: 1 if v > 0.5 else 0, predicted_label))
+        list(map(lambda v: 1 if v > 0.5 else 0, predicted_label)))
     positive = torch.sum(label).float()
     predicted_positive = torch.sum(predicted_label).float()
     true_positive = torch.sum(
