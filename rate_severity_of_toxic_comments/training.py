@@ -286,6 +286,7 @@ def train_loop(
         gradient_clipping,
         log_interval,
         dataset_type,
+        verbose=True,
         use_wandb=True):
     """
     Executes the training loop on the given parameters.
@@ -322,7 +323,7 @@ def train_loop(
     running_loss = 0.0
     cumul_batches = 0
     dataset_size = 0
-    for idx_batch, data in tqdm(enumerate(dataloader), total=len(dataloader)):
+    for idx_batch, data in tqdm(enumerate(dataloader), total=len(dataloader), disable=not verbose):
         if dataset_type == 'scored':
             ids = data['ids'].to(device, dtype=torch.long)
             mask = data['mask'].to(device, dtype=torch.long)
