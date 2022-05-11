@@ -42,17 +42,7 @@ def build_vocabulary(df, cols, tokenizer, min_freq=1, save_path=None):
     print(f'Comments count: {num_sentences}')
     print(f'Creating vocabulary from comments...')
     percentage_printed = 0.0
-    for index, sentence in enumerate(sentences_in_cols):
-        percentage = round(index / num_sentences, 2)
-        if percentage == 0.25 and percentage_printed == 0.0:
-            print(f'25% vocabulary created')
-            percentage_printed = 0.25
-        elif percentage == 0.50 and percentage_printed == 0.25:
-            print(f'50% vocabulary created')
-            percentage_printed = 0.50
-        elif percentage == 0.75 and percentage_printed == 0.5:
-            print(f'75% vocabulary created')
-            percentage_printed = 0.75
+    for sentence in tqdm(sentences_in_cols):
         counter.update(tokenizer._tokenize(sentence))
     v = torchtext.vocab.vocab(counter, min_freq=min_freq).get_stoi()
     print(f'Vocabulary created ({len(v)} words)')
