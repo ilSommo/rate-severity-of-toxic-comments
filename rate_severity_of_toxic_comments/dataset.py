@@ -10,6 +10,7 @@ from sklearn.model_selection import train_test_split
 import torch
 from torch.utils.data import Dataset, WeightedRandomSampler
 from torch.utils.data.dataloader import DataLoader
+from tqdm import tqdm
 
 from rate_severity_of_toxic_comments.preprocessing import apply_preprocessing_pipelines
 
@@ -355,11 +356,11 @@ class ScoredDataset(Dataset):
         preprocessing_metric = self.preprocessing_metric[index]
         target = self.target[index]
         item = {
-            'ids': torch.tensor(
-                ids, dtype=torch.long), 'mask': torch.tensor(
-                mask, dtype=torch.long), 'target': torch.tensor(
-                target, dtype=torch.float32), 'preprocessing_metric': torch.tensor(
-                    preprocessing_metric, dtype=torch.float32)}
+            'ids': ids.clone().detach(), 
+            'mask': mask.clone().detach(), 
+            'target': torch.tensor(target, dtype=torch.float32), 
+            'preprocessing_metric': torch.tensor(preprocessing_metric, dtype=torch.float32)
+        }
         return item
 
 
@@ -536,13 +537,7 @@ def load_dataframe(run_mode, dataset_params, model_params):
     print(f'Dataset comments to preprocess: {num_sentences}')
     print(f'Pipelines to apply: {pipelines}')
     for col in cols:
-        for i in df.index:
-            if i == int(num_sentences / 4):
-                print(f'25% comments preprocessed')
-            elif i == int(num_sentences / 2):
-                print(f'50% comments preprocessed')
-            elif i == int(num_sentences / 1.5):
-                print(f'75% comments preprocessed')
+        for i in tqdm(df.index):
             df.at[i, col], df.at[i, col +
                                  '_metric'] = apply_preprocessing_pipelines(df.at[i, col], pipelines)
     print(f'Dataframe preprocessed\n')
@@ -575,7 +570,6 @@ def split_dataset(dataframe: pd.DataFrame, target_col_name, seed):
     dataframe['label'] = dataframe[target_col_name] * 10
     unique, counts = np.unique(
         np.floor(dataframe['label']), return_counts=True)
-    print(dict(zip(unique, counts)))
     splitting = train_test_split(
         dataframe, stratify=np.floor(
             dataframe['label']), random_state=seed)
