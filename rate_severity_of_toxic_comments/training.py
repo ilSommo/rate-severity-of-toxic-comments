@@ -170,6 +170,7 @@ def test_loop(
         device,
         log_interval,
         dataset_type,
+        verbose=False,
         use_wandb=True):
     """
     Executes the testing loop on the given parameters.
@@ -208,7 +209,7 @@ def test_loop(
     binarization_targets = []
     with torch.no_grad():
         for idx_batch, data in tqdm(
-                enumerate(dataloader), total=len(dataloader)):
+                enumerate(dataloader), total=len(dataloader), disable=not verbose):
             if dataset_type == 'scored':
                 ids = data['ids'].to(device, dtype=torch.long)
                 mask = data['mask'].to(device, dtype=torch.long)
