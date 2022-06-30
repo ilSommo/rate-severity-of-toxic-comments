@@ -39,6 +39,9 @@ def apply_preprocessing_pipelines(text, pipelines):
     for pipeline in pipelines:
         text, metric = apply_preprocessing_pipeline(text, metric, pipeline)
     metric = metric / len(pipelines)
+
+    if text == "":
+        text = "[UNK]"
     return text, metric
 
 
@@ -118,9 +121,10 @@ def _apply_punctuation_pipeline(text):
         Preprocessing amount metric.
 
     """
+    extended_punctuation = string.punctuation + "—"
     additional_metric = len(re.findall('[%s]' % re.escape(
-        string.punctuation), text)) / max(len(text), 1)
-    text = re.sub('[%s]' % re.escape(string.punctuation), '', text)
+        extended_punctuation), text)) / max(len(text), 1)
+    text = re.sub('[%s]' % re.escape(extended_punctuation), ' ', text)
     return text, additional_metric
 
 
@@ -141,9 +145,10 @@ def _apply_whitespaces_pipeline(text):
         Preprocessing amount metric.
 
     """
-    additional_metric = len(re.findall('  +', text)) / \
+    additional_metric = len(re.findall('\s+', text)) / \
         max(len(re.findall(' +', text)), 1)
-    text = re.sub('  +', ' ', text)
+    text = re.sub('\s+', ' ', text)
+    text = re.sub(' $', '', text)
     return text, additional_metric
 
 
