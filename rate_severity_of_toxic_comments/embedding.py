@@ -70,7 +70,11 @@ def check_OOV_terms(
         List of out-of-vocabulary terms.
 
     """
-    embedding_vocabulary = set(embedding_model.index_to_key)
+    try:
+        embedding_vocabulary = set(embedding_model.index_to_key)
+    except:
+        embedding_vocabulary = set(embedding_model.index2entity)
+
     vocab_set = set(vocab.keys())
     oov = vocab_set.difference(embedding_vocabulary)
     known_words = vocab_set.intersection(embedding_vocabulary)
