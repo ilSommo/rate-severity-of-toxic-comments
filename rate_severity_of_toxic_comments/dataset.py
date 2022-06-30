@@ -302,9 +302,9 @@ class RegressionDataset(Dataset):
         self.df = df
         self.max_len = max_length
         self.tokenizer = tokenizer
-        self.text = df['comment_text'].values
+        self.text = df['text'].values
         self.sample_weight = df['sample_weight'].values
-        self.preprocessing_metric = df['comment_text_metric'].values
+        self.preprocessing_metric = df['text_metric'].values
         self.target = df['target'].values
 
     def __len__(self):
