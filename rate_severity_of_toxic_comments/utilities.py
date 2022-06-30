@@ -18,7 +18,7 @@ from rate_severity_of_toxic_comments.tokenizer import NaiveTokenizer, create_rec
 
 
 _bad_words = []
-AVAILABLE_MODES = ['recurrent', 'pretrained', 'debug']
+AVAILABLE_MODES = ['recurrent', 'transformer', 'debug']
 
 
 def fix_random_seed(seed):
@@ -120,9 +120,9 @@ def process_config(df, config):
 
     """
     support_bag = {}
-    if config['options']['run_mode'] == 'pretrained':
+    if config['options']['run_mode'] == 'transformer':
         support_bag['tokenizer'] = AutoTokenizer.from_pretrained(
-            config['pretrained']['model_name'])
+            config['transformer']['model_name'])
     elif config['options']['run_mode'] == 'recurrent':
         tokenizer, embedding_matrix = create_recurrent_model_tokenizer(
             config, df)
@@ -165,10 +165,10 @@ def validate_config(config):
                ['run_mode', 'use_gpu', 'wandb']):
         raise ValueError(
             "Invalid configuration! Value missing under 'options'")
-    elif not all(item in config['pretrained'].keys() for item in
+    elif not all(item in config['transformer'].keys() for item in
                  ['model_name', 'output_features']):
         raise ValueError(
-            "Invalid configuration! Value missing under 'pretrained'")
+            "Invalid configuration! Value missing under 'transformer'")
     elif not all(item in config['recurrent'].keys() for item in
                  ['architecture', 'preprocessing', 'vocab_file', 'embedding_type', 'embedding_dimension', 'hidden_dim']):
         raise ValueError(

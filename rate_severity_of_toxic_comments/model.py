@@ -12,9 +12,9 @@ OUTPUT_CLASSES = 1
 AVAILABLE_ARCHITECTURES = ['LSTM', 'GRU', 'BiDi']
 
 
-class PretrainedModel(Module):
+class TransformerModel(Module):
     """
-    Class containing a pretrained neural network model.
+    Class containing a transformer-based neural network model.
 
     Attributes
     ----------
@@ -221,8 +221,8 @@ def create_model(run_mode, train_params, model_params, support_bag):
             model_params['hidden_dim'],
             model_params['architecture'],
             model_params['preprocessing_metric'])
-    elif run_mode == 'pretrained':
-        model = PretrainedModel(
+    elif run_mode == 'transformer':
+        model = TransformerModel(
             model_params['model_name'],
             train_params['dropout'],
             model_params['output_features'])

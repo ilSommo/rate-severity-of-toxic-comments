@@ -5,7 +5,7 @@
     "wandb": true,
     "seed": 42
   },
-  "pretrained": {
+  "transformer": {
     "model_name": "roberta-base",
     "output_features": 768,
     "max_length": 128

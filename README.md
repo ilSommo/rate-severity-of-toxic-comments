@@ -18,7 +18,7 @@ $ python download_resources.py --datasets --vocabs --models
 
 The download resources script will download the best trained models.
 
-The following command will train again the model using the <b>config/default.json</b> configuration depending on the "run-mode" (recurrent, pretrained, debug)
+The following command will train again the model using the <b>config/default.json</b> configuration depending on the "run-mode" (recurrent, transformer, debug)
 
 ```console
 $ python train.py
