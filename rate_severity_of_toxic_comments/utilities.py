@@ -181,9 +181,9 @@ def validate_config(config):
                  ['dataset']):
         raise ValueError(
             "Invalid configuration! Value missing under 'evaluation'")
-    elif config['training']['dataset']['type'] == 'pairwise' and 'loss_margin' not in config['training']['dataset']:
+    elif config['training']['dataset']['type'] == 'ranking' and 'loss_margin' not in config['training']['dataset']:
         raise ValueError(
-            'Pairwise dataset requires a margin attribute!')
-    elif config['evaluation']['dataset']['type'] == 'pairwise' and 'loss_margin' not in config['evaluation']['dataset']:
+            'Ranking dataset requires a margin attribute!')
+    elif config['evaluation']['dataset']['type'] == 'ranking' and 'loss_margin' not in config['evaluation']['dataset']:
         raise ValueError(
-            'Pairwise dataset requires a margin attribute!')
+            'Ranking dataset requires a margin attribute!')

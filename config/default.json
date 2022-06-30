@@ -32,7 +32,7 @@
     "dataset": {
       "path": "res/data/train.csv",
       "cols": ["comment_text"],
-      "type": "scored",
+      "type": "regression",
       "weighted_sampling": true,
       "target_col": "target",
       "download": "https://easydeskweb.com/res/temp/data/train.csv"
@@ -43,7 +43,7 @@
     "dataset": {
       "path": "res/data/validation_binarized.csv",
       "cols": ["Sentence"],
-      "type": "binarized",
+      "type": "classification",
       "loss_margin": 0.5,
       "weighted_sampling": false,
       "download": "https://easydeskweb.com/res/temp/data/validation_binarized.csv"

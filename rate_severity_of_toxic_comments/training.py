@@ -94,9 +94,9 @@ def run_training(
     device = torch.device('cuda' if torch.cuda.is_available()
                           and use_gpu else 'cpu')
     train_dataset_params = training_params['dataset']
-    if train_dataset_params['type'] == 'scored':
+    if train_dataset_params['type'] == 'regression':
         loss_fn = nn.MSELoss()
-    elif train_dataset_params['type'] == 'pairwise':
+    elif train_dataset_params['type'] == 'ranking':
         loss_fn = nn.MarginRankingLoss(
             margin=train_dataset_params['loss_margin'])
     train_batch_size = training_params['train_batch_size']
@@ -210,7 +210,7 @@ def test_loop(
     with torch.no_grad():
         for idx_batch, data in tqdm(
                 enumerate(dataloader), total=len(dataloader), disable=not verbose):
-            if dataset_type == 'scored':
+            if dataset_type == 'regression':
                 ids = data['ids'].to(device, dtype=torch.long)
                 mask = data['mask'].to(device, dtype=torch.long)
                 targets = data['target'].to(device, dtype=torch.float32)
@@ -220,7 +220,7 @@ def test_loop(
                 scores = model(ids, mask, preprocessing_metrics)
                 scores = scores.to(torch.float32)
                 loss = loss_fn(scores, targets)
-            elif dataset_type == 'pairwise':
+            elif dataset_type == 'ranking':
                 more_toxic_ids = data['more_toxic_ids'].to(
                     device, dtype=torch.long)
                 more_toxic_mask = data['more_toxic_mask'].to(
@@ -247,7 +247,7 @@ def test_loop(
                 total_scores = more_toxic_scores + less_toxic_scores
                 total_accuracy += (more_toxic_outputs >
                                    less_toxic_outputs).sum().item()
-            elif dataset_type == 'binarized':
+            elif dataset_type == 'classification':
                 ids = data['text_ids'].to(device, dtype=torch.long)
                 mask = data['text_mask'].to(device, dtype=torch.long)
                 targets = data['target'].to(device, dtype=torch.long)
@@ -325,7 +325,7 @@ def train_loop(
     cumul_batches = 0
     dataset_size = 0
     for idx_batch, data in tqdm(enumerate(dataloader), total=len(dataloader), disable=not verbose):
-        if dataset_type == 'scored':
+        if dataset_type == 'regression':
             ids = data['ids'].to(device, dtype=torch.long)
             mask = data['mask'].to(device, dtype=torch.long)
             targets = data['target'].to(device, dtype=torch.float32)
@@ -335,7 +335,7 @@ def train_loop(
             scores = model(ids, mask, preprocessing_metric)
             scores = scores.to(torch.float32)
             loss = loss_fn(scores, targets)
-        elif dataset_type == 'pairwise':
+        elif dataset_type == 'ranking':
             more_toxic_ids = data['more_toxic_ids'].to(
                 device, dtype=torch.long)
             more_toxic_mask = data['more_toxic_mask'].to(

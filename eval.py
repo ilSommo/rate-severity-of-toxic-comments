@@ -51,9 +51,9 @@ if __name__ == '__main__':
 
     batch_size = args.batch_size
 
-    if eval_dataset_params['type'] == 'scored':
+    if eval_dataset_params['type'] == 'regression':
         loss_fn = nn.MSELoss()
-    elif eval_dataset_params['type'] == 'pairwise':
+    elif eval_dataset_params['type'] == 'ranking':
         loss_fn = nn.MarginRankingLoss(
             margin=eval_dataset_params['loss_margin'])
     else:
@@ -119,7 +119,7 @@ if __name__ == '__main__':
         hist.to_csv(
             'res/hist/' + model_details['path'].split('/')[-1][11:-4] + '.csv')
 
-        if eval_dataset_params['type'] == 'binarized':
+        if eval_dataset_params['type'] == 'classification':
             y_test = metrics['binarization_targets']
             eval_metrics = compute_metrics(
                 torch.tensor(y_score), torch.tensor(y_test))

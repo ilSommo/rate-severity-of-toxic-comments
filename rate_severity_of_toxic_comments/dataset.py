@@ -15,10 +15,10 @@ from tqdm import tqdm
 from rate_severity_of_toxic_comments.preprocessing import apply_preprocessing_pipelines
 
 
-AVAILABLE_DATASET_TYPES = ['pairwise', 'scored', 'binarized']
+AVAILABLE_DATASET_TYPES = ['ranking', 'regression', 'classification']
 
 
-class BinarizedDataset(Dataset):
+class ClassificationDataset(Dataset):
     """
     Class containing a binarized dataset.
 
@@ -123,9 +123,9 @@ class BinarizedDataset(Dataset):
         return item
 
 
-class PairwiseDataset(Dataset):
+class RankingDataset(Dataset):
     """
-    Dataset class for representing the "pairwise" type dataset samples, consisting of a pair of texts with the first being classified more toxic then the second.
+    Dataset class for representing the "ranking" type dataset samples, consisting of a pair of texts with the first being classified more toxic then the second.
 
     Attributes
     ----------
@@ -253,9 +253,9 @@ class PairwiseDataset(Dataset):
         return item
 
 
-class ScoredDataset(Dataset):
+class RegressionDataset(Dataset):
     """
-    Dataset class for representing the "binarized" type dataset samples.
+    Dataset class for representing the "regression" type dataset samples.
 
     Attributes
     ----------
@@ -424,18 +424,18 @@ def build_dataset(df, dataset_params, model_params, tokenizer):
         Dataset to return.
 
     """
-    if dataset_params['type'] == 'pairwise':
-        dataset = PairwiseDataset(
+    if dataset_params['type'] == 'ranking':
+        dataset = RankingDataset(
             df,
             tokenizer=tokenizer,
             max_length=model_params['max_length'])
-    elif dataset_params['type'] == 'scored':
-        dataset = ScoredDataset(
+    elif dataset_params['type'] == 'regression':
+        dataset = RegressionDataset(
             df,
             tokenizer=tokenizer,
             max_length=model_params['max_length'])
-    elif dataset_params['type'] == 'binarized':
-        dataset = BinarizedDataset(
+    elif dataset_params['type'] == 'classification':
+        dataset = ClassificationDataset(
             df,
             tokenizer=tokenizer,
             max_length=model_params['max_length'])
