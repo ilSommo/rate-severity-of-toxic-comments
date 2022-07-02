@@ -29,6 +29,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', default=32)
     parser.add_argument('--mode', default='best', choices=['best', 'last'])
     parser.add_argument('--folder', default='res/models/')
+    parser.add_argument('--predictions', type=int, default=None)
     parser.add_argument('--headless', action='store_true')
     args = parser.parse_args()
 
@@ -41,6 +42,7 @@ if __name__ == '__main__':
             'description': 'Last Model Found',
             'path': latest_file
         }]
+        print(f"Using weights found in {latest_file}")
     elif args.mode == 'best':
         models_file = open(BEST_MODELS_FILE_PATH)
         models = json.load(models_file)
@@ -80,6 +82,7 @@ if __name__ == '__main__':
             training_params = CONFIG['training']
             model_params = CONFIG[run_mode]
 
+        df_original = pd.read_csv(eval_dataset_params["path"])
         df_test = load_dataframe(
             run_mode, eval_dataset_params, model_params=model_params)
 
@@ -98,7 +101,7 @@ if __name__ == '__main__':
             training_params,
             model_params,
             support_bag)
-        model.load_state_dict(torch.load(model_details['path']))
+        model.load_state_dict(torch.load(model_details['path'], map_location=device))
         model.to(device)
 
         metrics = test_loop(
@@ -108,7 +111,9 @@ if __name__ == '__main__':
             device,
             log_interval=1000,
             dataset_type=eval_dataset_params['type'],
-            use_wandb=False)
+            use_wandb=False,
+            collect_predictions=True)
+        
         y_score = metrics['scores']
         hist = pd.DataFrame({'score': y_score})
 
@@ -148,3 +153,9 @@ if __name__ == '__main__':
                 'res/roc/' + model_details['path'].split('/')[-1][11:-4] + '.csv')
         else:
             print(model_details['description'], metrics)
+
+        if args.predictions:
+            for p in sorted(metrics["predictions"], key=lambda x: x["error"], reverse=True)[:args.predictions]:
+                row = df_original[df_original['id'] == p['idx']]
+                print(row["text"].values[0])
+                print("="*100)

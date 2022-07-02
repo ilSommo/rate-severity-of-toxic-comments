@@ -171,7 +171,8 @@ def test_loop(
         log_interval,
         dataset_type,
         verbose=False,
-        use_wandb=True):
+        use_wandb=True,
+        collect_predictions=False):
     """
     Executes the testing loop on the given parameters.
 
@@ -207,6 +208,10 @@ def test_loop(
     dataset_size = 0
     total_scores = []
     binarization_targets = []
+
+    if collect_predictions:
+        total_metrics["predictions"] = []
+
     with torch.no_grad():
         for idx_batch, data in tqdm(
                 enumerate(dataloader), total=len(dataloader), disable=not verbose):
@@ -217,9 +222,19 @@ def test_loop(
                 preprocessing_metrics = data['preprocessing_metric'].to(
                     device, dtype=torch.float32)
                 batch_size = ids.size(0)
+                
                 scores = model(ids, mask, preprocessing_metrics)
                 scores = scores.to(torch.float32)
+                
                 loss = loss_fn(scores, targets)
+
+                if collect_predictions:
+                    total_metrics["predictions"] += [{
+                        "idx": data["idx"][i].item(),
+                        "target": targets[i].item(),
+                        "prediction": scores[i].item(),
+                        "error": abs(targets[i].item() - scores[i].item())
+                    } for i in range(batch_size)]
             elif dataset_type == 'ranking':
                 more_toxic_ids = data['more_toxic_ids'].to(
                     device, dtype=torch.long)
@@ -235,6 +250,7 @@ def test_loop(
                     device, dtype=torch.long)
                 targets = data['target'].to(device, dtype=torch.long)
                 batch_size = more_toxic_ids.size(0)
+                
                 more_toxic_outputs = model(
                     more_toxic_ids, more_toxic_mask, more_toxic_metric)
                 less_toxic_outputs = model(
@@ -244,9 +260,17 @@ def test_loop(
                     torch.float32).tolist()
                 less_toxic_scores = less_toxic_outputs.to(
                     torch.float32).tolist()
+                
                 total_scores = more_toxic_scores + less_toxic_scores
                 total_accuracy += (more_toxic_outputs >
                                    less_toxic_outputs).sum().item()
+                if collect_predictions:
+                    total_metrics["predictions"] += [{
+                        "idx": data["idx"][i].item(),
+                        "more_toxic": more_toxic_scores[i].item(),
+                        "less_toxic": less_toxic_scores[i].item(),
+                        "error": less_toxic_scores[i].item() - more_toxic_scores[i].item()
+                    } for i in range(batch_size)]
             elif dataset_type == 'classification':
                 ids = data['text_ids'].to(device, dtype=torch.long)
                 mask = data['text_mask'].to(device, dtype=torch.long)
@@ -254,21 +278,33 @@ def test_loop(
                 preprocessing_metrics = data['text_metric'].to(
                     device, dtype=torch.float32)
                 batch_size = ids.size(0)
+                
                 scores = model(ids, mask, preprocessing_metrics)
                 scores = scores.to(torch.float32)
-                total_scores += scores.tolist()
                 targets = targets.to(torch.bool)
-                binarization_targets += targets.tolist()
                 loss = loss_fn(scores, targets)
+                
+                total_scores += scores.tolist()
+                binarization_targets += targets.tolist()
+                if collect_predictions:
+                    total_metrics["predictions"] += [{
+                        "idx": data["idx"][i].item(),
+                        "target": targets[i].item(),
+                        "prediction": scores[i].item(),
+                        "error": abs(targets[i].item() - scores[i].item())
+                    } for i in range(batch_size)]
+            
             total_loss += (loss.item() * batch_size)
             running_loss += loss.item()
             cumul_batches += 1
             dataset_size += batch_size
+            
             if idx_batch % log_interval == 0 and idx_batch > 0 and use_wandb:
                 wandb.log(
                     {'Validation Running Loss': running_loss / cumul_batches})
                 running_loss = 0
                 cumul_batches = 0
+    
     total_metrics['valid_loss'] = total_loss / dataset_size
     total_metrics['scores'] = total_scores
     if total_accuracy > 0:
@@ -324,6 +360,7 @@ def train_loop(
     running_loss = 0.0
     cumul_batches = 0
     dataset_size = 0
+    
     for idx_batch, data in tqdm(enumerate(dataloader), total=len(dataloader), disable=not verbose):
         if dataset_type == 'regression':
             ids = data['ids'].to(device, dtype=torch.long)
@@ -332,6 +369,7 @@ def train_loop(
             preprocessing_metric = data['preprocessing_metric'].to(
                 device, dtype=torch.float32)
             batch_size = ids.size(0)
+            
             scores = model(ids, mask, preprocessing_metric)
             scores = scores.to(torch.float32)
             loss = loss_fn(scores, targets)
@@ -350,25 +388,31 @@ def train_loop(
                 device, dtype=torch.long)
             targets = data['target'].to(device, dtype=torch.long)
             batch_size = more_toxic_ids.size(0)
+            
             more_toxic_outputs = model(
                 more_toxic_ids, more_toxic_mask, more_toxic_metric)
             less_toxic_outputs = model(
                 less_toxic_ids, less_toxic_mask, less_toxic_metric)
             loss = loss_fn(more_toxic_outputs, less_toxic_outputs, targets)
+            
             total_accuracy = (
                 more_toxic_outputs > less_toxic_outputs).sum().item()
+        
         optimizer.zero_grad()
         loss.backward()
         clip_grad_norm_(model.parameters(), gradient_clipping)
         optimizer.step()
+        
         total_loss += (loss.item() * batch_size)
         running_loss += loss.item()
         cumul_batches += 1
         dataset_size += batch_size
+        
         if idx_batch % log_interval == 0 and idx_batch > 0 and use_wandb:
             wandb.log({'Train Running Loss': running_loss / cumul_batches})
             running_loss = 0
             cumul_batches = 0
+    
     total_metrics['train_loss'] = total_loss / dataset_size
     if total_accuracy > 0:
         total_metrics['train_accuracy'] = total_accuracy / dataset_size
