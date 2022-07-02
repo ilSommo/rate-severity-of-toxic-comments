@@ -94,7 +94,7 @@ if __name__ == '__main__':
             eval_dataset_params,
             model_params,
             support_bag['tokenizer'])
-        test_dl, = build_dataloaders([test_data], [batch_size])
+        test_dl, = build_dataloaders([test_data], [batch_size], [False])
 
         model = create_model(
             run_mode,

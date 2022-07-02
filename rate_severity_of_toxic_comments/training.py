@@ -105,7 +105,7 @@ def run_training(
     l2_reg = training_params['L2_regularization']
     grad_clipping = training_params['gradient_clipping']
     train_dataloader, val_dataloader = build_dataloaders(
-        [training_data, val_data], batch_sizes=(train_batch_size, valid_batch_size))
+        [training_data, val_data], batch_sizes=(train_batch_size, valid_batch_size), weighted_samplings=(training_params["weighted_sampling"], False))
     model = create_model(run_mode, training_params, model_params, support_bag)
     model.to(device)
     train_loop_stats = TrainLoopStatisticsManager(

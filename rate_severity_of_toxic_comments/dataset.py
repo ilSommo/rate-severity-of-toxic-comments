@@ -374,7 +374,7 @@ class RegressionDataset(Dataset):
         return item
 
 
-def build_dataloaders(datasets, batch_sizes):
+def build_dataloaders(datasets, batch_sizes, weighted_samplings):
     """
     Builds the dataloader.
 
@@ -392,8 +392,9 @@ def build_dataloaders(datasets, batch_sizes):
 
     """
     data_loaders = []
-    for ds, batch_size in zip(datasets, batch_sizes):
-        try:
+    #TODO Check dataloders initialization params
+    for ds, batch_size, weighted_sampling in zip(datasets, batch_sizes, weighted_samplings):
+        if weighted_sampling:
             data_loaders.append(
                 DataLoader(
                     ds,
@@ -402,7 +403,7 @@ def build_dataloaders(datasets, batch_sizes):
                     sampler=WeightedRandomSampler(
                         ds.sample_weight,
                         len(ds))))
-        except BaseException:
+        else:
             data_loaders.append(
                 DataLoader(
                     ds,
@@ -452,16 +453,14 @@ def build_dataset(df, dataset_params, model_params, tokenizer):
     return dataset
 
 
-def get_sample_weights(df, target_col_name, bins=100):
+def get_sample_weights(targets, bins=100):
     """
-    Returns the inverse frequency distribution of the binned column.
+    Returns the inverse frequency distribution of the binned iterable.
 
     Parameters
     ----------
-    df : pandas.core.frame.DataFrame
-        DataFrame containing the dataset.
-    target_col_name : str
-        Name of the target column.
+    targets : Iterable
+        Iterable of targets
     bins : int, default 100
         Number of bins.
 
@@ -471,7 +470,7 @@ def get_sample_weights(df, target_col_name, bins=100):
         Sample weights.
 
     """
-    binned_targets = pd.cut(df[target_col_name], bins)
+    binned_targets = pd.cut(targets, bins)
     sample_weights = binned_targets.map(1 / binned_targets.value_counts())
     return sample_weights
 
@@ -507,9 +506,6 @@ def load_dataframe(run_mode, dataset_params, model_params):
             df = pd.read_csv(base_train_file_path)
             for col in cols:
                 df[col + '_metric'] = 0
-            if dataset_params['weighted_sampling']:
-                df['sample_weight'] = get_sample_weights(
-                    df, dataset_params['target_col'])
             return df
         data_frame_to_load = base_train_file_path[:-4]
         vocab_to_load = vocab_file[:-4]
@@ -525,20 +521,15 @@ def load_dataframe(run_mode, dataset_params, model_params):
         # If the run type is not recurrent, preprocessing shouldn't be
         # performed, returns the plain dataframe
         df = pd.read_csv(data_frame_to_load)
-        if dataset_params['weighted_sampling']:
-            df['sample_weight'] = get_sample_weights(
-                df, dataset_params['target_col'])
-            for col in cols:
-                df[col + '_metric'] = 0
+        for col in cols:
+            df[col + '_metric'] = 0
         return df
+    
     if os.path.exists(data_frame_to_load):
         # A dataset with the requested preprocessing is found on the system,
         # return that one
         print(f'Loading preprocessed dataframe from {data_frame_to_load}\n')
         df = pd.read_csv(data_frame_to_load)
-        if dataset_params['weighted_sampling']:
-            df['sample_weight'] = get_sample_weights(
-                df, dataset_params['target_col'])
         return df
     else:
         df = pd.read_csv(base_train_file_path)
@@ -552,9 +543,6 @@ def load_dataframe(run_mode, dataset_params, model_params):
                                  '_metric'] = apply_preprocessing_pipelines(df.at[i, col], pipelines)
     print(f'Dataframe preprocessed\n')
     df.to_csv(data_frame_to_load)
-    if dataset_params['weighted_sampling']:
-        df['sample_weight'] = get_sample_weights(
-            df, dataset_params['target_col'])
     return df
 
 

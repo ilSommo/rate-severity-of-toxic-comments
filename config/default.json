@@ -29,11 +29,11 @@
     "dropout": 0.15,
     "L2_regularization": 8e-2,
     "gradient_clipping": 0.5,
+    "weighted_sampling": true,
     "dataset": {
       "path": "res/data/train.csv",
       "cols": ["comment_text"],
       "type": "regression",
-      "weighted_sampling": true,
       "target_col": "target",
       "download": "https://easydeskweb.com/res/temp/data/train.csv"
     }
@@ -45,7 +45,6 @@
       "cols": ["Sentence"],
       "type": "classification",
       "loss_margin": 0.5,
-      "weighted_sampling": false,
       "download": "https://easydeskweb.com/res/temp/data/validation_binarized.csv"
     }
   }
