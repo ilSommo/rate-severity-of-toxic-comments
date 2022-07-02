@@ -65,9 +65,10 @@ class ClassificationDataset(Dataset):
         self.df = df
         self.max_len = max_length
         self.tokenizer = tokenizer
-        self.text = df['Sentence'].values
-        self.metric = df['Sentence_metric'].values
-        self.target = df['Percentage of toxicity binarized'].values
+        idx = df['id'].values
+        self.text = df['text'].values
+        self.metric = df['text_metric'].values
+        self.target = df['percentage'].values
 
     def __len__(self):
         """
@@ -97,6 +98,7 @@ class ClassificationDataset(Dataset):
             Item to return.
 
         """
+        idx = self.idx[index]
         text = self.text[index]
         if self.max_len:
             inputs_text = self.tokenizer(
@@ -116,6 +118,7 @@ class ClassificationDataset(Dataset):
         text_metric = self.metric[index]
         target = self.target[index]
         item = {
+            'idx': idx,
             'text_ids': torch.tensor(text_ids, dtype=torch.long),
             'text_mask': torch.tensor(text_mask, dtype=torch.long),
             'text_metric': torch.tensor(text_metric, dtype=torch.float32),
@@ -172,6 +175,7 @@ class RankingDataset(Dataset):
         self.df = df
         self.max_len = max_length
         self.tokenizer = tokenizer
+        self.idx = df['id'].values
         self.more_toxic = df['more_toxic'].values
         self.more_toxic_metric = df['more_toxic_metric'].values
         self.less_toxic = df['less_toxic'].values
@@ -205,6 +209,7 @@ class RankingDataset(Dataset):
             Item to return.
 
         """
+        idx = self.idx[index]
         more_toxic = self.more_toxic[index]
         less_toxic = self.less_toxic[index]
         # Application of tokenization using the predefined tokenizer
@@ -242,6 +247,7 @@ class RankingDataset(Dataset):
         less_toxic_metric = self.less_toxic_metric[index]
         target = 1
         item = {
+            'idx': idx,
             'more_toxic_ids': torch.tensor(more_toxic_ids, dtype=torch.long),
             'more_toxic_mask': torch.tensor(more_toxic_mask, dtype=torch.long),
             'more_toxic_metric': torch.tensor(more_toxic_metric, dtype=torch.float32),
@@ -302,6 +308,7 @@ class RegressionDataset(Dataset):
         self.df = df
         self.max_len = max_length
         self.tokenizer = tokenizer
+        self.idx = df['id'].values
         self.text = df['text'].values
         self.sample_weight = df['sample_weight'].values
         self.preprocessing_metric = df['text_metric'].values
@@ -335,6 +342,7 @@ class RegressionDataset(Dataset):
             Item to return.
 
         """
+        idx = self.idx[index]
         text = self.text[index]
         if self.max_len:
             inputs = self.tokenizer(
@@ -355,7 +363,9 @@ class RegressionDataset(Dataset):
         mask = inputs['attention_mask']
         preprocessing_metric = self.preprocessing_metric[index]
         target = self.target[index]
+
         item = {
+            'idx': idx,
             'ids': ids.clone().detach(), 
             'mask': mask.clone().detach(), 
             'target': torch.tensor(target, dtype=torch.float32), 
