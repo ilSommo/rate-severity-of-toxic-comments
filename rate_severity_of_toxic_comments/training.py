@@ -141,7 +141,7 @@ def run_training(
             dataset_type=train_dataset_params['type'],
             use_wandb=use_wandb)
         time_end = time.time()
-        train_loop_stats.registerEpoch(
+        train_loop_stats.register_epoch(
             metrics_train, metrics_val, lr, epoch, time_start, time_end)
         if train_loop_stats.early_stop:
             print('Early Stopping')

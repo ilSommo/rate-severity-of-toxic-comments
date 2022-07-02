@@ -39,11 +39,11 @@ class TrainLoopStatisticsManager:
     -------
     __init__(self, model, early_stopping_patience=7, verbose=True, use_wandb=False)
         Initializes the manager.
-    registerEpoch(self, metrics_train: dict, metrics_val: dict, lr, epoch, time_start, time_end, early_stop_delta_sensibility=0.01)
+    register_epoch(self, metrics_train: dict, metrics_val: dict, lr, epoch, time_start, time_end, early_stop_delta_sensibility=0.01)
         Registers an epoch.
-    getLossHistory(self)
+    get_loss_history(self)
         Returns the loss history.
-    _checkEarlyStop(self, val_loss, delta_sensibility)
+    _check_early_stop(self, val_loss, delta_sensibility)
         Checks for early stopping conditions.
 
     """
@@ -80,7 +80,7 @@ class TrainLoopStatisticsManager:
         self.early_stop = False
         self.best_model_wts = copy.deepcopy(self.model.state_dict())
 
-    def registerEpoch(
+    def register_epoch(
             self,
             metrics_train: dict,
             metrics_val: dict,
@@ -130,10 +130,10 @@ class TrainLoopStatisticsManager:
             self.best_val_loss = valid_loss
             self.best_model_wts = copy.deepcopy(self.model.state_dict())
         else:
-            self._checkEarlyStop(
+            self._check_early_stop(
                 valid_loss, delta_sensibility=early_stop_delta_sensibility)
 
-    def getLossHistory(self):
+    def get_loss_history(self):
         """
         Returns the loss history.
 
@@ -149,7 +149,7 @@ class TrainLoopStatisticsManager:
         }
         return loss_history
 
-    def _checkEarlyStop(self, val_loss, delta_sensibility):
+    def _check_early_stop(self, val_loss, delta_sensibility):
         """
         Checks for early stopping conditions.
 
@@ -202,10 +202,6 @@ def compute_metrics(predicted_label, label):
 
 
 def plot_metrics(metrics):
-
     plt.bar(range(len(metrics)), list(metrics.values()), align='center')
     plt.xticks(range(len(metrics)), list(metrics.keys()))
-    # # for python 2.x:
-    # plt.bar(range(len(D)), D.values(), align='center')  # python 2.x
-    # plt.xticks(range(len(D)), D.keys())  # in python 2.x
     plt.show()
