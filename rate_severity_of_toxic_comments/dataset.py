@@ -273,8 +273,6 @@ class RegressionDataset(Dataset):
         Text tokenizer.
     text : list
         List of comments.
-    sample_weight : list
-        List of sample weights.
     preprocessing_metric : list
         List of preprocessing metrics of comments.
     target : list
@@ -310,7 +308,6 @@ class RegressionDataset(Dataset):
         self.tokenizer = tokenizer
         self.idx = df['id'].values
         self.text = df['text'].values
-        self.sample_weight = df['sample_weight'].values
         self.preprocessing_metric = df['text_metric'].values
         self.target = df['target'].values
 
@@ -395,13 +392,14 @@ def build_dataloaders(datasets, batch_sizes, weighted_samplings):
     #TODO Check dataloders initialization params
     for ds, batch_size, weighted_sampling in zip(datasets, batch_sizes, weighted_samplings):
         if weighted_sampling:
+            sample_weights = get_sample_weights(ds.target)
             data_loaders.append(
                 DataLoader(
                     ds,
                     batch_size=batch_size,
                     num_workers=2,
                     sampler=WeightedRandomSampler(
-                        ds.sample_weight,
+                        sample_weights,
                         len(ds))))
         else:
             data_loaders.append(
