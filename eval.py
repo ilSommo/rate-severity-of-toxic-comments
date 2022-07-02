@@ -25,6 +25,7 @@ BEST_MODELS_FILE_PATH = 'config/best_models.json'
 
 
 if __name__ == '__main__':
+    #TODO No need to load embedding when model is loaded from file
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', default=32)
     parser.add_argument('--mode', default='best', choices=['best', 'last'])
@@ -114,7 +115,7 @@ if __name__ == '__main__':
             use_wandb=False,
             collect_predictions=True)
         
-        y_score = metrics['scores']
+        y_score = [p["prediction"] for p in metrics['predictions']]
         hist = pd.DataFrame({'score': y_score})
 
         if not args.headless:
@@ -125,7 +126,7 @@ if __name__ == '__main__':
             'res/hist/' + model_details['path'].split('/')[-1][11:-4] + '.csv')
 
         if eval_dataset_params['type'] == 'classification':
-            y_test = metrics['binarization_targets']
+            y_test = [p["target"] for p in metrics['predictions']]
             eval_metrics = compute_metrics(
                 torch.tensor(y_score), torch.tensor(y_test))
             print(eval_metrics)
