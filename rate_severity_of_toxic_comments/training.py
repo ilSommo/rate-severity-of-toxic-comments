@@ -195,22 +195,20 @@ def test_loop(
 
     Returns
     -------
-    total_metrics : dict
+    epoch_metrics : dict
         Dictionary with testing metrics.
 
     """
     model.eval()
-    total_metrics = {}
-    total_loss = 0.0
-    total_accuracy = 0.0
-    running_loss = 0.0
+    epoch_metrics = {}
+    epoch_loss = 0.0
+    epoch_accuracy = 0.0
+    batch_loss = 0.0
     cumul_batches = 0
     dataset_size = 0
-    total_scores = []
-    binarization_targets = []
 
     if collect_predictions:
-        total_metrics["predictions"] = []
+        epoch_metrics["predictions"] = []
 
     with torch.no_grad():
         for idx_batch, data in tqdm(
@@ -229,7 +227,7 @@ def test_loop(
                 loss = loss_fn(scores, targets)
 
                 if collect_predictions:
-                    total_metrics["predictions"] += [{
+                    epoch_metrics["predictions"] += [{
                         "idx": data["idx"][i].item(),
                         "target": targets[i].item(),
                         "prediction": scores[i].item(),
@@ -261,14 +259,14 @@ def test_loop(
                 less_toxic_scores = less_toxic_outputs.to(
                     torch.float32).tolist()
                 
-                total_scores = more_toxic_scores + less_toxic_scores
-                total_accuracy += (more_toxic_outputs >
+                epoch_accuracy += (more_toxic_outputs >
                                    less_toxic_outputs).sum().item()
                 if collect_predictions:
-                    total_metrics["predictions"] += [{
+                    epoch_metrics["predictions"] += [{
                         "idx": data["idx"][i].item(),
                         "more_toxic": more_toxic_scores[i].item(),
                         "less_toxic": less_toxic_scores[i].item(),
+                        "prediction": more_toxic_scores[i].item() + less_toxic_scores[i].item(),
                         "error": less_toxic_scores[i].item() - more_toxic_scores[i].item()
                     } for i in range(batch_size)]
             elif dataset_type == 'classification':
@@ -284,34 +282,29 @@ def test_loop(
                 targets = targets.to(torch.bool)
                 loss = loss_fn(scores, targets)
                 
-                total_scores += scores.tolist()
-                binarization_targets += targets.tolist()
                 if collect_predictions:
-                    total_metrics["predictions"] += [{
+                    epoch_metrics["predictions"] += [{
                         "idx": data["idx"][i].item(),
                         "target": targets[i].item(),
                         "prediction": scores[i].item(),
                         "error": abs(targets[i].item() - scores[i].item())
                     } for i in range(batch_size)]
             
-            total_loss += (loss.item() * batch_size)
-            running_loss += loss.item()
+            epoch_loss += (loss.item() * batch_size)
+            batch_loss += loss.item()
             cumul_batches += 1
             dataset_size += batch_size
             
             if idx_batch % log_interval == 0 and idx_batch > 0 and use_wandb:
                 wandb.log(
-                    {'Validation Running Loss': running_loss / cumul_batches})
-                running_loss = 0
+                    {'Validation Running Loss': batch_loss / cumul_batches})
+                batch_loss = 0
                 cumul_batches = 0
     
-    total_metrics['valid_loss'] = total_loss / dataset_size
-    total_metrics['scores'] = total_scores
-    if total_accuracy > 0:
-        total_metrics['valid_accuracy'] = total_accuracy / dataset_size
-    if len(binarization_targets) > 0:
-        total_metrics['binarization_targets'] = binarization_targets
-    return total_metrics
+    epoch_metrics['valid_loss'] = epoch_loss / dataset_size
+    if epoch_accuracy > 0:
+        epoch_metrics['valid_accuracy'] = epoch_accuracy / dataset_size
+    return epoch_metrics
 
 
 def train_loop(
@@ -349,15 +342,15 @@ def train_loop(
 
     Returns
     -------
-    total_metrics : dict
+    epoch_metrics : dict
         Dictionary with training metrics.
 
     """
     model.train()
-    total_metrics = {}
-    total_loss = 0.0
-    total_accuracy = 0.0
-    running_loss = 0.0
+    epoch_metrics = {}
+    epoch_loss = 0.0
+    epoch_accuracy = 0.0
+    batch_loss = 0.0
     cumul_batches = 0
     dataset_size = 0
     
@@ -395,7 +388,7 @@ def train_loop(
                 less_toxic_ids, less_toxic_mask, less_toxic_metric)
             loss = loss_fn(more_toxic_outputs, less_toxic_outputs, targets)
             
-            total_accuracy = (
+            epoch_accuracy = (
                 more_toxic_outputs > less_toxic_outputs).sum().item()
         
         optimizer.zero_grad()
@@ -403,17 +396,17 @@ def train_loop(
         clip_grad_norm_(model.parameters(), gradient_clipping)
         optimizer.step()
         
-        total_loss += (loss.item() * batch_size)
-        running_loss += loss.item()
+        epoch_loss += (loss.item() * batch_size)
+        batch_loss += loss.item()
         cumul_batches += 1
         dataset_size += batch_size
         
         if idx_batch % log_interval == 0 and idx_batch > 0 and use_wandb:
-            wandb.log({'Train Running Loss': running_loss / cumul_batches})
-            running_loss = 0
+            wandb.log({'Train Running Loss': batch_loss / cumul_batches})
+            batch_loss = 0
             cumul_batches = 0
     
-    total_metrics['train_loss'] = total_loss / dataset_size
-    if total_accuracy > 0:
-        total_metrics['train_accuracy'] = total_accuracy / dataset_size
-    return total_metrics
+    epoch_metrics['train_loss'] = epoch_loss / dataset_size
+    if epoch_accuracy > 0:
+        epoch_metrics['train_accuracy'] = epoch_accuracy / dataset_size
+    return epoch_metrics
