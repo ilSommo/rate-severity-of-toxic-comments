@@ -159,7 +159,7 @@ def run_training(
         torch.save(model.state_dict(), os.path.join(
             wandb.run.dir, model_filename))
         run.finish()
-    loss_history = train_loop_stats.getLossHistory()
+    loss_history = train_loop_stats.get_loss_history()
     return model, loss_history
 
 
