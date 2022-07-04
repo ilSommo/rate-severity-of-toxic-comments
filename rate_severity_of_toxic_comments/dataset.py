@@ -361,6 +361,11 @@ class RegressionDataset(Dataset):
         preprocessing_metric = self.preprocessing_metric[index]
         target = self.target[index]
 
+        if type(ids) == list:
+            ids = torch.tensor(target)
+        if type(mask) == list:
+            mask = torch.tensor(mask)
+
         item = {
             'idx': idx,
             'ids': ids.clone().detach(), 
