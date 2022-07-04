@@ -362,7 +362,7 @@ class RegressionDataset(Dataset):
         target = self.target[index]
 
         if type(ids) == list:
-            ids = torch.tensor(target)
+            ids = torch.tensor(ids)
         if type(mask) == list:
             mask = torch.tensor(mask)
 
