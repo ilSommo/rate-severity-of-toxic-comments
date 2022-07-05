@@ -68,7 +68,7 @@
   },
   {
     "description": "DeBERTa v3",
-    "download": "https://mega.co.nz/#!vsdQwQqB!xqPPw9BjN03V6quwkFsMrLwSF528EeYsxfWpX80hOS0",
+    "download": "https://mega.co.nz/#!HxsygA6C!nbAAMk6vFGp0-hNjZy8r4wT7ThoTFDxHCTvk01B2C9o",
     "path": "res/models/deberta.pth",
     "params": {
       "run_mode": "transformer",
@@ -78,11 +78,11 @@
         "max_length": 128
       },
       "training": {
-        "epochs": 3,
+        "epochs": 5,
         "optimizer": "adam",
         "learning_rate": 6e-6,
         "L2_regularization": 1e-6,
-        "dropout": 0,
+        "dropout": 0.3,
         "grad_clipping": 1
       }
     }
