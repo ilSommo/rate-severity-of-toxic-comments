@@ -115,19 +115,20 @@ if __name__ == '__main__':
             dataset_type=eval_dataset_params['type'],
             use_wandb=False,
             collect_predictions=True)
-        
-        y_predict = [p["prediction"] for p in metrics['predictions']]
-        y_test = [p["target"] for p in metrics['predictions']]
-        hist = pd.DataFrame({'score': y_predict})
 
-        if not args.headless:
-            plt.hist(hist, 100)
-            plt.show()
-
-        hist.to_csv(
-            'res/hist/' + model_details['path'].split('/')[-1][11:-4] + '.csv')
-
+        print("="*100)
+        print(model_details['description'])
         if eval_dataset_params['type'] == 'classification':
+            y_predict = [p["prediction"] for p in metrics['predictions']]
+            y_test = [p["target"] for p in metrics['predictions']]
+            hist = pd.DataFrame({'score': y_predict})
+
+            if not args.headless:
+                plt.hist(hist, 100)
+                plt.show()
+
+            hist.to_csv(
+                'res/hist/' + model_details['path'].split('/')[-1][11:-4] + '.csv')
             eval_metrics = compute_metrics(
                 torch.tensor(y_predict), torch.tensor(y_test))
 
@@ -159,9 +160,56 @@ if __name__ == '__main__':
                 plt.ylabel('True Positive Rate')
                 plt.legend()
                 plt.show()
+
+            if args.predictions:
+                print("Error analysis")
+                print("="*100)
+                print(f"Target       | Prediction   | Text        ")
+                for p in sorted(metrics["predictions"], key=lambda x: x["error"], reverse=True)[:args.predictions]:
+                    row = df_original[df_original['id'] == p['idx']]
+                    target, prediction, text = p["target"], p["prediction"], row["text"].values[0]
+                    print(f"{target:12.5} | {prediction:12.5} | {text:100}")
+                    print("="*100)
         elif eval_dataset_params['type'] == 'ranking':
-            print(model_details['description'], metrics["valid_loss"])
+            import numpy as np
+            more_toxic = [p["more_toxic"] for p in metrics['predictions']]
+            less_toxic = [p["less_toxic"] for p in metrics['predictions']]
+
+            mrl, acc = (
+                metrics["valid_loss"],
+                sum(np.array(more_toxic) > np.array(less_toxic)) / len(less_toxic)
+            )
+            print("="*100)
+            print(f"Accuracy     | Margin Ranking Loss")
+            print("-"*100)
+            print(f"{mrl:12.5} | {acc:12.5}")
+            print("-"*100)
+
+            if args.predictions:
+                print("Error analysis")
+                print("="*100)
+                for p in sorted(metrics["predictions"], key=lambda x: x["error"], reverse=True)[:args.predictions]:
+                    row = df_original[df_original['id'] == p['idx']]
+                    l_text, m_text = row["less_toxic"].values[0], row["more_toxic"].values[0]
+                    l_pred, m_pred = p["less_toxic"], p["more_toxic"]
+                    print(f"Less Toxic")
+                    print(f"{l_pred:12.5} | {l_text:100}")
+                    print("-"*100)
+                    print(f"More Toxic")
+                    print(f"{m_pred:12.5} | {m_text:100}")
+                    print("="*100)
         elif eval_dataset_params['type'] == 'regression':
+            y_predict = [p["prediction"] for p in metrics['predictions']]
+            y_test = [p["target"] for p in metrics['predictions']]
+            hist = pd.DataFrame({'score': y_predict})
+
+            if not args.headless:
+                plt.hist(hist, 100)
+                plt.show()
+
+            hist.to_csv(
+                'res/hist/' + model_details['path'].split('/')[-1][11:-4] + '.csv')
+
             r2, mae, mse, rmse = (
                 r2_score(y_test, y_predict), 
                 mean_absolute_error(y_test, y_predict),
@@ -169,22 +217,17 @@ if __name__ == '__main__':
                 math.sqrt(mean_squared_error(y_test, y_predict))
             )
             print("="*100)
-            print(model_details['description'])
-            print("="*100)
-            x, y, z, w = "R2 Score", "MAE", "MSE", "RMSE"
-            print(f"{x:12} | {y:12} | {z:12} | {w:12}")
+            print(f"R2 Score     | MAE          | MSE          | RMSE        ")
             print("-"*100)
             print(f"{r2:12.5} | {mae:12.5} | {mse:12.5} | {rmse:12.5}")
             print("-"*100)
 
-        if args.predictions:
-            print("Error analysis")
-            print("="*100)
-            x, y, z = "Target", "Prediction", "Text"
-            print(f"{x:12} | {y:12} | {z:100}")
-            for p in sorted(metrics["predictions"], key=lambda x: x["error"], reverse=True)[:args.predictions]:
-                row = df_original[df_original['id'] == p['idx']]
-                x, y, z = p["target"], p["prediction"], row["text"].values[0]
-                print(f"{x:12.5} | {y:12.5} | {z:100}")
-                print()
+            if args.predictions:
+                print("Error analysis")
                 print("="*100)
+                print(f"Target       | Prediction   | Text        ")
+                for p in sorted(metrics["predictions"], key=lambda x: x["error"], reverse=True)[:args.predictions]:
+                    row = df_original[df_original['id'] == p['idx']]
+                    target, prediction, text = p["target"], p["prediction"], row["text"].values[0]
+                    print(f"{target:12.5} | {prediction:12.5} | {text:100}")
+                    print("="*100)

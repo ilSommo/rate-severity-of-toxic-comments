@@ -28,7 +28,8 @@ def run_training(
         use_wandb,
         use_gpu,
         verbose: bool = True,
-        log_interval=100):
+        log_interval=100,
+        model=None):
     """
     Executes the full train test loop with the given parameters.
 
@@ -203,7 +204,6 @@ def test_loop(
     epoch_metrics = {
         "loss": 0.0
     }
-    epoch_accuracy = 0.0
     batch_loss = 0.0
     cumul_batches = 0
     dataset_size = 0
@@ -260,21 +260,19 @@ def test_loop(
                 less_toxic_scores = less_toxic_outputs.to(
                     torch.float32).tolist()
                 
-                epoch_accuracy += (more_toxic_outputs >
-                                   less_toxic_outputs).sum().item()
                 if collect_predictions:
                     epoch_metrics["predictions"] += [{
                         "idx": data["idx"][i].item(),
-                        "more_toxic": more_toxic_scores[i].item(),
-                        "less_toxic": less_toxic_scores[i].item(),
-                        "prediction": more_toxic_scores[i].item() + less_toxic_scores[i].item(),
-                        "error": less_toxic_scores[i].item() - more_toxic_scores[i].item()
+                        "more_toxic": more_toxic_scores[i],
+                        "less_toxic": less_toxic_scores[i],
+                        "prediction": more_toxic_scores[i] + less_toxic_scores[i],
+                        "error": less_toxic_scores[i] - more_toxic_scores[i]
                     } for i in range(batch_size)]
             elif dataset_type == 'classification':
-                ids = data['text_ids'].to(device, dtype=torch.long)
-                mask = data['text_mask'].to(device, dtype=torch.long)
+                ids = data['ids'].to(device, dtype=torch.long)
+                mask = data['mask'].to(device, dtype=torch.long)
                 targets = data['target'].to(device, dtype=torch.long)
-                preprocessing_metrics = data['text_metric'].to(
+                preprocessing_metrics = data['metric'].to(
                     device, dtype=torch.float32)
                 batch_size = ids.size(0)
                 
@@ -303,8 +301,6 @@ def test_loop(
                 cumul_batches = 0
     
     epoch_metrics['valid_loss'] = epoch_metrics["loss"] / dataset_size
-    if epoch_accuracy > 0:
-        epoch_metrics['valid_accuracy'] = epoch_accuracy / dataset_size
     return epoch_metrics
 
 

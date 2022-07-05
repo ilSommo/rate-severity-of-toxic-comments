@@ -113,15 +113,21 @@ class ClassificationDataset(Dataset):
                 truncation=True,
                 add_special_tokens=True,
                 padding='longest')
-        text_ids = inputs_text['input_ids']
-        text_mask = inputs_text['attention_mask']
-        text_metric = self.metric[index]
+        ids = inputs_text['input_ids']
+        mask = inputs_text['attention_mask']
+        metric = self.metric[index]
         target = self.target[index]
+
+        if type(ids) == list:
+            ids = torch.tensor(ids)
+        if type(mask) == list:
+            mask = torch.tensor(mask)
+
         item = {
             'idx': idx,
-            'text_ids': torch.tensor(text_ids, dtype=torch.long),
-            'text_mask': torch.tensor(text_mask, dtype=torch.long),
-            'text_metric': torch.tensor(text_metric, dtype=torch.float32),
+            'ids': ids.clone.detach(),
+            'mask': mask.clone.detach(),
+            'metric': torch.tensor(metric, dtype=torch.float32),
             'target': torch.tensor(target, dtype=torch.bool)}
         return item
 
@@ -245,14 +251,24 @@ class RankingDataset(Dataset):
         less_toxic_ids = inputs_less_toxic['input_ids']
         less_toxic_mask = inputs_less_toxic['attention_mask']
         less_toxic_metric = self.less_toxic_metric[index]
+
+        if type(more_toxic_ids) == list:
+            more_toxic_ids = torch.tensor(more_toxic_ids)
+        if type(more_toxic_mask) == list:
+            more_toxic_mask = torch.tensor(more_toxic_mask)
+        if type(less_toxic_ids) == list:
+            less_toxic_ids = torch.tensor(less_toxic_ids)
+        if type(less_toxic_mask) == list:
+            less_toxic_mask = torch.tensor(less_toxic_mask)
+        
         target = 1
         item = {
             'idx': idx,
-            'more_toxic_ids': torch.tensor(more_toxic_ids, dtype=torch.long),
-            'more_toxic_mask': torch.tensor(more_toxic_mask, dtype=torch.long),
+            'more_toxic_ids': more_toxic_ids.clone().detach(),
+            'more_toxic_mask': more_toxic_mask.clone().detach(),
             'more_toxic_metric': torch.tensor(more_toxic_metric, dtype=torch.float32),
-            'less_toxic_ids': torch.tensor(less_toxic_ids, dtype=torch.long),
-            'less_toxic_mask': torch.tensor(less_toxic_mask, dtype=torch.long),
+            'less_toxic_ids': less_toxic_ids.clone().detach(),
+            'less_toxic_mask': less_toxic_mask.clone().detach(),
             'less_toxic_metric': torch.tensor(less_toxic_metric, dtype=torch.float32),
             'target': torch.tensor(target, dtype=torch.long)
         }
