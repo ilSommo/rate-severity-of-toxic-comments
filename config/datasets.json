@@ -1,0 +1,58 @@
+{
+    "jigsaw2022": {
+        "path": "res/data/jigsaw2022.csv",
+        "cols": ["less_toxic", "more_toxic"],
+        "type": "ranking",
+        "target_col": "target",
+        "download": "https://mega.co.nz/#!6odzCY6A!ptFQAH9R1fAct9lLrxFBmiFpBZdXjAQ9Z19QTsQFjFg"
+    },
+    "jigsaw2019": {
+        "path": "res/data/jigsaw2019.csv",
+        "cols": ["text"],
+        "type": "regression",
+        "target_col": "target",
+        "download": "https://mega.co.nz/#!CpkXDbwB!NXsKDt7Z2NwmcoRFfzfZdwpSlCUY0olT6gXwKkQ4q_M"
+    },
+    "jigsaw2018": {
+        "path": "res/data/jigsaw2018.csv",
+        "cols": ["text"],
+        "type": "regression",
+        "target_col": "target",
+        "download": "https://mega.co.nz/#!rp9w1CCK!APUivJrzoeKd9LHTEFWnsHGshn0BMfz9vGZlV02zBTY"
+    },
+    "twitter": {
+        "path": "res/data/twitter.csv",
+        "cols": ["text"],
+        "type": "regression",
+        "target_col": "target",
+        "download": "https://mega.co.nz/#!i8822YqT\\!3rdFs2LKCe8VkZ4G0FW2El0muQYT1vX6mBFv1ksjjWE"
+    },
+    "ruddit": {
+        "path": "res/data/ruddit.csv",
+        "cols": ["text"],
+        "type": "regression",
+        "target_col": "target",
+        "download": "https://mega.co.nz/#!npM3GKhB!_a4LWQpUi7ODpJUQkSI8MvrxkOSkcl-RyQvkpckLwIc"
+    },
+    "combination": {
+        "path": "res/data/combination.csv",
+        "cols": ["text"],
+        "type": "regression",
+        "target_col": "target",
+        "download": "https://mega.co.nz/#!m9032BJK!zEVPCkJMDXK63qT7zUM0USgA9oNCbp_dgOehL3eMmW0"
+    },
+    "combination_preprocessed": {
+        "path": "res/data/combination_LOWER_PUNCTUATION_WHITESPACES.csv",
+        "cols": ["text"],
+        "type": "regression",
+        "target_col": "target",
+        "download": "https://mega.co.nz/#!n5kVWaaT!Ys1gKsqXehjgJexZBJrbLN--wdIGWiCjDhPZaFTzD9E"
+    },
+    "jigsaw2022_submission": {
+        "path": "res/data/jigsaw2022_submission.csv",
+        "cols": ["less_toxic", "more_toxic"],
+        "type": "regression",
+        "target_col": "target",
+        "download": "https://mega.co.nz/#!a4MkXKqQ!S_-Y1seQ83nSjX3o04vxxsOYOXEIBd04Aw0wW54cIwA"
+    }
+}
