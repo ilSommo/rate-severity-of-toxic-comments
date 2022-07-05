@@ -79,7 +79,8 @@ if __name__ == '__main__':
     datasets = json.load(datasets_file)
 
     if args.datasets:
-        for dataset in datasets:
+        for name, dataset in datasets.items():
+            print(f"Downloading {name} dataset")
             download(dataset['path'], dataset['download'], args.source)
         # print('Downloading training set file')
         # download(CONFIG['training']['dataset']['path'],
