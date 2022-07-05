@@ -19,6 +19,7 @@ from rate_severity_of_toxic_comments.tokenizer import NaiveTokenizer, create_rec
 
 _bad_words = []
 AVAILABLE_MODES = ['recurrent', 'transformer', 'debug']
+DATASETS_CONFIG_FILE_PATH = 'config/datasets.json'
 
 
 def fix_random_seed(seed):
@@ -98,6 +99,12 @@ def parse_config(default_filepath, local_filepath=None):
                         d[k] = v
                 return d
             config = deep_update(config, json.load(local))
+
+    datasets_file = open(DATASETS_CONFIG_FILE_PATH)
+    datasets = json.load(datasets_file)
+    config["training"]["dataset"] = datasets[config["training"]["dataset"]]
+    config["evaluation"]["dataset"] = datasets[config["evaluation"]["dataset"]]
+    
     validate_config(config)
     return config
 

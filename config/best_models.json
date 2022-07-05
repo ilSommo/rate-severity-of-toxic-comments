@@ -8,7 +8,7 @@
       "model": {
         "architecture": "LSTM",
         "preprocessing": ["LOWER", "PUNCTUATION", "WHITESPACES"],
-        "vocab_file": "res/vocab/naive.txt",
+        "vocab_file": "res/vocab/vocab.txt",
         "embedding_dimension": 300,
         "embedding_type": "glove",
         "hidden_dim": 128,
@@ -27,8 +27,35 @@
     }
   },
   {
+    "description": "GRU",
+    "download": "https://mega.co.nz/#!Lp1FBapI!ocuY_gGFBHdLc1KoaGcWXzlnirp5nI8_DtvPsHCQWSY",
+    "path": "res/models/gru.pth",
+    "params": {
+      "run_mode": "recurrent",
+      "model": {
+        "architecture": "GRU",
+        "preprocessing": ["LOWER", "PUNCTUATION", "WHITESPACES"],
+        "vocab_file": "res/vocab/vocab.txt",
+        "embedding_dimension": 300,
+        "embedding_type": "glove",
+        "hidden_dim": 128,
+        "max_length": 128,
+        "preprocessing_metric": false
+      },
+      "training": {
+        "epochs": 10,
+        "optimizer": "adam",
+        "learning_rate": 3e-4,
+        "dropout": 0.25,
+        "L2_regularization": 0, 
+        "gradient_clipping": 1, 
+        "weighted_sampling": true
+      }
+    }
+  },
+  {
     "description": "Bidirectional LSTM",
-    "download": "TODO",
+    "download": "https://mega.co.nz/#!X0kiQbbb!3qEZ2TpXF0GlNQF5WmeeajyG6LdgTpTGAZZYJ8Jp5wI",
     "path": "res/models/bilstm.pth",
     "params": {
       "run_mode": "recurrent",
@@ -42,7 +69,15 @@
         "max_length": 128,
         "preprocessing_metric": false
       },
-      "training": "TODO"
+      "training": {
+        "epochs": 10,
+        "optimizer": "adam",
+        "learning_rate": 3e-4,
+        "dropout": 0.25,
+        "L2_regularization": 0, 
+        "gradient_clipping": 1, 
+        "weighted_sampling": true
+      }
     }
   },
   {
@@ -52,7 +87,7 @@
     "params": {
       "run_mode": "transformer",
       "model": {
-        "model_name": "distilbert-base-uncased",
+        "model_name": "roberta-base",
         "output_features": 768,
         "max_length": 128
       },

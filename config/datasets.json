@@ -4,7 +4,8 @@
         "cols": ["less_toxic", "more_toxic"],
         "type": "ranking",
         "target_col": "target",
-        "download": "https://mega.co.nz/#!6odzCY6A!ptFQAH9R1fAct9lLrxFBmiFpBZdXjAQ9Z19QTsQFjFg"
+        "loss_margin": 0.5,
+        "download": "https://mega.co.nz/#!TwtHjbZT!NWFTn8blE9zY0SXXYAaZMaM4UEjEmxakwj6WcTh1Sxo"
     },
     "jigsaw2019": {
         "path": "res/data/jigsaw2019.csv",

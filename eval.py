@@ -72,6 +72,7 @@ if __name__ == '__main__':
                 ' skipped since it was not found')
             continue
 
+        print("Evaluating " + model_details['description'])
         if args.mode == 'best':
             run_mode, training_params, model_params = model_details['params'][
                 'run_mode'], model_details['params']['training'], model_details['params']['model']
@@ -167,7 +168,7 @@ if __name__ == '__main__':
                 for p in sorted(metrics["predictions"], key=lambda x: x["error"], reverse=True)[:args.predictions]:
                     row = df_original[df_original['id'] == p['idx']]
                     target, prediction, text = p["target"], p["prediction"], row["text"].values[0]
-                    print(f"{target:12.5} | {prediction:12.5} | {text:100}")
+                    print(f"{target:12.5} | {prediction:12.5} | {text[:100]}")
                     print("="*100)
         elif eval_dataset_params['type'] == 'ranking':
             import numpy as np
@@ -192,10 +193,10 @@ if __name__ == '__main__':
                     l_text, m_text = row["less_toxic"].values[0], row["more_toxic"].values[0]
                     l_pred, m_pred = p["less_toxic"], p["more_toxic"]
                     print(f"Less Toxic")
-                    print(f"{l_pred:12.5} | {l_text:100}")
+                    print(f"{l_pred:12.5} | {l_text[:100]}")
                     print("-"*100)
                     print(f"More Toxic")
-                    print(f"{m_pred:12.5} | {m_text:100}")
+                    print(f"{m_pred:12.5} | {m_text[:100]}")
                     print("="*100)
         elif eval_dataset_params['type'] == 'regression':
             y_predict = [p["prediction"] for p in metrics['predictions']]
@@ -228,5 +229,5 @@ if __name__ == '__main__':
                 for p in sorted(metrics["predictions"], key=lambda x: x["error"], reverse=True)[:args.predictions]:
                     row = df_original[df_original['id'] == p['idx']]
                     target, prediction, text = p["target"], p["prediction"], row["text"].values[0]
-                    print(f"{target:12.5} | {prediction:12.5} | {text:100}")
+                    print(f"{target:12.5} | {prediction:12.5} | {text[:100]}")
                     print("="*100)

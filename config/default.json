@@ -13,7 +13,7 @@
   "recurrent": {
     "architecture": "BiDi",
     "preprocessing": ["LOWER", "NUMBERS", "TRIPLE"],
-    "vocab_file": "res/vocab/naive.txt",
+    "vocab_file": "res/vocab/vocab.txt",
     "embedding_dimension": 300,
     "embedding_type": "glove",
     "hidden_dim": 128,
@@ -21,31 +21,19 @@
     "preprocessing_metric": true
   },
   "training": {
-    "epochs": 3,
-    "train_batch_size": 32,
-    "valid_batch_size": 64,
-    "optimizer": "adamw",
-    "learning_rate": 1e-2,
-    "dropout": 0.15,
-    "L2_regularization": 8e-2,
-    "gradient_clipping": 0.5,
+    "epochs": 5,
+    "train_batch_size": 8,
+    "valid_batch_size": 8,
+    "optimizer": "adam",
+    "learning_rate": 6e-6,
+    "L2_regularization": 1e-6,
+    "dropout": 0.3,
+    "grad_clipping": 1,
     "weighted_sampling": true,
-    "dataset": {
-      "path": "res/data/train.csv",
-      "cols": ["comment_text"],
-      "type": "regression",
-      "target_col": "target",
-      "download": "https://easydeskweb.com/res/temp/data/train.csv"
-    }
+    "dataset": "combination"
   },
   "debug": { "max_length": 128 },
   "evaluation": {
-    "dataset": {
-      "path": "res/data/validation_binarized.csv",
-      "cols": ["Sentence"],
-      "type": "classification",
-      "loss_margin": 0.5,
-      "download": "https://easydeskweb.com/res/temp/data/validation_binarized.csv"
-    }
+    "dataset": "jigsaw2022"
   }
 }
