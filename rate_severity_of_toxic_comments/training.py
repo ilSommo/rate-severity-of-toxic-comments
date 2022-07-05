@@ -200,8 +200,9 @@ def test_loop(
 
     """
     model.eval()
-    epoch_metrics = {}
-    epoch_loss = 0.0
+    epoch_metrics = {
+        "loss": 0.0
+    }
     epoch_accuracy = 0.0
     batch_loss = 0.0
     cumul_batches = 0
@@ -290,7 +291,7 @@ def test_loop(
                         "error": abs(targets[i].item() - scores[i].item())
                     } for i in range(batch_size)]
             
-            epoch_loss += (loss.item() * batch_size)
+            epoch_metrics["loss"] += (loss.item() * batch_size)
             batch_loss += loss.item()
             cumul_batches += 1
             dataset_size += batch_size
@@ -301,7 +302,7 @@ def test_loop(
                 batch_loss = 0
                 cumul_batches = 0
     
-    epoch_metrics['valid_loss'] = epoch_loss / dataset_size
+    epoch_metrics['valid_loss'] = epoch_metrics["loss"] / dataset_size
     if epoch_accuracy > 0:
         epoch_metrics['valid_accuracy'] = epoch_accuracy / dataset_size
     return epoch_metrics
@@ -347,8 +348,9 @@ def train_loop(
 
     """
     model.train()
-    epoch_metrics = {}
-    epoch_loss = 0.0
+    epoch_metrics = {
+        "loss": 0.0
+    }
     epoch_accuracy = 0.0
     batch_loss = 0.0
     cumul_batches = 0
@@ -396,7 +398,7 @@ def train_loop(
         clip_grad_norm_(model.parameters(), gradient_clipping)
         optimizer.step()
         
-        epoch_loss += (loss.item() * batch_size)
+        epoch_metrics["loss"] += (loss.item() * batch_size)
         batch_loss += loss.item()
         cumul_batches += 1
         dataset_size += batch_size
@@ -406,7 +408,7 @@ def train_loop(
             batch_loss = 0
             cumul_batches = 0
     
-    epoch_metrics['train_loss'] = epoch_loss / dataset_size
+    epoch_metrics['train_loss'] = epoch_metrics["loss"] / dataset_size
     if epoch_accuracy > 0:
         epoch_metrics['train_accuracy'] = epoch_accuracy / dataset_size
     return epoch_metrics

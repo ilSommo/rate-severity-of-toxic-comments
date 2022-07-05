@@ -199,9 +199,3 @@ def compute_metrics(predicted_label, label):
         "recall": recall.item(),
         "f1": f1_score(precision, recall).item()
     }
-
-
-def plot_metrics(metrics):
-    plt.bar(range(len(metrics)), list(metrics.values()), align='center')
-    plt.xticks(range(len(metrics)), list(metrics.keys()))
-    plt.show()

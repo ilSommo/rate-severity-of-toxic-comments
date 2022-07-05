@@ -6,18 +6,19 @@ import argparse
 import glob
 import json
 import os
+import math
 
 import matplotlib.pyplot as plt
 import pandas as pd
-from sklearn.metrics import roc_curve, auc, roc_auc_score
+from sklearn.metrics import roc_curve, auc, roc_auc_score, r2_score, mean_absolute_error, mean_squared_error
 import torch
 from torch import nn
-
+            
 from rate_severity_of_toxic_comments.dataset import build_dataloaders, build_dataset, load_dataframe
 from rate_severity_of_toxic_comments.model import create_model
 from rate_severity_of_toxic_comments.training import test_loop
 from rate_severity_of_toxic_comments.utilities import parse_config, process_config
-from rate_severity_of_toxic_comments.metrics import compute_metrics, plot_metrics
+from rate_severity_of_toxic_comments.metrics import compute_metrics
 
 DEFAULT_CONFIG_FILE_PATH = 'config/default.json'
 LOCAL_CONFIG_FILE_PATH = 'config/local.json'
@@ -115,8 +116,9 @@ if __name__ == '__main__':
             use_wandb=False,
             collect_predictions=True)
         
-        y_score = [p["prediction"] for p in metrics['predictions']]
-        hist = pd.DataFrame({'score': y_score})
+        y_predict = [p["prediction"] for p in metrics['predictions']]
+        y_test = [p["target"] for p in metrics['predictions']]
+        hist = pd.DataFrame({'score': y_predict})
 
         if not args.headless:
             plt.hist(hist, 100)
@@ -126,37 +128,63 @@ if __name__ == '__main__':
             'res/hist/' + model_details['path'].split('/')[-1][11:-4] + '.csv')
 
         if eval_dataset_params['type'] == 'classification':
-            y_test = [p["target"] for p in metrics['predictions']]
             eval_metrics = compute_metrics(
-                torch.tensor(y_score), torch.tensor(y_test))
-            print(eval_metrics)
-            plot_metrics(eval_metrics)
-            fpr, tpr, thresholds = roc_curve(y_test, y_score)
-            roc_auc = auc(y_test, y_score)
+                torch.tensor(y_predict), torch.tensor(y_test))
+
+            fpr, tpr, thresholds = roc_curve(y_test, y_predict)
+            roc_auc = auc(y_test, y_predict)
             ns_probs = ns_probs = [0 for _ in range(len(y_test))]
             ns_auc = roc_auc_score(y_test, ns_probs)
-            lr_auc = roc_auc_score(y_test, y_score)
+            lr_auc = roc_auc_score(y_test, y_predict)
+
+            ns_fpr, ns_tpr, _ = roc_curve(y_test, ns_probs)
+            lr_fpr, lr_tpr, _ = roc_curve(y_test, y_predict)
+            points = pd.DataFrame({'lr_fpr': lr_fpr, 'lr_tpr': lr_tpr})
+
+            print(eval_metrics)
             print('Random: ROC AUC=%.3f' % (ns_auc))
             print('Trained: ROC AUC=%.3f' % (lr_auc))
-            ns_fpr, ns_tpr, _ = roc_curve(y_test, ns_probs)
-            lr_fpr, lr_tpr, _ = roc_curve(y_test, y_score)
 
+            points.to_csv(
+                'res/roc/' + model_details['path'].split('/')[-1][11:-4] + '.csv')
+            
             if not args.headless:
+                plt.bar(range(len(eval_metrics)), list(eval_metrics.values()), align='center')
+                plt.xticks(range(len(eval_metrics)), list(eval_metrics.keys()))
+                plt.show()
+                
                 plt.plot(ns_fpr, ns_tpr, linestyle='--', label='Random')
                 plt.plot(lr_fpr, lr_tpr, marker='.', label='Trained')
                 plt.xlabel('False Positive Rate')
                 plt.ylabel('True Positive Rate')
                 plt.legend()
                 plt.show()
-
-            points = pd.DataFrame({'lr_fpr': lr_fpr, 'lr_tpr': lr_tpr})
-            points.to_csv(
-                'res/roc/' + model_details['path'].split('/')[-1][11:-4] + '.csv')
-        else:
-            print(model_details['description'], metrics)
+        elif eval_dataset_params['type'] == 'ranking':
+            print(model_details['description'], metrics["valid_loss"])
+        elif eval_dataset_params['type'] == 'regression':
+            r2, mae, mse, rmse = (
+                r2_score(y_test, y_predict), 
+                mean_absolute_error(y_test, y_predict),
+                mean_squared_error(y_test, y_predict),
+                math.sqrt(mean_squared_error(y_test, y_predict))
+            )
+            print("="*100)
+            print(model_details['description'])
+            print("="*100)
+            x, y, z, w = "R2 Score", "MAE", "MSE", "RMSE"
+            print(f"{x:12} | {y:12} | {z:12} | {w:12}")
+            print("-"*100)
+            print(f"{r2:12.5} | {mae:12.5} | {mse:12.5} | {rmse:12.5}")
+            print("-"*100)
 
         if args.predictions:
+            print("Error analysis")
+            print("="*100)
+            x, y, z = "Target", "Prediction", "Text"
+            print(f"{x:12} | {y:12} | {z:100}")
             for p in sorted(metrics["predictions"], key=lambda x: x["error"], reverse=True)[:args.predictions]:
                 row = df_original[df_original['id'] == p['idx']]
-                print(row["text"].values[0])
+                x, y, z = p["target"], p["prediction"], row["text"].values[0]
+                print(f"{x:12.5} | {y:12.5} | {z:100}")
+                print()
                 print("="*100)
