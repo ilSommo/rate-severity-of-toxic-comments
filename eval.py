@@ -114,6 +114,7 @@ if __name__ == '__main__':
             log_interval=1000,
             dataset_type=eval_dataset_params['type'],
             use_wandb=False,
+            verbose=True,
             collect_predictions=True)
 
         print("="*100)
