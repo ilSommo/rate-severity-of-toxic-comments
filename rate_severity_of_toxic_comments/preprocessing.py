@@ -3,8 +3,9 @@ __author__ = 'Lorenzo Menghini, Martino Pulici, Alessandro Stockman, Luca Zucchi
 
 
 import string
-
 import re
+
+import emoji
 
 
 AVAILABLE_PREPROCESSING_PIPELINES = [
@@ -12,7 +13,8 @@ AVAILABLE_PREPROCESSING_PIPELINES = [
     'PUNCTUATION',
     'WHITESPACES',
     'NUMBERS',
-    'TRIPLE'
+    'TRIPLE',
+    'DEMOJIZE'
 ]
 
 
@@ -78,6 +80,8 @@ def apply_preprocessing_pipeline(text, metric, pipeline):
             text, additional_metric = _apply_numbers_pipeline(text)
         elif pipeline == 'TRIPLE':
             text, additional_metric = _apply_triple_pipeline(text)
+        elif pipeline == 'DEMOJIZE':
+            text, additional_metric = _apply_demojize_pipeline(text)
     metric += additional_metric
     return text, metric
 
@@ -103,7 +107,6 @@ def _apply_lower_pipeline(text):
     text = text.lower()
     return text, additional_metric
 
-
 def _apply_punctuation_pipeline(text):
     """
     Applies a the punctuation pipeline to a text.
@@ -121,11 +124,33 @@ def _apply_punctuation_pipeline(text):
         Preprocessing amount metric.
 
     """
-    extended_punctuation = string.punctuation + "—"
+    extended_punctuation = string.punctuation + "—…”“’"
     additional_metric = len(re.findall('[%s]' % re.escape(
         extended_punctuation), text)) / max(len(text), 1)
     text = re.sub('[%s]' % re.escape(extended_punctuation), ' ', text)
+    # TODO: Keep only "[A-Za-zÀ-ÖØ-öø-ÿ]" ?
     return text, additional_metric
+
+def _apply_demojize_pipeline(text):
+    """
+    Applies a the demojize pipeline to a text.
+
+    Parameters
+    ----------
+    text : str
+        Text to preprocess.
+
+    Returns
+    -------
+    text : str
+        Preprocessed text.
+    additional_metric : float
+        Preprocessing amount metric.
+
+    """
+    # additional_metric = len(re.findall('[%s]' % re.escape(extended_punctuation), text)) / max(len(text), 1)
+    text = emoji.demojize(text, delimiters=("", ""))
+    return text, 0
 
 
 def _apply_whitespaces_pipeline(text):

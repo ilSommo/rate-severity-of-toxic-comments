@@ -21,6 +21,7 @@ scikit-learn = "*"
 mlxtend = "*"
 kaggle = "*"
 tqdm = "*"
+emoji = "*"
 
 [dev-packages]
 autopep8 = "*"
