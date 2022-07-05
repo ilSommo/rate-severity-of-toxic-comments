@@ -58,6 +58,7 @@ def download(file_path, download_url, source):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--source', choices=["mega", "http"])
+    parser.add_argument('--alldatasets', action='store_true')
     parser.add_argument('--datasets', action='store_true')
     parser.add_argument('--vocabs', action='store_true')
     parser.add_argument('--models', action='store_true')
@@ -78,16 +79,18 @@ if __name__ == '__main__':
     datasets_file = open(DATASETS_CONFIG_FILE_PATH)
     datasets = json.load(datasets_file)
 
-    if args.datasets:
+    if args.alldatasets:
         for name, dataset in datasets.items():
             print(f"Downloading {name} dataset")
             download(dataset['path'], dataset['download'], args.source)
-        # print('Downloading training set file')
-        # download(CONFIG['training']['dataset']['path'],
-        #          CONFIG['training']['dataset']['download'], args.source)
-        # print('Downloading test set file')
-        # download(CONFIG['evaluation']['dataset']['path'],
-        #          CONFIG['evaluation']['dataset']['download'], args.source)
+    
+    if args.datasets:
+        print('Downloading training set file')
+        download(CONFIG['training']['dataset']['path'],
+                 CONFIG['training']['dataset']['download'], args.source)
+        print('Downloading test set file')
+        download(CONFIG['evaluation']['dataset']['path'],
+                 CONFIG['evaluation']['dataset']['download'], args.source)
 
     if args.vocabs:
         download(CONFIG['recurrent']['vocab_file'], vocabs[CONFIG['recurrent']['vocab_file']], args.source)

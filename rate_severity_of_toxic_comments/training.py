@@ -229,7 +229,7 @@ def test_loop(
 
                 if collect_predictions:
                     epoch_metrics["predictions"] += [{
-                        "idx": data["idx"][i].item(),
+                        "idx": data["idx"][i],
                         "target": targets[i].item(),
                         "prediction": scores[i].item(),
                         "error": abs(targets[i].item() - scores[i].item())
@@ -262,7 +262,7 @@ def test_loop(
                 
                 if collect_predictions:
                     epoch_metrics["predictions"] += [{
-                        "idx": data["idx"][i].item(),
+                        "idx": data["idx"][i],
                         "more_toxic": more_toxic_scores[i],
                         "less_toxic": less_toxic_scores[i],
                         "prediction": more_toxic_scores[i] + less_toxic_scores[i],
@@ -283,7 +283,7 @@ def test_loop(
                 
                 if collect_predictions:
                     epoch_metrics["predictions"] += [{
-                        "idx": data["idx"][i].item(),
+                        "idx": data["idx"][i],
                         "target": targets[i].item(),
                         "prediction": scores[i].item(),
                         "error": abs(targets[i].item() - scores[i].item())
