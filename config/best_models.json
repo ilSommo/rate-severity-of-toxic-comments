@@ -1,13 +1,13 @@
 [
   {
-    "description": "Baseline Model",
-    "download": "https://easydeskweb.com/res/temp/model/baseline.pth",
+    "description": "Baseline (LSTM)",
+    "download": "https://mega.co.nz/#!XglGxZKC!V33EKIGDEClnmSEulizUrFC_E-pAqaas2vlqIKq7cb8",
     "path": "res/models/baseline.pth",
     "params": {
       "run_mode": "recurrent",
       "model": {
         "architecture": "LSTM",
-        "preprocessing": ["LOWER"],
+        "preprocessing": ["LOWER", "PUNCTUATION", "WHITESPACES"],
         "vocab_file": "res/vocab/naive.txt",
         "embedding_dimension": 300,
         "embedding_type": "glove",
@@ -16,45 +16,72 @@
         "preprocessing_metric": false
       },
       "training": {
+        "epochs": 10,
+        "optimizer": "adam",
+        "learning_rate": 3e-4,
         "dropout": 0,
-        "grad_clipping": 1
+        "L2_regularization": 0,
+        "gradient_clipping": 1,
+        "weighted_sampling": true
       }
     }
   },
   {
-    "description": "Recurrent Model",
-    "download": "https://easydeskweb.com/res/temp/model/recurrent.pth",
-    "path": "res/models/recurrent.pth",
+    "description": "Bidirectional LSTM",
+    "download": "TODO",
+    "path": "res/models/model_bilstm.pth",
     "params": {
       "run_mode": "recurrent",
       "model": {
         "architecture": "BiDi",
-        "preprocessing": ["LOWER", "NUMBERS", "TRIPLE"],
-        "vocab_file": "res/vocab/naive.txt",
+        "preprocessing": ["LOWER", "PUNCTUATION", "WHITESPACES"],
+        "vocab_file": "res/vocab/vocab.txt",
         "embedding_dimension": 300,
         "embedding_type": "glove",
         "hidden_dim": 128,
         "max_length": 128,
-        "preprocessing_metric": true
+        "preprocessing_metric": false
       },
-      "training": {
-        "dropout": 0.15,
-        "grad_clipping": 0.5
-      }
+      "training": "TODO"
     }
   },
   {
-    "description": "Pretrained Model",
-    "download": "https://easydeskweb.com/res/temp/model/pretrained.pth",
-    "path": "res/models/pretrained.pth",
+    "description": "RoBERTa",
+    "download": "https://mega.co.nz/#!KwVA2KgB!G-lWTR3XmeV-iDkEaw7Wo822Nqop84Qs2EKwSKe169A",
+    "path": "res/models/roberta.pth",
     "params": {
-      "run_mode": "pretrained",
+      "run_mode": "transformer",
       "model": {
         "model_name": "distilbert-base-uncased",
         "output_features": 768,
         "max_length": 128
       },
       "training": {
+        "epochs": 3,
+        "optimizer": "adam",
+        "learning_rate": 1e-4,
+        "L2_regularization": 1e-6,
+        "dropout": 0,
+        "grad_clipping": 1
+      }
+    }
+  },
+  {
+    "description": "DeBERTa v3",
+    "download": "https://mega.co.nz/#!vsdQwQqB!xqPPw9BjN03V6quwkFsMrLwSF528EeYsxfWpX80hOS0",
+    "path": "res/models/deberta.pth",
+    "params": {
+      "run_mode": "transformer",
+      "model": {
+        "model_name": "microsoft/deberta-v3-base",
+        "output_features": 768,
+        "max_length": 128
+      },
+      "training": {
+        "epochs": 3,
+        "optimizer": "adam",
+        "learning_rate": 6e-6,
+        "L2_regularization": 1e-6,
         "dropout": 0,
         "grad_clipping": 1
       }
