@@ -41,6 +41,10 @@ def download(file_path, download_url, source):
             dirname = os.path.dirname(file_path)
             ret = subprocess.check_output(f"megadl --path {dirname} {download_url} --print-names", shell=True)
             lines = ret.split(b'\n')
+
+            if len(lines) < 2:
+                print(f"[ERROR]: Invalid url {download_url}. Skipping.")
+                return
             downloaded_file_path = os.path.join(dirname, lines[-2].decode("utf-8"))
             subprocess.call(f"mv {downloaded_file_path} {file_path}", shell=True)
         else:

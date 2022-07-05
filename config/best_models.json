@@ -29,7 +29,7 @@
   {
     "description": "Bidirectional LSTM",
     "download": "TODO",
-    "path": "res/models/model_bilstm.pth",
+    "path": "res/models/bilstm.pth",
     "params": {
       "run_mode": "recurrent",
       "model": {
