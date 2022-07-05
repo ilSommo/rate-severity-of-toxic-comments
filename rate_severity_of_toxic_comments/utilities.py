@@ -102,7 +102,7 @@ def parse_config(default_filepath, local_filepath=None):
     return config
 
 
-def process_config(df, config):
+def process_config(df, config, train=True):
     """
     Parses the configuration dictionary.
 
@@ -112,6 +112,8 @@ def process_config(df, config):
         Dataset.
     config : dict
         Configuration dictionary.
+    train : boolean
+        If false, ignores processes only needed for training (e.g. embedding matrix creation).
 
     Returns
     -------
@@ -124,10 +126,11 @@ def process_config(df, config):
         support_bag['tokenizer'] = AutoTokenizer.from_pretrained(
             config['transformer']['model_name'])
     elif config['options']['run_mode'] == 'recurrent':
-        tokenizer, embedding_matrix = create_recurrent_model_tokenizer(
-            config, df)
+        tokenizer, embedding_matrix, embedding_shape = create_recurrent_model_tokenizer(
+            config, df, create_matrix=train)
         support_bag['tokenizer'] = tokenizer
         support_bag['embedding_matrix'] = embedding_matrix
+        support_bag['embedding_shape'] = embedding_shape
     elif config['options']['run_mode'] == 'debug':
         support_bag['tokenizer'] = NaiveTokenizer()
         support_bag['tokenizer'].set_vocab({'[UNK]': 0, '[PAD]': 1})

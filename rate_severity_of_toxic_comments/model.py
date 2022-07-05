@@ -115,7 +115,8 @@ class RecurrentModel(Module):
             dropout,
             hidden_dim,
             architecture,
-            preprocessing_metric):
+            preprocessing_metric,
+            embedding_shape=None):
         """
         Initializes the model.
 
@@ -134,9 +135,15 @@ class RecurrentModel(Module):
 
         """
         super().__init__()
-        _, embedding_dim = embedding_matrix.shape
-        self.embedding = Embedding.from_pretrained(
-            torch.tensor(embedding_matrix))
+
+        if not embedding_matrix is None:
+            _, embedding_dim = embedding_matrix.shape
+            self.embedding = Embedding.from_pretrained(
+                torch.tensor(embedding_matrix))
+        else:
+            vocab_len, embedding_dim = embedding_shape
+            self.embedding = Embedding(vocab_len, embedding_dim)
+        
         if architecture == 'LSTM':
             self.recurrent = LSTM(embedding_dim, hidden_dim,
                                   batch_first=True)
@@ -220,7 +227,8 @@ def create_model(run_mode, train_params, model_params, support_bag):
             train_params['dropout'],
             model_params['hidden_dim'],
             model_params['architecture'],
-            model_params['preprocessing_metric'])
+            model_params['preprocessing_metric'],
+            support_bag['embedding_shape'])
     elif run_mode == 'transformer':
         model = TransformerModel(
             model_params['model_name'],

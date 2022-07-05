@@ -89,7 +89,7 @@ if __name__ == '__main__':
             run_mode, eval_dataset_params, model_params=model_params)
 
         CONFIG['recurrent']['vocab_file'] = model_params['vocab_file']
-        support_bag = process_config(df_test, CONFIG)
+        support_bag = process_config(df_test, CONFIG, train=False)
 
         test_data = build_dataset(
             df_test,

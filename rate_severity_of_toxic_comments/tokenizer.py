@@ -217,7 +217,7 @@ class NaiveTokenizer(PreTrainedTokenizer):
         return out_string
 
 
-def create_recurrent_model_tokenizer(config, df, verbose=False):
+def create_recurrent_model_tokenizer(config, df, verbose=False, create_matrix=True):
     """
     Creates a recurrent model tokenizer.
 
@@ -229,6 +229,8 @@ def create_recurrent_model_tokenizer(config, df, verbose=False):
         Dataset.
     verbose : bool, default False
         Verbosity flag.
+    verbose : bool, default True
+        When true creates embedding matrix.
 
     Returns
     -------
@@ -247,10 +249,15 @@ def create_recurrent_model_tokenizer(config, df, verbose=False):
         vocab, tokenizer = build_vocabulary(
             df, dataframe_cols, tokenizer, save_path=vocab_file_path)
     tokenizer.set_vocab(vocab)
-    embedding_model = load_embedding_model(config['recurrent'])
-    if verbose:
-        oov = check_OOV_terms(embedding_model, vocab)
-        count_OOV_frequency(df, dataframe_cols, oov)
-    embedding_matrix = build_embedding_matrix(
-        embedding_model, embedding_dim, vocab)
-    return tokenizer, embedding_matrix
+
+    embedding_matrix = None
+    if create_matrix:
+        embedding_model = load_embedding_model(config['recurrent'])
+        if verbose:
+            oov = check_OOV_terms(embedding_model, vocab)
+            count_OOV_frequency(df, dataframe_cols, oov)
+        embedding_matrix = build_embedding_matrix(
+            embedding_model, embedding_dim, vocab)
+    
+    embedding_shape = (len(vocab), embedding_dim)
+    return tokenizer, embedding_matrix, embedding_shape
