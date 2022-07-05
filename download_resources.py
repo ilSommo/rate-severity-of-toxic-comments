@@ -18,6 +18,7 @@ from rate_severity_of_toxic_comments.vocabulary import get_preprocess_filenames
 DEFAULT_CONFIG_FILE_PATH = 'config/default.json'
 LOCAL_CONFIG_FILE_PATH = 'config/local.json'
 VOCAB_CONFIG_FILE_PATH = 'config/vocabs.json'
+DATASETS_CONFIG_FILE_PATH = 'config/datasets.json'
 BEST_MODELS_FILE_PATH = 'config/best_models.json'
 
 
@@ -74,13 +75,18 @@ if __name__ == '__main__':
     models_file = open(BEST_MODELS_FILE_PATH)
     models = json.load(models_file)
 
+    datasets_file = open(DATASETS_CONFIG_FILE_PATH)
+    datasets = json.load(datasets_file)
+
     if args.datasets:
-        print('Downloading training set file')
-        download(CONFIG['training']['dataset']['path'],
-                 CONFIG['training']['dataset']['download'], args.source)
-        print('Downloading test set file')
-        download(CONFIG['evaluation']['dataset']['path'],
-                 CONFIG['evaluation']['dataset']['download'], args.source)
+        for dataset in datasets:
+            download(dataset['path'], dataset['download'], args.source)
+        # print('Downloading training set file')
+        # download(CONFIG['training']['dataset']['path'],
+        #          CONFIG['training']['dataset']['download'], args.source)
+        # print('Downloading test set file')
+        # download(CONFIG['evaluation']['dataset']['path'],
+        #          CONFIG['evaluation']['dataset']['download'], args.source)
 
     if args.vocabs:
         download(CONFIG['recurrent']['vocab_file'], vocabs[CONFIG['recurrent']['vocab_file']], args.source)
