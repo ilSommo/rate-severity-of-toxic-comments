@@ -42,6 +42,20 @@
         "target_col": "target",
         "download": "https://mega.co.nz/#!m9032BJK!zEVPCkJMDXK63qT7zUM0USgA9oNCbp_dgOehL3eMmW0"
     },
+    "combination_train": {
+        "path": "res/data/combination_train.csv",
+        "cols": ["text"],
+        "type": "regression",
+        "target_col": "target",
+        "download": "https://mega.co.nz/#!Wl0gya6b!JXrdF8IWSkZ0mj6N2eeD2QTA4T-EVCwdkI5TBBsR8qI"
+    },
+    "combination_valid": {
+        "path": "res/data/combination_valid.csv",
+        "cols": ["text"],
+        "type": "regression",
+        "target_col": "target",
+        "download": "https://mega.co.nz/#!i4lUkDJJ!eDQcYS-P83Ww_R_WJX43kqfJ72UXoOJwJkG-s0SeCLc"
+    },
     "combination_preprocessed": {
         "path": "res/data/combination_LOWER_PUNCTUATION_WHITESPACES.csv",
         "cols": ["text"],
