@@ -12,7 +12,7 @@
   },
   "recurrent": {
     "architecture": "BiDi",
-    "preprocessing": ["LOWER", "PUNCTUATION", "WHITESPACE"],
+    "preprocessing": ["LOWER", "PUNCTUATION", "WHITESPACES"],
     "vocab_file": "res/vocab/vocab.txt",
     "embedding_dimension": 300,
     "embedding_type": "glove",
