@@ -26,7 +26,6 @@ BEST_MODELS_FILE_PATH = 'config/best_models.json'
 
 
 if __name__ == '__main__':
-    #TODO No need to load embedding when model is loaded from file
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', default=32)
     parser.add_argument('--mode', default='best', choices=['best', 'last'])
