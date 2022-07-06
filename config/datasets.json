@@ -56,6 +56,13 @@
         "target_col": "target",
         "download": "https://mega.co.nz/#!i4lUkDJJ!eDQcYS-P83Ww_R_WJX43kqfJ72UXoOJwJkG-s0SeCLc"
     },
+    "combination_exp": {
+        "path": "res/data/combination_exp.csv",
+        "cols": ["text"],
+        "type": "regression",
+        "target_col": "target",
+        "download": "https://mega.co.nz/#!GhkHHS6Q!WEV1QPn5MYaw8if3Ioi0N8qkSPlSYngMaK_UyXoouJc"
+    },
     "combination_preprocessed": {
         "path": "res/data/combination_LOWER_PUNCTUATION_WHITESPACES.csv",
         "cols": ["text"],
