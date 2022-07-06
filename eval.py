@@ -26,11 +26,15 @@ BEST_MODELS_FILE_PATH = 'config/best_models.json'
 
 
 if __name__ == '__main__':
+    models_file = open(BEST_MODELS_FILE_PATH)
+    models_content = json.load(models_file)
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', default=32)
-    parser.add_argument('--mode', default='best', choices=['best', 'last'])
+    parser.add_argument('--mode', default='best', choices=['best', 'last', 'specific'])
     parser.add_argument('--folder', default='res/models/')
     parser.add_argument('--predictions', type=int, default=None)
+    parser.add_argument('--model', default=None, choices=list(models_content.keys()))
     parser.add_argument('--headless', action='store_true')
     args = parser.parse_args()
 
@@ -45,8 +49,11 @@ if __name__ == '__main__':
         }]
         print(f"Using weights found in {latest_file}")
     elif args.mode == 'best':
-        models_file = open(BEST_MODELS_FILE_PATH)
-        models = json.load(models_file)
+        models = models_content.values()
+    elif args.mode == 'specific':
+        if args.model is None:
+            raise argparse.ArgumentError('Specify model when mode is `specific`')
+        models = [models_content[args.model]]
     else:
         raise argparse.ArgumentError('Invalid mode')
 

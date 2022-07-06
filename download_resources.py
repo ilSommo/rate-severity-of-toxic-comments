@@ -74,7 +74,7 @@ if __name__ == '__main__':
     vocabs = json.load(vocabs_file)
 
     models_file = open(BEST_MODELS_FILE_PATH)
-    models = json.load(models_file)
+    models = json.load(models_file).values()
 
     datasets_file = open(DATASETS_CONFIG_FILE_PATH)
     datasets = json.load(datasets_file)

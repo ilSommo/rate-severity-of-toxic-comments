@@ -1,12 +1,4 @@
 {
-    "jigsaw2022": {
-        "path": "res/data/jigsaw2022.csv",
-        "cols": ["less_toxic", "more_toxic"],
-        "type": "ranking",
-        "target_col": "target",
-        "loss_margin": 0.5,
-        "download": "https://mega.co.nz/#!TwtHjbZT!NWFTn8blE9zY0SXXYAaZMaM4UEjEmxakwj6WcTh1Sxo"
-    },
     "jigsaw2019": {
         "path": "res/data/jigsaw2019.csv",
         "cols": ["text"],
@@ -56,25 +48,12 @@
         "target_col": "target",
         "download": "https://mega.co.nz/#!i4lUkDJJ!eDQcYS-P83Ww_R_WJX43kqfJ72UXoOJwJkG-s0SeCLc"
     },
-    "combination_exp": {
-        "path": "res/data/combination_exp.csv",
-        "cols": ["text"],
-        "type": "regression",
-        "target_col": "target",
-        "download": "https://mega.co.nz/#!GhkHHS6Q!WEV1QPn5MYaw8if3Ioi0N8qkSPlSYngMaK_UyXoouJc"
-    },
-    "combination_preprocessed": {
-        "path": "res/data/combination_LOWER_PUNCTUATION_WHITESPACES.csv",
-        "cols": ["text"],
-        "type": "regression",
-        "target_col": "target",
-        "download": "https://mega.co.nz/#!n5kVWaaT!Ys1gKsqXehjgJexZBJrbLN--wdIGWiCjDhPZaFTzD9E"
-    },
-    "jigsaw2022_submission": {
-        "path": "res/data/jigsaw2022_submission.csv",
+    "jigsaw2022": {
+        "path": "res/data/jigsaw2022.csv",
         "cols": ["less_toxic", "more_toxic"],
-        "type": "regression",
+        "type": "ranking",
         "target_col": "target",
-        "download": "https://mega.co.nz/#!a4MkXKqQ!S_-Y1seQ83nSjX3o04vxxsOYOXEIBd04Aw0wW54cIwA"
+        "loss_margin": 0.5,
+        "download": "https://mega.co.nz/#!TwtHjbZT!NWFTn8blE9zY0SXXYAaZMaM4UEjEmxakwj6WcTh1Sxo"
     }
 }

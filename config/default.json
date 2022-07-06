@@ -1,12 +1,12 @@
 {
   "options": {
-    "run_mode": "recurrent",
+    "run_mode": "transformer",
     "use_gpu": true,
     "wandb": true,
     "seed": 42
   },
   "transformer": {
-    "model_name": "roberta-base",
+    "model_name": "microsoft/deberta-v3-base",
     "output_features": 768,
     "max_length": 128
   },
@@ -30,10 +30,10 @@
     "dropout": 0.3,
     "gradient_clipping": 1,
     "weighted_sampling": true,
-    "dataset": "combination_exp"
+    "dataset": "combination"
   },
   "debug": { "max_length": 128 },
   "evaluation": {
-    "dataset": "jigsaw2022"
+    "dataset": "combination_valid"
   }
 }

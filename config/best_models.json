@@ -1,5 +1,5 @@
-[
-  {
+{
+  "lstm": {
     "description": "Baseline (LSTM)",
     "download": "https://mega.co.nz/#!XglGxZKC!V33EKIGDEClnmSEulizUrFC_E-pAqaas2vlqIKq7cb8",
     "path": "res/models/baseline.pth",
@@ -26,7 +26,7 @@
       }
     }
   },
-  {
+  "gru": {
     "description": "GRU",
     "download": "https://mega.co.nz/#!Lp1FBapI!ocuY_gGFBHdLc1KoaGcWXzlnirp5nI8_DtvPsHCQWSY",
     "path": "res/models/gru.pth",
@@ -53,7 +53,7 @@
       }
     }
   },
-  {
+  "bidi": {
     "description": "Bidirectional LSTM",
     "download": "https://mega.co.nz/#!X0kiQbbb!3qEZ2TpXF0GlNQF5WmeeajyG6LdgTpTGAZZYJ8Jp5wI",
     "path": "res/models/bilstm.pth",
@@ -80,7 +80,7 @@
       }
     }
   },
-  {
+  "roberta": {
     "description": "RoBERTa",
     "download": "https://mega.co.nz/#!KwVA2KgB!G-lWTR3XmeV-iDkEaw7Wo822Nqop84Qs2EKwSKe169A",
     "path": "res/models/roberta.pth",
@@ -101,7 +101,7 @@
       }
     }
   },
-  {
+  "deberta": {
     "description": "DeBERTa v3",
     "download": "https://mega.co.nz/#!HxsygA6C!nbAAMk6vFGp0-hNjZy8r4wT7ThoTFDxHCTvk01B2C9o",
     "path": "res/models/deberta.pth",
@@ -122,4 +122,4 @@
       }
     }
   }
-]
+}
