@@ -97,7 +97,7 @@
         "learning_rate": 1e-4,
         "L2_regularization": 1e-6,
         "dropout": 0,
-        "grad_clipping": 1
+        "gradient_clipping": 1
       }
     }
   },
@@ -118,7 +118,7 @@
         "learning_rate": 6e-6,
         "L2_regularization": 1e-6,
         "dropout": 0.3,
-        "grad_clipping": 1
+        "gradient_clipping": 1
       }
     }
   }

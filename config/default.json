@@ -28,12 +28,12 @@
     "learning_rate": 6e-6,
     "L2_regularization": 1e-6,
     "dropout": 0.3,
-    "grad_clipping": 1,
+    "gradient_clipping": 1,
     "weighted_sampling": true,
-    "dataset": "combination_train"
+    "dataset": "combination_exp"
   },
   "debug": { "max_length": 128 },
   "evaluation": {
-    "dataset": "combination_valid"
+    "dataset": "jigsaw2022"
   }
 }
