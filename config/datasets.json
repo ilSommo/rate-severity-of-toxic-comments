@@ -47,13 +47,5 @@
         "type": "regression",
         "target_col": "target",
         "download": "https://mega.co.nz/#!i4lUkDJJ!eDQcYS-P83Ww_R_WJX43kqfJ72UXoOJwJkG-s0SeCLc"
-    },
-    "jigsaw2022": {
-        "path": "res/data/jigsaw2022.csv",
-        "cols": ["less_toxic", "more_toxic"],
-        "type": "ranking",
-        "target_col": "target",
-        "loss_margin": 0.5,
-        "download": "https://mega.co.nz/#!TwtHjbZT!NWFTn8blE9zY0SXXYAaZMaM4UEjEmxakwj6WcTh1Sxo"
     }
 }
